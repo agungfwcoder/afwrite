@@ -38,7 +38,7 @@
   --afw-shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 8px 24px -12px rgba(24, 24, 27, 0.12);
   --afw-content-size: 1.125rem;
   --afw-content-line: 1.75;
-  --afw-content-padding: 28px 32px 40px;
+  --afw-content-gutter: 32px; /* jarak kiri-kanan konten; juga dipakai media ukuran penuh */
   --afw-min-height: 280px;
 
   position: relative;
@@ -202,7 +202,7 @@
   flex: 1;
   min-height: var(--afw-min-height);
   margin: 0;
-  padding: var(--afw-content-padding);
+  padding: 28px var(--afw-content-gutter) 40px;
   font-family: var(--afw-font-content);
   font-size: var(--afw-content-size);
   line-height: var(--afw-content-line);
@@ -314,6 +314,168 @@
   border-radius: 6px;
 }
 
+
+
+/* ---------- Media: gambar, video, pemisah ---------- */
+
+.afw .afw-content figure {
+  position: relative;
+  margin: 1.6em auto;
+  padding: 0;
+  text-align: center;
+  border-radius: 6px;
+  cursor: default;
+}
+
+.afw .afw-content figure > img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 6px;
+  user-select: none;
+}
+
+.afw .afw-content figure[data-size='wide'] > img,
+.afw .afw-content figure[data-size='full'] > img {
+  width: 100%;
+}
+
+.afw .afw-content figure[data-size='full'] {
+  margin-left: calc(var(--afw-content-gutter) * -1);
+  margin-right: calc(var(--afw-content-gutter) * -1);
+}
+
+.afw .afw-content figure[data-size='full'] > img,
+.afw .afw-content figure[data-size='full'] > iframe {
+  border-radius: 0;
+}
+
+.afw .afw-content figure > iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 6px;
+  background: var(--afw-surface);
+  /* Di dalam editor, klik memilih video (bukan memutarnya). */
+  pointer-events: none;
+}
+
+.afw .afw-content figure:not([data-size]) > iframe {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.afw .afw-content figcaption {
+  margin: 0.6em auto 0;
+  padding: 0 1em;
+  font-size: 0.875em;
+  line-height: 1.5;
+  color: var(--afw-muted);
+  text-align: center;
+  outline: none;
+  cursor: text;
+}
+
+.afw .afw-content figcaption:empty::before {
+  content: attr(data-placeholder);
+  color: var(--afw-placeholder);
+}
+
+/* Keterangan kosong hanya terlihat saat gambar dipilih atau keterangan sedang diedit. */
+.afw .afw-content figure:not(.afw-is-selected) > figcaption:empty:not(:focus) {
+  display: none;
+}
+
+.afw .afw-content hr {
+  height: auto;
+  margin: 2em 0;
+  padding: 0.3em 0;
+  overflow: visible;
+  text-align: center;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  opacity: 1;
+  cursor: default;
+}
+
+.afw .afw-content hr::before {
+  content: '···';
+  display: block;
+  font-size: 1.5em;
+  line-height: 1;
+  letter-spacing: 0.6em;
+  color: var(--afw-muted);
+}
+
+.afw .afw-content figure.afw-is-selected,
+.afw .afw-content hr.afw-is-selected {
+  outline: 2px solid var(--afw-accent);
+  outline-offset: 4px;
+}
+
+.afw .afw-content figure.afw-is-selected ::selection,
+.afw .afw-content figure.afw-is-selected::selection {
+  background: transparent;
+}
+
+.afw .afw-content figure[data-afw-uploading] > img {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+}
+
+.afw .afw-content figure[data-afw-uploading]::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border: 3px solid var(--afw-accent-soft);
+  border-top-color: var(--afw-accent);
+  border-radius: 50%;
+  animation: afw-spin 0.8s linear infinite;
+}
+
+@keyframes afw-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Pesan error ---------- */
+
+.afw .afw-toast {
+  position: absolute;
+  right: 0;
+  left: 0;
+  bottom: 44px;
+  width: max-content;
+  margin: 0 auto;
+  z-index: 30;
+  max-width: calc(100% - 32px);
+  padding: 8px 14px;
+  font-size: 0.8125rem;
+  color: #fff;
+  background: #dc2626;
+  border-radius: 8px;
+  box-shadow: var(--afw-float-shadow);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  pointer-events: none;
+}
+
+.afw .afw-toast.afw-is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
 
 /* ---------- Tombol + (baris kosong) ---------- */
 
@@ -606,7 +768,7 @@
 
 @media (max-width: 640px) {
   .afw {
-    --afw-content-padding: 20px 18px 32px;
+    --afw-content-gutter: 18px;
     --afw-content-size: 1.0625rem;
   }
 }

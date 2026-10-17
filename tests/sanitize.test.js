@@ -37,7 +37,7 @@ describe('struktur', () => {
     ['<span style="font-weight:bold">b</span><span style="font-style: italic">i</span>', '<p><b>b</b><i>i</i></p>'],
     ['<table><tr><td>a</td><td>b</td></tr><tr><td>c</td></tr></table>', '<p>a b</p><p>c</p>'],
     ['<a href="example.com">x</a>', '<p><a href="https://example.com">x</a></p>'],
-    ['<p>a<hr>b</p>', '<p>a</p><p>b</p>'],
+    ['<p>a<hr>b</p>', '<p>a</p><hr><p>b</p>'],
   ])('%s', (input, expected) => {
     expect(sanitize(input)).toBe(expected);
   });

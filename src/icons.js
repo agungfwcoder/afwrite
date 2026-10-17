@@ -3,6 +3,14 @@ const svg = (body) =>
   `<svg class="afw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 
 export const ICONS = {
+  image: svg('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
+  embed: svg('<path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/>'),
+  hr: svg('<path d="M3 12h18"/><path d="M8 6h8" opacity=".35"/><path d="M8 18h8" opacity=".35"/>'),
+  sizeNormal: svg('<path d="M3 3h18"/><path d="M3 21h18"/><rect x="7" y="7" width="10" height="10" rx="1.5"/>'),
+  sizeWide: svg('<path d="M3 3h18"/><path d="M3 21h18"/><rect x="4" y="7" width="16" height="10" rx="1.5"/>'),
+  sizeFull: svg('<path d="M3 3h18"/><path d="M3 21h18"/><rect x="1" y="7" width="22" height="10" rx="1.5"/>'),
+  alt: svg('<path d="M17 6.1H3"/><path d="M21 12.1H3"/><path d="M15.1 18H3"/>'),
+  trash: svg('<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>'),
   paragraph: svg('<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>'),
   plus: svg('<path d="M5 12h14"/><path d="M12 5v14"/>'),
   check: svg('<path d="M20 6 9 17l-5-5"/>'),

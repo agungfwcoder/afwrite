@@ -45,7 +45,7 @@ export const TEMPLATE = `
      :class="{ 'afw-is-open': bubble.open, 'afw-is-ready': bubble.ready }"
      :style="\`left: \${bubble.x}px; top: \${bubble.y}px\`"
      role="toolbar" aria-label="Format teks"
-     @keydown.escape.prevent.stop="cancelLink()">
+     @keydown.escape.prevent.stop="cancelInput()">
 
   <div class="afw-bubble-row" :class="{ 'afw-is-hidden': bubble.mode !== 'format' }">
     ${buttonGroup('bubbleItems', 'afw-btn-inverse')}
@@ -53,16 +53,17 @@ export const TEMPLATE = `
 
   <!-- Bukan elemen form: editor biasanya berada di dalam form halaman, dan form
        bertingkat dibuang browser. Enter ditangani langsung di input. -->
-  <div class="afw-bubble-row afw-link-form" :class="{ 'afw-is-hidden': bubble.mode !== 'link' }">
+  <!-- Satu input untuk beberapa keperluan: URL link, link video, dan alt text gambar. -->
+  <div class="afw-bubble-row afw-link-form" :class="{ 'afw-is-hidden': bubble.mode !== 'input' }">
     <input type="text" class="afw-link-input" x-ref="linkInput" x-model="bubble.url"
-           placeholder="Tempel atau ketik URL…" aria-label="URL"
+           :placeholder="inputPlaceholder()" :aria-label="inputPlaceholder()"
            autocomplete="off" spellcheck="false"
            @input="bubble.error = ''"
-           @keydown.enter.prevent="applyLink()"
-           @blur="onLinkBlur()">
-    <button type="button" class="afw-btn afw-btn-inverse" title="Simpan link (Enter)" aria-label="Simpan link" @mousedown.prevent @click="applyLink()" x-html="icon('check')"></button>
-    <button type="button" class="afw-btn afw-btn-inverse" :class="{ 'afw-is-hidden': !bubble.hasLink }" title="Hapus link" aria-label="Hapus link" @mousedown.prevent @click="removeLink()" x-html="icon('unlink')"></button>
-    <button type="button" class="afw-btn afw-btn-inverse" title="Batal (Esc)" aria-label="Batal" @mousedown.prevent @click="cancelLink()" x-html="icon('close')"></button>
+           @keydown.enter.prevent="applyInput()"
+           @blur="onInputBlur()">
+    <button type="button" class="afw-btn afw-btn-inverse" title="Simpan (Enter)" aria-label="Simpan" @mousedown.prevent @click="applyInput()" x-html="icon('check')"></button>
+    <button type="button" class="afw-btn afw-btn-inverse" :class="{ 'afw-is-hidden': !(bubble.purpose === 'link' && bubble.hasLink) }" title="Hapus link" aria-label="Hapus link" @mousedown.prevent @click="removeLink()" x-html="icon('unlink')"></button>
+    <button type="button" class="afw-btn afw-btn-inverse" title="Batal (Esc)" aria-label="Batal" @mousedown.prevent @click="cancelInput()" x-html="icon('close')"></button>
     <span class="afw-link-error" x-show="bubble.error" x-text="bubble.error"></span>
   </div>
 
@@ -77,6 +78,36 @@ export const TEMPLATE = `
     <button type="button" class="afw-btn afw-btn-inverse" title="Hapus link" aria-label="Hapus link" @mousedown.prevent @click="exec('unlink')" x-html="icon('unlink')"></button>
   </div>
 </div>
+
+<!-- Toolbar media (gambar / video / pemisah yang sedang dipilih) -->
+<div class="afw-bubble afw-mediabar" x-ref="mediabar"
+     :class="{ 'afw-is-open': media.open, 'afw-is-ready': media.ready }"
+     :style="\`left: \${media.x}px; top: \${media.y}px\`"
+     role="toolbar" aria-label="Atur media">
+  <div class="afw-bubble-row">
+    <template x-if="media.kind !== 'divider'">
+      <div class="afw-group">
+        <template x-for="size in mediaSizes" :key="size.value">
+          <button type="button" class="afw-btn afw-btn-inverse"
+                  :class="{ 'afw-is-active': media.size === size.value }"
+                  :title="size.label" :aria-label="size.label" :aria-pressed="media.size === size.value"
+                  @mousedown.prevent @click="setMediaSize(size.value)"
+                  x-html="icon(size.icon)"></button>
+        </template>
+        <span class="afw-sep"></span>
+      </div>
+    </template>
+    <button type="button" class="afw-btn afw-btn-inverse" x-show="media.kind === 'image'"
+            :class="{ 'afw-is-active': !!media.alt }"
+            title="Alt text (deskripsi untuk pembaca layar)" aria-label="Alt text"
+            @mousedown.prevent @click="editAlt()" x-html="icon('alt')"></button>
+    <button type="button" class="afw-btn afw-btn-inverse" title="Hapus (Backspace)" aria-label="Hapus media"
+            @mousedown.prevent @click="removeMedia()" x-html="icon('trash')"></button>
+  </div>
+</div>
+
+<!-- Pesan error (mis. upload gagal) -->
+<div class="afw-toast" role="status" aria-live="polite" :class="{ 'afw-is-open': toast.open }" x-text="toast.message"></div>
 
 <!-- Slash menu -->
 <div class="afw-menu" x-ref="menu"

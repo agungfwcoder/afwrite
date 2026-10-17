@@ -3,6 +3,7 @@
 // Di awal paragraf (diikuti spasi):
 //   # atau ##  -> Judul      ###  -> Subjudul    >  -> Kutipan
 //   - * +      -> Daftar berpoin                1. -> Daftar bernomor
+//   ---        -> Pemisah
 //
 // Di dalam teks:
 //   **tebal**   *miring*   _miring_   `kode`
@@ -16,6 +17,7 @@ const BLOCK_RULES = [
   { marker: /^>$/, command: 'quote' },
   { marker: /^[-*+]$/, command: 'ul' },
   { marker: /^\d+[.)]$/, command: 'ol' },
+  { marker: /^(-{3,}|\*{3,}|_{3,})$/, command: 'hr' },
 ];
 
 const INLINE_RULES = [

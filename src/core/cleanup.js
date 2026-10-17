@@ -8,18 +8,36 @@
 // Berbeda dengan sanitize() yang membangun ulang seluruh HTML (dipakai untuk output),
 // fungsi ini hanya melakukan perbaikan kecil yang aman dilakukan saat mengetik.
 
+import { normalizeImageSrc, parseEmbed } from './embed.js';
 import { normalizeUrl } from './url.js';
 import { rememberSelection, restoreRemembered } from './selection.js';
 
-const ALLOWED = new Set(['P', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'B', 'I', 'A', 'CODE', 'BR']);
+const ALLOWED = new Set([
+  'P', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'B', 'I', 'A', 'CODE', 'BR',
+  'FIGURE', 'FIGCAPTION', 'IMG', 'IFRAME', 'HR',
+]);
 const RENAME = { STRONG: 'B', EM: 'I', H1: 'H2', H4: 'H3', H5: 'H3', H6: 'H3' };
-const DROP = new Set(['SCRIPT', 'STYLE', 'META', 'LINK', 'TITLE', 'IFRAME', 'OBJECT', 'EMBED', 'TEMPLATE']);
-const BLOCKS = 'p, h1, h2, h3, h4, h5, h6, blockquote, ul, ol, li, div';
+const DROP = new Set(['SCRIPT', 'STYLE', 'META', 'LINK', 'TITLE', 'OBJECT', 'EMBED', 'TEMPLATE']);
+const BLOCKS = 'p, h1, h2, h3, h4, h5, h6, blockquote, ul, ol, li, div, figure, hr';
+
+// Atribut yang boleh ada di DOM editor (sebagian hanya untuk keperluan editor,
+// mis. contenteditable/class; output tetap dibersihkan oleh sanitize()).
+const ATTRS = {
+  A: ['href'],
+  FIGURE: ['contenteditable', 'class', 'data-size', 'data-embed', 'data-afw-uploading'],
+  FIGCAPTION: ['contenteditable', 'data-placeholder'],
+  IMG: ['src', 'alt', 'draggable'],
+  IFRAME: ['src', 'title', 'allow', 'allowfullscreen', 'loading', 'referrerpolicy', 'tabindex'],
+  HR: ['class', 'contenteditable'],
+};
+
+const allowedAttr = (el, name) => (ATTRS[el.tagName] || []).includes(name);
 
 function isDirty(el) {
   if (!ALLOWED.has(el.tagName)) return true;
+  if (el.parentElement?.closest('figcaption')) return true; // keterangan: teks polos
   for (const attr of el.attributes) {
-    if (!(el.tagName === 'A' && attr.name === 'href')) return true;
+    if (!allowedAttr(el, attr.name)) return true;
   }
   return false;
 }
@@ -52,11 +70,20 @@ export function cleanLive(root) {
 
     if (DROP.has(tag)) return el.remove();
 
-    // Atribut: hanya <a href> yang valid yang dipertahankan.
+    // Di dalam keterangan gambar hanya teks.
+    if (el.parentElement?.closest('figcaption')) {
+      return tag === 'BR' && el.parentElement.childNodes.length === 1 ? el.remove() : unwrap(el);
+    }
+
     [...el.attributes].forEach((attr) => {
-      if (!(tag === 'A' && attr.name === 'href')) el.removeAttribute(attr.name);
+      if (!allowedAttr(el, attr.name)) el.removeAttribute(attr.name);
     });
+
     if (tag === 'A' && !normalizeUrl(el.getAttribute('href'))) return unwrap(el);
+    if (tag === 'IMG' && !normalizeImageSrc(el.getAttribute('src'), { allowBlob: true })) {
+      return (el.closest('figure') || el).remove();
+    }
+    if (tag === 'IFRAME' && !parseEmbed(el.getAttribute('src'))) return (el.closest('figure') || el).remove();
 
     if (RENAME[tag]) return rename(el, RENAME[tag]);
 

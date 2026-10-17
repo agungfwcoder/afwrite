@@ -6,6 +6,7 @@
 // browser dan otomatis masuk riwayat undo). Implementasinya bisa diganti nanti
 // tanpa mengubah UI, karena UI hanya mengenal nama perintah.
 
+import { createEmbedFigure, insertImageFiles, insertMediaBlock, pickImageFiles } from './media.js';
 import { normalizeUrl } from './url.js';
 import { escapeHtml } from './sanitize.js';
 import {
@@ -162,6 +163,39 @@ export const COMMANDS = {
       exec('unlink');
       window.getSelection().collapseToEnd();
     },
+    active: () => false,
+  },
+  // ----- Media -----
+  image: {
+    // Tanpa argumen: buka dialog pilih file. Dengan argumen: FileList/array File.
+    run: (ed, files) => (files ? insertImageFiles(ed, files) : pickImageFiles(ed)),
+    active: () => false,
+  },
+  embed: {
+    // Tanpa argumen: minta URL ke UI (event 'embedrequest'), atau prompt() jika tidak ada UI.
+    run(ed, url) {
+      if (url === undefined) {
+        if (ed.listeners.embedrequest?.length) {
+          ed.emit('embedrequest', {});
+          return;
+        }
+        const saved = saveSelection();
+        url = window.prompt('Tempel link YouTube atau Vimeo');
+        if (!url) return;
+        ed.el.focus();
+        restoreSelection(saved);
+      }
+      const figure = createEmbedFigure(url);
+      if (!figure) {
+        ed.emit('error', { message: 'Link video tidak dikenali. Gunakan link YouTube atau Vimeo.' });
+        return;
+      }
+      insertMediaBlock(ed.el, figure);
+    },
+    active: () => false,
+  },
+  hr: {
+    run: (ed) => insertMediaBlock(ed.el, document.createElement('hr')),
     active: () => false,
   },
   indent: {

@@ -1,8 +1,12 @@
 // Sanitasi HTML berbasis whitelist.
 //
 // Dipakai untuk: konten hasil paste/drop, setHTML(), dan output getHTML().
-// Hasilnya hanya berisi tag yang dikenal editor, tanpa atribut apa pun kecuali
-// <a href> yang sudah divalidasi. Contoh:
+// Hasilnya hanya berisi tag yang dikenal editor. Atribut yang tersisa hanya:
+//   <a href>                       URL divalidasi (http/https/mailto/tel/relatif)
+//   <img src alt>                  src divalidasi; data:image hanya png/jpg/gif/webp/avif
+//   <figure data-size data-embed>  data-size: wide | full
+//   <iframe ...>                   hanya YouTube/Vimeo, src dibangun ulang dari ID video
+// Contoh:
 //
 //   sanitize('<div style="color:red">Hai <script>x()</script><span style="font-weight:700">kamu</span></div>')
 //   // -> '<p>Hai <b>kamu</b></p>'
@@ -11,19 +15,22 @@
 // Server tetap WAJIB menyanitasi ulang sebelum menyimpan/menampilkan, karena request
 // bisa dikirim tanpa melewati editor.
 
+import { createEmbedIframe, normalizeImageSrc, parseEmbed } from './embed.js';
 import { normalizeUrl } from './url.js';
 
-export const BLOCK_TAGS = new Set(['P', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL', 'LI']);
+export const BLOCK_TAGS = new Set(['P', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'FIGURE', 'HR']);
+const MEDIA_TAGS = new Set(['FIGURE', 'HR']);
+const FIGURE_SIZES = ['wide', 'full'];
 export const INLINE_TAGS = new Set(['B', 'I', 'A', 'CODE', 'BR']);
 const TEXT_BLOCKS = new Set(['P', 'H2', 'H3', 'BLOCKQUOTE', 'LI']);
 const LISTS = new Set(['UL', 'OL']);
 
 // Dibuang beserta seluruh isinya.
 const DROP_TAGS = new Set([
-  'SCRIPT', 'STYLE', 'TEMPLATE', 'IFRAME', 'FRAME', 'FRAMESET', 'OBJECT', 'EMBED', 'APPLET',
+  'SCRIPT', 'STYLE', 'TEMPLATE', 'FRAME', 'FRAMESET', 'OBJECT', 'EMBED', 'APPLET',
   'META', 'LINK', 'BASE', 'TITLE', 'HEAD', 'NOSCRIPT', 'SVG', 'MATH', 'CANVAS',
   'FORM', 'INPUT', 'BUTTON', 'SELECT', 'OPTION', 'TEXTAREA', 'DIALOG',
-  'IMG', 'PICTURE', 'SOURCE', 'VIDEO', 'AUDIO', 'HR', // media menyusul di Termin 4
+  'SOURCE', 'VIDEO', 'AUDIO', 'TRACK',
   'O:P', // paragraf kosong dari Microsoft Word
 ]);
 
@@ -37,18 +44,24 @@ const TAG_MAP = {
 
 // Wadah blok: isinya dipertahankan, teks lepas dibungkus <p>.
 const CONTAINER_TAGS = new Set([
-  'DIV', 'SECTION', 'ARTICLE', 'MAIN', 'HEADER', 'FOOTER', 'ASIDE', 'NAV', 'FIGURE', 'FIGCAPTION',
+  'DIV', 'SECTION', 'ARTICLE', 'MAIN', 'HEADER', 'FOOTER', 'ASIDE', 'NAV',
   'ADDRESS', 'CENTER', 'DL', 'DT', 'DD', 'PRE', 'DETAILS', 'SUMMARY', 'TABLE', 'CAPTION',
   'THEAD', 'TBODY', 'TFOOT', 'TR', 'BODY', 'HTML',
 ]);
 
-export function sanitize(html) {
+// Opsi:
+//   allowDataImages (true)  izinkan <img src="data:image/...">
+let options = {};
+
+export function sanitize(html, opts = {}) {
   if (!html || !String(html).trim()) return '';
-  const container = sanitizeToElement(html);
+  const container = sanitizeToElement(html, opts);
   return container.innerHTML;
 }
 
-export function sanitizeToElement(html) {
+export function sanitizeToElement(html, opts = {}) {
+  options = { allowDataImages: true, ...opts };
+
   // DOMParser menghasilkan dokumen "mati": script tidak jalan, gambar tidak dimuat.
   const source = new DOMParser().parseFromString(String(html), 'text/html');
   const nodes = [...source.body.childNodes].flatMap(convert);
@@ -74,7 +87,18 @@ function convert(node) {
   if (/display\s*:\s*none/.test(style)) return [];
   if (/mso-list\s*:\s*ignore/.test(style)) return []; // simbol bullet palsu dari Word
 
+  // Media
+  if (tag === 'IMG') return imageFigure(node);
+  if (tag === 'IFRAME') {
+    const embed = parseEmbed(node.getAttribute('src'));
+    return embed ? [embedFigure(embed)] : [];
+  }
+  if (tag === 'HR') return [el('HR')];
+
   const children = [...node.childNodes].flatMap(convert);
+
+  if (tag === 'FIGCAPTION') return [el('FIGCAPTION', {}, flattenToInline(children))];
+  if (tag === 'FIGURE') return makeFigure(node, children);
 
   // Google Docs membungkus seluruh isi clipboard dengan <b style="font-weight:normal">.
   if (tag === 'B' && /font-weight\s*:\s*(normal|400)/.test(style)) return children;
@@ -104,6 +128,39 @@ function convert(node) {
 }
 
 const isBlock = (node) => node.nodeType === Node.ELEMENT_NODE && BLOCK_TAGS.has(node.tagName);
+const isMedia = (node) => node.nodeType === Node.ELEMENT_NODE && MEDIA_TAGS.has(node.tagName);
+
+function imageFigure(node) {
+  const src = normalizeImageSrc(node.getAttribute('src') || node.getAttribute('data-src'), {
+    allowData: options.allowDataImages,
+  });
+  if (!src) return [];
+  const alt = (node.getAttribute('alt') || '').trim();
+  return [el('FIGURE', {}, [el('IMG', { src, alt })])];
+}
+
+function embedFigure(embed) {
+  return el('FIGURE', { 'data-embed': embed.provider }, [createEmbedIframe(embed)]);
+}
+
+// <figure> sumber: ambil media pertama + <figcaption>. Media lain jadi figure terpisah.
+function makeFigure(node, children) {
+  const figures = children.filter((n) => n.nodeType === Node.ELEMENT_NODE && n.tagName === 'FIGURE');
+  const captions = children.filter((n) => n.nodeType === Node.ELEMENT_NODE && n.tagName === 'FIGCAPTION');
+
+  if (!figures.length) {
+    // Tanpa gambar/video: keterangannya saja yang dipertahankan sebagai paragraf.
+    return wrapInlineRuns(captions.flatMap((c) => [...c.childNodes]), 'P');
+  }
+
+  const [figure, ...rest] = figures;
+  const size = node.getAttribute('data-size');
+  if (FIGURE_SIZES.includes(size)) figure.setAttribute('data-size', size);
+  if (captions.length) {
+    figure.append(el('FIGCAPTION', {}, captions.flatMap((c) => [...c.childNodes])));
+  }
+  return [figure, ...rest];
+}
 
 function el(tag, attrs = {}, children = []) {
   const element = document.createElement(tag);
@@ -157,6 +214,7 @@ function wrapInline(tag, nodes, attrs = {}) {
 }
 
 function applyInlineInside(block, tag, attrs) {
+  if (MEDIA_TAGS.has(block.tagName)) return; // gambar ber-link: link-nya dibuang
   if (LISTS.has(block.tagName)) {
     [...block.children].forEach((li) => applyInlineInside(li, tag, attrs));
     return;
@@ -175,6 +233,11 @@ function flattenToInline(nodes, { keepLists = false } = {}) {
   let needBreak = false;
 
   nodes.forEach((node) => {
+    // Gambar/video di dalam list atau kutipan tidak didukung; posisinya jadi pemisah baris.
+    if (isMedia(node)) {
+      if (out.length) needBreak = true;
+      return;
+    }
     if (keepLists && node.nodeType === Node.ELEMENT_NODE && LISTS.has(node.tagName)) {
       out.push(node);
       needBreak = false;
@@ -254,10 +317,11 @@ function makeBlock(tag, children) {
 
 export function tidy(root) {
   unwrapRedundant(root);
-  root.querySelectorAll('p, h2, h3, blockquote, li').forEach(normalizeWhitespace);
+  root.querySelectorAll('p, h2, h3, blockquote, li, figcaption').forEach(normalizeWhitespace);
   removeEmptyInline(root);
-  root.querySelectorAll('p, h2, h3, blockquote, li').forEach(trimBreaks);
+  root.querySelectorAll('p, h2, h3, blockquote, li, figcaption').forEach(trimBreaks);
   removeEmptyBlocks(root);
+  tidyMedia(root);
   mergeAdjacent(root);
   root.normalize();
 }
@@ -348,12 +412,23 @@ function trimBreaks(block) {
 
 function removeEmptyBlocks(root) {
   // Dari dalam ke luar, agar li kosong terhapus sebelum list induknya diperiksa.
-  [...root.querySelectorAll('p, h2, h3, blockquote, li, ul, ol')].reverse().forEach((block) => {
+  [...root.querySelectorAll('p, h2, h3, blockquote, li, ul, ol, figcaption')].reverse().forEach((block) => {
     const hasText = inlineLeaves(block).some((n) => n.nodeType === Node.TEXT_NODE && n.data.trim());
     const hasList = LISTS.has(block.tagName)
       ? !!block.querySelector('li')
       : !!block.querySelector('ul, ol');
     if (!hasText && !hasList) block.remove();
+  });
+}
+
+// Figure & hr hanya boleh di tingkat teratas; figure wajib berisi gambar/video.
+function tidyMedia(root) {
+  root.querySelectorAll('figure, hr').forEach((node) => {
+    if (node.parentNode !== root) return node.remove();
+    if (node.tagName === 'FIGURE' && !node.querySelector(':scope > img, :scope > iframe')) node.remove();
+  });
+  root.querySelectorAll('img, iframe, figcaption').forEach((node) => {
+    if (node.parentNode?.tagName !== 'FIGURE') node.remove();
   });
 }
 

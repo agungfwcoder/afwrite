@@ -73,6 +73,22 @@ if (FRAMEWORKS[fw]) {
   });
 }
 
+// Simulasi upload untuk demo: jeda 1 detik lalu kembalikan data URL.
+// Di aplikasi sungguhan, kirim file ke server dan kembalikan URL-nya:
+//   upload: async (file) => {
+//     const body = new FormData();
+//     body.append('image', file);
+//     const res = await fetch('/upload', { method: 'POST', body });
+//     return (await res.json()).url;
+//   }
+window.demoUpload = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => setTimeout(() => resolve(reader.result), 1000);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
 Alpine.plugin(wyswyg);
 window.Alpine = Alpine;
 Alpine.start();

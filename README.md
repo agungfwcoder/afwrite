@@ -92,3 +92,32 @@ Opsi `pasteAsPlainText: true` membuang semua format saat paste.
 > dikirim tanpa melewati editor, jadi server tetap wajib menyaring HTML sebelum
 > menyimpan atau menampilkannya (mis. HTMLPurifier / `mews/purifier` di Laravel),
 > dengan whitelist yang sama seperti di atas.
+
+## Gambar, video, dan pemisah
+
+- **Gambar:** pilih lewat slash menu (`/gambar`), seret file ke editor, atau tempel screenshot.
+  Klik gambar untuk mengatur ukuran (normal / lebar / penuh), alt text, atau menghapusnya.
+- **Video:** `/video`, lalu tempel link YouTube atau Vimeo; menempel link YouTube di baris kosong juga langsung menjadi embed.
+  URL iframe selalu dibangun ulang dari ID video (YouTube memakai `youtube-nocookie.com`).
+- **Pemisah:** `/pemisah` atau ketik `---` lalu spasi.
+
+```js
+wysiwyg({
+  // Wajib untuk produksi: tanpa ini gambar disimpan sebagai base64 di dalam HTML.
+  upload: async (file) => {
+    const body = new FormData();
+    body.append('image', file);
+    const res = await fetch('/upload', { method: 'POST', body });
+    return (await res.json()).url;
+  },
+  maxImageSize: 5 * 1024 * 1024, // default 5 MB
+})
+```
+
+Output media:
+
+```html
+<figure data-size="wide"><img src="..." alt="..."><figcaption>Keterangan</figcaption></figure>
+<figure data-embed="youtube"><iframe src="https://www.youtube-nocookie.com/embed/ID" ...></iframe></figure>
+<hr>
+```

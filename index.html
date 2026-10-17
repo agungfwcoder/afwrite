@@ -11,8 +11,8 @@
   <div class="demo" x-data="demo()">
     <header class="demo-header">
       <div>
-        <h1 class="demo-title">wyswyg <span class="demo-badge">Termin 3</span></h1>
-        <p class="demo-sub">Bubble toolbar, slash command, markdown shortcut, dan link inline — plus sanitasi paste dari Word &amp; Google Docs.</p>
+        <h1 class="demo-title">wyswyg <span class="demo-badge">Termin 4</span></h1>
+        <p class="demo-sub">Bubble toolbar, slash command, markdown, gambar &amp; video — plus sanitasi paste dari Word &amp; Google Docs.</p>
       </div>
 
       <div class="demo-controls">
@@ -48,7 +48,7 @@
         <h2 class="demo-panel-title">Editor</h2>
 
         <div :data-afw-theme="theme"
-             x-data="wysiwyg({ name: 'content', placeholder: 'Tulis cerita Anda… ketik / untuk pilihan blok' })"
+             x-data="wysiwyg({ name: 'content', placeholder: 'Tulis cerita Anda… ketik / untuk pilihan blok', upload: demoUpload })"
              x-effect="showToolbar = mode === 'full'"
              @wysiwyg-change="output = $event.detail.html">
           <h2>Selamat datang 👋</h2>
@@ -56,6 +56,8 @@
           <blockquote>Tulisan yang baik dimulai dari editor yang tidak mengganggu.</blockquote>
           <p>Shortcut markdown yang bisa dicoba:</p>
           <ul><li>ketik ## lalu spasi untuk judul</li><li>ketik &gt; lalu spasi untuk kutipan</li><li>ketik **tebal** atau `kode`</li><li>ketik / di baris kosong untuk memilih blok</li></ul>
+          <figure><img src="/demo/sample.png" alt="Ilustrasi pegunungan"><figcaption>Klik gambar untuk mengatur ukuran, alt text, atau menghapusnya.</figcaption></figure>
+          <p>Seret file gambar ke sini, tempel screenshot, atau tempel link YouTube di baris kosong.</p>
         </div>
 
         <div class="demo-actions">

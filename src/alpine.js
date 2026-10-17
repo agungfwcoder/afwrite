@@ -17,20 +17,33 @@
 // markup default tidak akan disuntikkan.
 
 import { Editor } from './core/editor.js';
+import { parseEmbed } from './core/embed.js';
 import { normalizeUrl } from './core/url.js';
 import { BUBBLE, ICONS, TOOLBAR } from './icons.js';
 import { TEMPLATE } from './template.js';
 
 const GAP = 10;
 const EDGE = 8;
+const INPUT_PLACEHOLDERS = {
+  link: 'Tempel atau ketik URL…',
+  embed: 'Tempel link YouTube atau Vimeo…',
+  alt: 'Deskripsikan gambar untuk pembaca layar…',
+};
+const MEDIA_SIZES = [
+  { value: 'normal', label: 'Ukuran normal', icon: 'sizeNormal' },
+  { value: 'wide', label: 'Lebar', icon: 'sizeWide' },
+  { value: 'full', label: 'Penuh', icon: 'sizeFull' },
+];
 const isCoarsePointer = () => typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
 
 export function wysiwygComponent(options = {}) {
   // Disimpan di closure, bukan di data reaktif, agar instance Editor (yang memegang
   // elemen DOM dan Range) tidak dibungkus Proxy oleh Alpine.
   let editor = null;
+  let root = null; // elemen .afw; disimpan karena $el bisa menunjuk elemen lain saat dipanggil dari event
   let savedRange = null;
-  let linkBusy = false;
+  let inputBusy = false;
+  let toastTimer = null;
 
   return {
     html: '',
@@ -42,12 +55,16 @@ export function wysiwygComponent(options = {}) {
     showBubble: options.bubble ?? true,
     showStats: options.stats ?? true,
     stats: { words: 0, minutes: 0 },
-    bubble: { open: false, ready: false, mode: 'format', x: 0, y: 0, url: '', href: '', hasLink: false, error: '' },
+    // mode: format | input | linkinfo; purpose (mode input): link | embed | alt
+    bubble: { open: false, ready: false, mode: 'format', purpose: 'link', x: 0, y: 0, url: '', href: '', hasLink: false, error: '' },
+    media: { open: false, ready: false, x: 0, y: 0, kind: 'image', size: 'normal', alt: '' },
+    mediaSizes: MEDIA_SIZES,
+    toast: { open: false, message: '' },
     slash: { open: false, ready: false, items: [], index: 0, x: 0, y: 0 },
     plus: { visible: false, y: 0 },
 
     init() {
-      const root = this.$el;
+      root = this.$el;
       root.classList.add('afw');
 
       let el = root.querySelector('[data-afw-editor]');
@@ -78,7 +95,9 @@ export function wysiwygComponent(options = {}) {
       editor.on('state', (state) => (this.active = state));
       editor.on('selection', (info) => this.onSelection(info));
       editor.on('slash', (state) => this.onSlash(state));
-      editor.on('linkrequest', (detail) => this.openLinkInput(detail));
+      editor.on('linkrequest', ({ href }) => this.openInput('link', href));
+      editor.on('embedrequest', () => this.openInput('embed'));
+      editor.on('error', ({ message }) => this.showToast(message));
 
       this.html = editor.getHTML();
       this.stats = editor.stats();
@@ -120,7 +139,7 @@ export function wysiwygComponent(options = {}) {
     // Hitung posisi elemen melayang terhadap `rect` (koordinat layar), lalu ubah
     // ke koordinat relatif terhadap root `.afw`. Tidak keluar dari layar.
     place(el, rect, { prefer = 'above', align = 'center', gap = GAP } = {}) {
-      const root = this.$el.getBoundingClientRect();
+      const box = root.getBoundingClientRect();
       const w = el.offsetWidth;
       const h = el.offsetHeight;
 
@@ -135,16 +154,22 @@ export function wysiwygComponent(options = {}) {
         ? (fitsAbove || !fitsBelow ? above : below)
         : (fitsBelow || !fitsAbove ? below : above);
 
-      return { x: Math.round(left - root.left), y: Math.round(top - root.top) };
+      return { x: Math.round(left - box.left), y: Math.round(top - box.top) };
     },
 
     // ---------- Bubble ----------
 
     onSelection(info) {
-      // Sedang mengetik URL: fokus ada di input, seleksi editor diabaikan.
-      if (this.bubble.open && this.bubble.mode === 'link') return;
+      // Sedang mengisi input (URL/alt): fokus ada di input, seleksi editor diabaikan.
+      if (this.bubble.open && this.bubble.mode === 'input') return;
 
       this.updatePlus(info);
+
+      if (info.media) {
+        this.closeBubble();
+        return this.showMediaBar(info.media);
+      }
+      this.hideMediaBar();
 
       if (!info.inside || info.dragging || this.slash.open || !this.showBubble) return this.closeBubble();
       if (!info.collapsed) return this.showBubbleAt('format', info.rect);
@@ -163,7 +188,7 @@ export function wysiwygComponent(options = {}) {
 
       this.$nextTick(() => {
         // Di perangkat sentuh, menu bawaan OS muncul di atas seleksi -> bubble di bawah.
-        const prefer = isCoarsePointer() ? 'below' : 'above';
+        const prefer = isCoarsePointer() && mode === 'format' ? 'below' : 'above';
         const pos = this.place(this.$refs.bubble, rect, { prefer });
         this.bubble.x = pos.x;
         this.bubble.y = pos.y;
@@ -178,53 +203,116 @@ export function wysiwygComponent(options = {}) {
       this.bubble.error = '';
     },
 
-    // ---------- Link ----------
+    // ---------- Input: link, video, alt text ----------
 
-    openLinkInput({ href = '' } = {}) {
+    inputPlaceholder() {
+      return INPUT_PLACEHOLDERS[this.bubble.purpose] || '';
+    },
+
+    openInput(purpose, value = '') {
       savedRange = editor.saveSelection();
-      const rect = editor.selectionRect();
+      const rect = purpose === 'alt' ? this.mediaRect() : editor.selectionRect();
       if (!rect) return;
 
-      this.bubble.url = href;
-      this.bubble.hasLink = !!href;
+      this.hideMediaBar();
+      this.bubble.purpose = purpose;
+      this.bubble.url = value || '';
+      this.bubble.hasLink = purpose === 'link' && !!value;
       this.bubble.error = '';
-      this.showBubbleAt('link', rect);
+      this.showBubbleAt('input', rect);
       this.$nextTick(() => {
         this.$refs.linkInput.focus();
         this.$refs.linkInput.select();
       });
     },
 
-    applyLink() {
-      const url = this.bubble.url.trim();
-      if (url && !normalizeUrl(url)) {
-        this.bubble.error = 'URL tidak valid';
-        return;
+    // Dipertahankan untuk kompatibilitas: openLinkInput({ href }).
+    openLinkInput({ href = '' } = {}) {
+      this.openInput('link', href);
+    },
+
+    applyInput() {
+      const value = this.bubble.url.trim();
+      const purpose = this.bubble.purpose;
+
+      if (purpose === 'link') {
+        if (value && !normalizeUrl(value)) return (this.bubble.error = 'URL tidak valid');
+        return this.withEditorFocus(() => (value ? editor.exec('link', value) : editor.exec('unlink')));
       }
-      this.withEditorFocus(() => (url ? editor.exec('link', url) : editor.exec('unlink')));
+      if (purpose === 'embed') {
+        if (!value) return this.cancelInput();
+        if (!parseEmbed(value)) return (this.bubble.error = 'Link video tidak dikenali (YouTube/Vimeo)');
+        return this.withEditorFocus(() => editor.exec('embed', value));
+      }
+      if (purpose === 'alt') {
+        return this.withEditorFocus(() => editor.setMediaAlt(value));
+      }
     },
 
     removeLink() {
       this.withEditorFocus(() => editor.exec('unlink'));
     },
 
-    cancelLink() {
-      if (this.bubble.mode !== 'link') return this.closeBubble();
-      this.withEditorFocus(() => {});
+    cancelInput() {
+      if (this.bubble.mode !== 'input') return this.closeBubble();
+      const purpose = this.bubble.purpose;
+      this.withEditorFocus(() => purpose === 'alt' && editor.setMediaAlt(this.media.alt));
     },
 
     // Fokus pindah dari input ke tempat lain (klik di luar) -> tutup tanpa menyimpan.
-    onLinkBlur() {
-      if (!linkBusy && this.bubble.mode === 'link') this.closeBubble();
+    onInputBlur() {
+      if (!inputBusy && this.bubble.mode === 'input') this.closeBubble();
     },
 
     withEditorFocus(callback) {
-      linkBusy = true;
+      inputBusy = true;
       this.closeBubble();
       editor.restoreSelection(savedRange);
       callback();
       savedRange = null;
-      linkBusy = false;
+      inputBusy = false;
+    },
+
+    // ---------- Media ----------
+
+    showMediaBar({ kind, size, alt, rect }) {
+      const wasOpen = this.media.open;
+      Object.assign(this.media, { open: true, kind, size, alt });
+      if (!wasOpen) this.media.ready = false;
+      this.$nextTick(() => {
+        const pos = this.place(this.$refs.mediabar, rect, { prefer: 'above' });
+        this.media.x = pos.x;
+        this.media.y = pos.y;
+        this.media.ready = true;
+      });
+    },
+
+    hideMediaBar() {
+      this.media.open = false;
+      this.media.ready = false;
+    },
+
+    mediaRect() {
+      return root.querySelector('.afw-content .afw-is-selected')?.getBoundingClientRect() || null;
+    },
+
+    setMediaSize(size) {
+      editor.setMediaSize(size);
+    },
+
+    editAlt() {
+      this.openInput('alt', this.media.alt);
+    },
+
+    removeMedia() {
+      editor.removeMedia();
+    },
+
+    showToast(message) {
+      this.toast.message = message;
+      this.toast.open = true;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => (this.toast.open = false), 4000);
     },
 
     // ---------- Slash menu & tombol + ----------
@@ -273,9 +361,9 @@ export function wysiwygComponent(options = {}) {
         this.plus.visible = false;
         return;
       }
-      const root = this.$el.getBoundingClientRect();
+      const box = root.getBoundingClientRect();
       const block = info.emptyBlock.rect;
-      this.plus.y = Math.round(block.top - root.top + block.height / 2 - 14);
+      this.plus.y = Math.round(block.top - box.top + block.height / 2 - 14);
       this.plus.visible = true;
     },
   };

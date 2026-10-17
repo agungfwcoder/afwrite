@@ -10,12 +10,27 @@
 //   selection    (info)   posisi seleksi untuk UI melayang (bubble, tombol +)
 //   slash        (state)  status slash menu: { open, query, items, index, rect }
 //   linkrequest  ({href}) perintah link dijalankan tanpa URL; UI diminta menampilkan input
+//   embedrequest ()       perintah embed dijalankan tanpa URL
+//   error        ({message, error?}) mis. upload gagal / file terlalu besar
 //   focus / blur
 
 import { BLOCKS, filterBlocks } from './blocks.js';
 import { COMMANDS } from './commands.js';
 import { cleanLive } from './cleanup.js';
+import { parseEmbed } from './embed.js';
 import { applyBlockShortcut, applyInlineShortcut } from './markdown.js';
+import {
+  createEmbedFigure,
+  emptyParagraph,
+  insertImageFiles,
+  insertMediaBlock,
+  isMediaNode,
+  mediaKind,
+  placeCaretIn,
+  prepareMedia,
+  setMediaSize,
+  topBlockAtCaret,
+} from './media.js';
 import { sanitize, sanitizeToElement, textToHtml } from './sanitize.js';
 import {
   closestInRoot,
@@ -33,6 +48,9 @@ const DEFAULTS = {
   markdown: true, // shortcut markdown saat mengetik
   slash: true, // slash menu
   blocks: BLOCKS, // isi slash menu
+  upload: null, // async (file) => url gambar; tanpa ini gambar disimpan sebagai data URL (base64)
+  maxImageSize: 5 * 1024 * 1024, // byte; 0 = tanpa batas
+  allowDataImages: true, // izinkan <img src="data:image/..."> di output
 };
 
 const EMPTY_PARAGRAPH = '<p><br></p>';
@@ -99,12 +117,14 @@ export class Editor {
 
   // Output selalu lewat sanitize(): tag whitelist, tanpa atribut, tanpa paragraf kosong.
   getHTML() {
-    return this.isEmpty() ? '' : sanitize(this.el.innerHTML);
+    return this.isEmpty() ? '' : sanitize(this.el.innerHTML, this._sanitizeOptions());
   }
 
   // Konten dari luar (database, dll.) disanitasi sebelum masuk editor.
   setHTML(html, { silent = false } = {}) {
-    this.el.innerHTML = sanitize(html) || EMPTY_PARAGRAPH;
+    this._clearMediaSelection();
+    this.el.innerHTML = sanitize(html, this._sanitizeOptions()) || EMPTY_PARAGRAPH;
+    prepareMedia(this.el);
     this._updatePlaceholder();
     if (!silent) this.emit('change', this.getHTML());
   }
@@ -125,7 +145,7 @@ export class Editor {
 
   // Sisipkan HTML di posisi kursor (disanitasi). Dipakai oleh paste & drop.
   insertHTML(html) {
-    const clean = sanitizeToElement(html);
+    const clean = sanitizeToElement(html, this._sanitizeOptions());
     if (!clean.childNodes.length) return;
 
     // Satu paragraf saja -> sisipkan isinya, agar tidak memecah paragraf tempat kursor berada.
@@ -174,6 +194,81 @@ export class Editor {
   selectionRect() {
     const range = getRange();
     return range && this.el.contains(range.startContainer) ? rangeRect(range) : null;
+  }
+
+  // ----- Media (gambar, video, pemisah) -----
+
+  insertImages(files) {
+    return insertImageFiles(this, files);
+  }
+
+  selectMedia(node) {
+    if (!isMediaNode(node) || node.parentNode !== this.el) return;
+    if (this._selectedMedia !== node) {
+      this._clearMediaSelection();
+      this._selectedMedia = node;
+      node.classList.add('afw-is-selected');
+    }
+    // Seleksi DOM diletakkan mengelilingi media agar fokus & keyboard tetap di editor.
+    this._selectingMedia = true;
+    this.el.focus({ preventScroll: true });
+    const range = document.createRange();
+    range.selectNode(node);
+    restoreSelection(range);
+    this._selectingMedia = false;
+    this.emit('state', this.state());
+    this._scheduleSelection();
+  }
+
+  deselectMedia() {
+    if (!this._selectedMedia) return;
+    this._clearMediaSelection();
+    this._scheduleSelection();
+  }
+
+  // { kind: 'image' | 'embed' | 'divider', size, alt } atau null
+  selectedMedia() {
+    const node = this._selectedMedia;
+    if (!node) return null;
+    return {
+      kind: mediaKind(node),
+      size: node.getAttribute('data-size') || 'normal',
+      alt: node.querySelector('img')?.getAttribute('alt') || '',
+    };
+  }
+
+  setMediaSize(size) {
+    if (!this._selectedMedia) return;
+    setMediaSize(this._selectedMedia, size);
+    this._handleChange();
+    this.selectMedia(this._selectedMedia);
+  }
+
+  setMediaAlt(alt) {
+    const img = this._selectedMedia?.querySelector('img');
+    if (!img) return;
+    img.setAttribute('alt', String(alt || '').trim());
+    this._handleChange();
+    this.selectMedia(this._selectedMedia);
+  }
+
+  removeMedia() {
+    const node = this._selectedMedia;
+    if (!node) return;
+    const next = node.nextElementSibling;
+    const prev = node.previousElementSibling;
+    this._clearMediaSelection();
+    node.remove();
+
+    const target = next && !isMediaNode(next) ? next : prev && !isMediaNode(prev) ? prev : null;
+    if (target) placeCaretIn(target, target === next ? 'start' : 'end');
+    else if (isMediaNode(next)) this.selectMedia(next);
+    else {
+      const p = emptyParagraph();
+      this.el.append(p);
+      placeCaretIn(p);
+    }
+    this._handleChange();
   }
 
   // ----- Slash menu -----
@@ -262,6 +357,7 @@ export class Editor {
         this.emit('state', this.state());
       }],
       [el, 'paste', (e) => this._handlePaste(e)],
+      [el, 'click', (e) => this._handleClick(e)],
       [el, 'drop', (e) => this._handleDrop(e)],
       // Drag dari dalam editor sendiri (memindah teks) dibiarkan ke browser.
       [el, 'dragstart', () => (this._internalDrag = true)],
@@ -274,6 +370,7 @@ export class Editor {
         this._scheduleSelection();
       }],
       [document, 'selectionchange', () => {
+        this._checkMediaSelection();
         if (isSelectionInside(this.el)) this.emit('state', this.state());
         if (this.slash.open) this._updateSlash();
         this._scheduleSelection();
@@ -288,8 +385,124 @@ export class Editor {
     document.execCommand('styleWithCSS', false, false);
   }
 
+  _sanitizeOptions() {
+    return { allowDataImages: this.options.allowDataImages };
+  }
+
+  _clearMediaSelection() {
+    this._selectedMedia?.classList.remove('afw-is-selected');
+    this._selectedMedia = null;
+  }
+
+  // Seleksi pindah ke tempat lain di editor -> media tidak lagi terpilih.
+  _checkMediaSelection() {
+    const node = this._selectedMedia;
+    if (!node || this._selectingMedia) return;
+    if (!node.isConnected) return this._clearMediaSelection();
+
+    const range = getRange();
+    if (!range || !this.el.contains(range.commonAncestorContainer)) return; // fokus di toolbar/input
+    const index = [...this.el.childNodes].indexOf(node);
+    const stillAround = range.startContainer === this.el && range.startOffset === index &&
+      range.endContainer === this.el && range.endOffset === index + 1;
+    if (!stillAround) this._clearMediaSelection();
+  }
+
+  _handleClick(e) {
+    const media = e.target.closest?.('figure, hr');
+    if (media && media.parentNode === this.el && !e.target.closest('figcaption')) {
+      e.preventDefault();
+      this.selectMedia(media);
+    }
+  }
+
+  _inCaption() {
+    const range = getRange();
+    let node = range?.startContainer;
+    if (node && node.nodeType !== Node.ELEMENT_NODE) node = node.parentElement;
+    return !!node?.closest?.('figcaption') && this.el.contains(node);
+  }
+
+  // Keyboard saat media terpilih. Mengembalikan true jika ditangani.
+  _handleMediaKey(e) {
+    const node = this._selectedMedia;
+    const key = e.key;
+
+    if (key === 'Backspace' || key === 'Delete') {
+      e.preventDefault();
+      this.removeMedia();
+      return true;
+    }
+    if (key === 'Enter') {
+      e.preventDefault();
+      const p = emptyParagraph();
+      node.after(p);
+      this._clearMediaSelection();
+      placeCaretIn(p);
+      this._handleChange();
+      return true;
+    }
+    if (['ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Escape'].includes(key)) {
+      e.preventDefault();
+      this._moveFromMedia(node, ['ArrowUp', 'ArrowLeft'].includes(key) ? 'before' : 'after');
+      return true;
+    }
+    // Mengetik saat media terpilih tidak mengganti media.
+    if (key.length === 1 && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      return true;
+    }
+    return false;
+  }
+
+  _moveFromMedia(node, direction) {
+    const target = direction === 'before' ? node.previousElementSibling : node.nextElementSibling;
+    if (isMediaNode(target)) return this.selectMedia(target);
+
+    this._clearMediaSelection();
+    if (target) {
+      placeCaretIn(target, direction === 'before' ? 'end' : 'start');
+    } else {
+      const p = emptyParagraph();
+      direction === 'before' ? node.before(p) : node.after(p);
+      placeCaretIn(p);
+      this._handleChange();
+    }
+    this._scheduleSelection();
+  }
+
+  // Backspace di awal paragraf setelah media / Delete di akhir paragraf sebelum media
+  // -> pilih media itu dulu (bukan langsung menghapus).
+  _handleKeyNearMedia(e) {
+    if (e.key !== 'Backspace' && e.key !== 'Delete') return false;
+    const range = getRange();
+    if (!range || !range.collapsed) return false;
+
+    const block = topBlockAtCaret(this.el);
+    if (!block || isMediaNode(block)) return false;
+
+    const edge = document.createRange();
+    if (e.key === 'Backspace') {
+      edge.setStart(block, 0);
+      edge.setEnd(range.startContainer, range.startOffset);
+    } else {
+      edge.setStart(range.startContainer, range.startOffset);
+      edge.setEnd(block, block.childNodes.length);
+    }
+    if (edge.toString().replace(/\u200b/g, '')) return false;
+
+    const media = e.key === 'Backspace' ? block.previousElementSibling : block.nextElementSibling;
+    if (!isMediaNode(media)) return false;
+
+    e.preventDefault();
+    if (!block.textContent.trim() && block.tagName === 'P') block.remove();
+    this.selectMedia(media);
+    this._handleChange();
+    return true;
+  }
+
   _handleInput(e) {
-    if (this.options.markdown && e.inputType === 'insertText' && e.data) {
+    if (this.options.markdown && e.inputType === 'insertText' && e.data && !this._inCaption()) {
       const char = e.data.slice(-1);
       if (char === ' ' && applyBlockShortcut(this)) return;
       if (applyInlineShortcut(this, char)) return this._handleChange();
@@ -298,6 +511,25 @@ export class Editor {
   }
 
   _handleKeydown(e) {
+    if (this._selectedMedia && this._handleMediaKey(e)) return;
+
+    // Enter di keterangan gambar -> lanjut ke paragraf setelah gambar.
+    if (e.key === 'Enter' && this._inCaption()) {
+      e.preventDefault();
+      const figure = topBlockAtCaret(this.el);
+      let next = figure.nextElementSibling;
+      if (!next || isMediaNode(next)) {
+        next = emptyParagraph();
+        figure.after(next);
+      }
+      this.el.focus({ preventScroll: true });
+      placeCaretIn(next);
+      this._handleChange();
+      return;
+    }
+
+    if (this._handleKeyNearMedia(e)) return;
+
     // Navigasi slash menu.
     if (this.slash.open) {
       const keys = {
@@ -340,9 +572,52 @@ export class Editor {
 
     const html = data.getData('text/html');
     const text = data.getData('text/plain');
-    // File/gambar dari clipboard ditangani di Termin 4.
+    const files = [...(data.files || [])];
+
+    // Keterangan gambar: hanya teks satu baris.
+    if (this._inCaption()) {
+      document.execCommand('insertText', false, text.replace(/\s+/g, ' ').trim());
+      return;
+    }
+
+    // Gambar dari clipboard (screenshot, salin gambar). Jika HTML-nya hanya <img> ber-URL
+    // dan tidak ada fungsi upload, pakai URL-nya saja (lebih ringan dari base64).
+    const htmlIsOnlyImage = !html || /^\s*(<meta[^>]*>\s*)?(<!--[^]*?-->\s*)*<img[^>]*>\s*(<!--[^]*?-->\s*)*$/i.test(html);
+    if (files.length && htmlIsOnlyImage && !this.options.pasteAsPlainText) {
+      const httpImage = html && /<img[^>]*src=["']?https?:/i.test(html);
+      if (httpImage && !this.options.upload) this.insertHTML(html);
+      else this.insertImages(files);
+      return;
+    }
+
+    if (this._pasteUrl(text, html)) return;
+
     if (html && !this.options.pasteAsPlainText) this.insertHTML(html);
     else if (text) this.insertText(text);
+  }
+
+  // Tempel satu URL:
+  //  - ada teks terseleksi            -> jadikan link
+  //  - di paragraf kosong, link video -> embed
+  _pasteUrl(text, html) {
+    const url = text.trim();
+    if (!/^https?:\/\/\S+$/i.test(url)) return false;
+    if (html && !/^\s*(<meta[^>]*>\s*)?<a [^>]*>[^<]*<\/a>\s*$/i.test(html) && html.replace(/<[^>]+>/g, '').trim() !== url) return false;
+
+    const range = getRange();
+    if (range && !range.collapsed && !closestInRoot(this.el, 'a')) {
+      this.exec('link', url);
+      return true;
+    }
+
+    const block = topBlockAtCaret(this.el);
+    const isEmptyParagraph = block?.tagName === 'P' && !block.textContent.trim();
+    if (isEmptyParagraph && parseEmbed(url)) {
+      insertMediaBlock(this.el, createEmbedFigure(url));
+      this._handleChange();
+      return true;
+    }
+    return false;
   }
 
   _handleDrop(e) {
@@ -350,13 +625,18 @@ export class Editor {
     const data = e.dataTransfer;
     const html = data?.getData('text/html');
     const text = data?.getData('text/plain');
-    if (!html && !text) return;
+    const files = [...(data?.files || [])];
+    if (!html && !text && !files.length) return;
 
     e.preventDefault();
     const range = rangeFromPoint(e.clientX, e.clientY);
     if (range && this.el.contains(range.startContainer)) {
       this.el.focus();
       restoreSelection(range);
+    }
+    if (files.length) {
+      this.insertImages(files);
+      return;
     }
     if (html && !this.options.pasteAsPlainText) this.insertHTML(html);
     else this.insertText(text);
@@ -365,6 +645,8 @@ export class Editor {
   _handleChange() {
     this._ensureParagraph();
     cleanLive(this.el);
+    prepareMedia(this.el);
+    if (this._selectedMedia && !this._selectedMedia.isConnected) this._clearMediaSelection();
     this._updatePlaceholder();
     this._updateSlash();
     this.emit('change', this.getHTML());
@@ -427,6 +709,15 @@ export class Editor {
   }
 
   _selectionInfo() {
+    if (this._selectedMedia) {
+      return {
+        inside: true,
+        collapsed: false,
+        dragging: !!this._pointerDown,
+        media: { ...this.selectedMedia(), rect: this._selectedMedia.getBoundingClientRect() },
+      };
+    }
+
     const range = getRange();
     const inside = !!range && this.el.contains(range.commonAncestorContainer) && document.activeElement === this.el;
     if (!inside) return { inside: false };
