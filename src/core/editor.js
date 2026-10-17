@@ -581,7 +581,26 @@ export class Editor {
     if (media && media.parentNode === this.el && !e.target.closest('figcaption')) {
       e.preventDefault();
       this.selectMedia(media);
+      return;
     }
+    if (e.target === this.el) this._clickGap(e.clientY);
+  }
+
+  // Klik di celah antar blok yang bersebelahan dengan media (mis. pemisah langsung diikuti
+  // kutipan) -> buat paragraf kosong di sana, karena kursor tidak bisa diletakkan di celah itu.
+  _clickGap(y) {
+    const blocks = [...this.el.children];
+    const after = blocks.find((node) => node.getBoundingClientRect().bottom >= y);
+    if (after && after.getBoundingClientRect().top <= y) return; // di dalam blok, bukan celah
+    const before = after ? after.previousElementSibling : blocks[blocks.length - 1];
+    if (!isMediaNode(before) && !isMediaNode(after)) return;
+
+    const p = emptyParagraph();
+    after ? after.before(p) : this.el.append(p);
+    this._clearMediaSelection();
+    placeCaretIn(p);
+    this._handleChange();
+    this._scheduleSelection();
   }
 
   _inCaption() {

@@ -291,7 +291,7 @@
 .afw-prose blockquote {
   margin: 1.2em 0;
   padding: 0.1em 0 0.1em 1.1em;
-  font-style: italic;
+  font-style: var(--afw-quote-style, normal);
   color: var(--afw-text);
   background: none;
   border: 0;

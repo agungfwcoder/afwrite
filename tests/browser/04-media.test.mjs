@@ -271,6 +271,21 @@ o = await out();
 check('setHTML: media dari luar disanitasi', o === '<figure><img src="https://example.com/a.png" alt=""></figure><hr>', o);
 check('setHTML: paragraf ditambahkan setelah media terakhir', (await dom()).endsWith('<p><br></p>'));
 
+// ---------- Klik celah di sebelah pemisah ----------
+await set('<p>Atas</p><hr><blockquote>Kutipan</blockquote>');
+const gap = await page.$eval('.afw-content hr', (hr) => {
+  const a = hr.getBoundingClientRect();
+  const n = hr.nextElementSibling.getBoundingClientRect();
+  return { x: a.left + a.width / 2, y: (a.bottom + n.top) / 2 };
+});
+await page.mouse.click(gap.x, gap.y);
+await page.waitForTimeout(150);
+check('klik celah setelah pemisah -> paragraf kosong + tombol +',
+  (await page.$eval('.afw-plus', (e) => e.classList.contains('afw-is-open'))));
+await page.keyboard.type('Halo');
+o = await out();
+check('ketik di celah setelah pemisah', o === '<p>Atas</p><hr><p>Halo</p><blockquote>Kutipan</blockquote>', o);
+
 check('tidak ada error JS', errors.filter((e) => !e.includes('example.com')).length === 0, errors.join(' | '));
 console.log(results.join('\n'));
 await browser.close();

@@ -218,6 +218,7 @@ Semua warna, font, dan ukuran memakai variabel CSS `--afw-*`:
   --afw-accent: #e11d48;
   --afw-font-content: Georgia, serif;
   --afw-content-size: 1.25rem;
+  --afw-quote-style: italic; /* kutipan miring (bawaan: normal) */
 }
 ```
 

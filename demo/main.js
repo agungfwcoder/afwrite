@@ -47,6 +47,8 @@ Alpine.data('demo', () => ({
     this.$watch('output', (html) => {
       render.innerHTML = html || '<p class="demo-empty">Belum ada konten.</p>';
     });
+    // x-ignore juga mematikan binding di elemen itu sendiri, jadi tema dipasang manual.
+    this.$watch('theme', (theme) => render.setAttribute('data-afw-theme', theme));
     // Komponen editor (anak) baru siap setelah komponen demo ini selesai init.
     this.$nextTick(() => {
       this.output = Alpine.$data(document.querySelector('.afw'))?.html || '';
