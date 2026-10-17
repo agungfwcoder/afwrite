@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
+  <title>wyswyg — Demo</title>
+  <script type="module" src="/demo/main.js"></script>
+</head>
+<body>
+  <div class="demo" x-data="demo()">
+    <header class="demo-header">
+      <div>
+        <h1 class="demo-title">wyswyg <span class="demo-badge">Termin 3</span></h1>
+        <p class="demo-sub">Bubble toolbar, slash command, markdown shortcut, dan link inline — plus sanitasi paste dari Word &amp; Google Docs.</p>
+      </div>
+
+      <div class="demo-controls">
+        <label class="demo-field">
+          <span>Mode</span>
+          <select x-model="mode">
+            <option value="full">Lengkap (toolbar + bubble)</option>
+            <option value="minimal">Minimal (bubble saja)</option>
+          </select>
+        </label>
+        <label class="demo-field">
+          <span>Tema</span>
+          <select x-model="theme">
+            <option value="light">Terang</option>
+            <option value="dark">Gelap</option>
+            <option value="auto">Ikuti sistem</option>
+          </select>
+        </label>
+        <label class="demo-field">
+          <span>Uji bentrok CSS</span>
+          <select x-model="framework" @change="loadFramework()">
+            <option value="none">Tanpa framework</option>
+            <option value="bootstrap">Bootstrap 5</option>
+            <option value="tailwind">Tailwind 4</option>
+          </select>
+        </label>
+      </div>
+    </header>
+
+    <form class="demo-grid" @submit.prevent="submitted = new FormData($event.target).get('content')">
+      <!-- ====== Editor ====== -->
+      <section class="demo-panel demo-panel-editor">
+        <h2 class="demo-panel-title">Editor</h2>
+
+        <div :data-afw-theme="theme"
+             x-data="wysiwyg({ name: 'content', placeholder: 'Tulis cerita Anda… ketik / untuk pilihan blok' })"
+             x-effect="showToolbar = mode === 'full'"
+             @wysiwyg-change="output = $event.detail.html">
+          <h2>Selamat datang 👋</h2>
+          <p>Ini editor <b>wyswyg</b>. Coba <b>blok teks ini</b> untuk memunculkan bubble toolbar, atau taruh kursor di <a href="https://example.com">link ini</a>.</p>
+          <blockquote>Tulisan yang baik dimulai dari editor yang tidak mengganggu.</blockquote>
+          <p>Shortcut markdown yang bisa dicoba:</p>
+          <ul><li>ketik ## lalu spasi untuk judul</li><li>ketik &gt; lalu spasi untuk kutipan</li><li>ketik **tebal** atau `kode`</li><li>ketik / di baris kosong untuk memilih blok</li></ul>
+        </div>
+
+        <div class="demo-actions">
+          <span class="demo-label">Simulasi paste:</span>
+          <template x-for="(sample, key) in samples" :key="key">
+            <button type="button" class="demo-chip" @mousedown.prevent @click="simulatePaste(key)" x-text="sample.label"></button>
+          </template>
+        </div>
+        <p class="demo-hint">Atau salin langsung dari Word, Google Docs, atau halaman web mana pun lalu tempel di editor.</p>
+
+        <div class="demo-actions">
+          <button type="submit" class="demo-submit">Kirim form (uji input hidden)</button>
+        </div>
+      </section>
+
+      <!-- ====== Hasil render ====== -->
+      <section class="demo-panel">
+        <h2 class="demo-panel-title">Hasil render</h2>
+        <!-- Diisi lewat JS dan diberi x-ignore: x-html milik Alpine akan ikut mengeksekusi
+             atribut x-init/@click di dalam konten. -->
+        <article class="demo-render" data-demo-render x-ignore></article>
+      </section>
+
+      <!-- ====== HTML mentah ====== -->
+      <section class="demo-panel demo-panel-wide">
+        <h2 class="demo-panel-title">HTML mentah <small x-text="`${output.length} karakter`"></small></h2>
+        <pre class="demo-code"><code x-text="pretty(output) || '(kosong)'"></code></pre>
+      </section>
+
+      <section class="demo-panel demo-panel-wide" x-show="submitted !== null" x-cloak>
+        <h2 class="demo-panel-title">Nilai yang dikirim form</h2>
+        <pre class="demo-code"><code x-text="submitted"></code></pre>
+      </section>
+    </form>
+  </div>
+</body>
+</html>

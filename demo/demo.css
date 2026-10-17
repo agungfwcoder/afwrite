@@ -1,0 +1,195 @@
+/* Style khusus halaman demo (bukan bagian library). Sengaja memakai prefix `demo-`. */
+
+[x-cloak] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: #f4f4f5;
+  color: #18181b;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.demo {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+.demo-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.demo-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.demo-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  vertical-align: middle;
+  color: #4f46e5;
+  background: #eef2ff;
+  border-radius: 999px;
+}
+
+.demo-sub {
+  margin: 6px 0 0;
+  color: #71717a;
+}
+
+.demo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.demo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #71717a;
+}
+
+.demo-field select {
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #18181b;
+  background: #fff;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+}
+
+.demo-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.demo-panel {
+  min-width: 0;
+}
+
+.demo-panel-wide {
+  grid-column: 1 / -1;
+}
+
+.demo-panel-title {
+  margin: 0 0 10px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #71717a;
+}
+
+.demo-panel-title small {
+  margin-left: 6px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.demo-render {
+  min-height: 280px;
+  padding: 28px 32px;
+  font-size: 1.125rem;
+  line-height: 1.75;
+  background: #fff;
+  border: 1px dashed #d4d4d8;
+  border-radius: 14px;
+}
+
+.demo-render > :first-child {
+  margin-top: 0;
+}
+
+.demo-empty {
+  color: #a1a1aa;
+}
+
+.demo-code {
+  margin: 0;
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #e4e4e7;
+  background: #18181b;
+  border-radius: 14px;
+}
+
+.demo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.demo-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #71717a;
+}
+
+.demo-chip {
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #18181b;
+  background: #fff;
+  border: 1px solid #e4e4e7;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.demo-chip:hover {
+  border-color: #a5b4fc;
+  background: #eef2ff;
+}
+
+.demo-hint {
+  margin: 8px 0 0;
+  font-size: 0.8125rem;
+  color: #a1a1aa;
+}
+
+.demo-submit {
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  background: #18181b;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+@media (max-width: 860px) {
+  .demo-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

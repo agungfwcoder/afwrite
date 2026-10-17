@@ -1,0 +1,36 @@
+{
+  "name": "wyswyg",
+  "version": "0.1.0",
+  "description": "Editor WYSIWYG ringan bergaya Medium, berbasis vanilla JS + Alpine.js",
+  "type": "module",
+  "main": "./dist/wyswyg.umd.cjs",
+  "module": "./dist/wyswyg.js",
+  "exports": {
+    ".": {
+      "import": "./dist/wyswyg.js",
+      "require": "./dist/wyswyg.umd.cjs"
+    },
+    "./style.css": "./dist/wyswyg.css"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "alpinejs": "^3.0.0"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "alpinejs": "^3.17.4",
+    "jsdom": "^30.1.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  }
+}

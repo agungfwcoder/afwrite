@@ -1,0 +1,612 @@
+/*
+ * wyswyg — style editor
+ *
+ * Aturan isolasi agar tidak bentrok dengan Bootstrap, Tailwind, dll:
+ *  1. Semua class berawalan `afw-`, termasuk state (`afw-is-active`, bukan `active`).
+ *  2. Semua selector dibatasi di bawah root `.afw`; tidak ada style untuk elemen global.
+ *  3. Semua variabel berawalan `--afw-`.
+ *  4. Konten editor memakai selector `.afw .afw-content <tag>` (specificity 0,2,1) sehingga
+ *     menang atas reset elemen dari Tailwind preflight / Bootstrap reboot (0,0,1).
+ *  5. Tidak memakai @layer, sehingga tetap menang atas style Tailwind v4 yang berada di layer.
+ */
+
+.afw {
+  --afw-font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --afw-font-content: var(--afw-font);
+  --afw-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --afw-bg: #ffffff;
+  --afw-surface: #f6f6f7;
+  --afw-border: #e4e4e7;
+  --afw-text: #18181b;
+  --afw-muted: #71717a;
+  --afw-placeholder: #a1a1aa;
+  --afw-accent: #4f46e5;
+  --afw-accent-soft: #eef2ff;
+  --afw-link: #4f46e5;
+  --afw-quote-bar: #c7d2fe;
+  --afw-float-bg: #18181b;
+  --afw-float-text: #fafafa;
+  --afw-float-muted: #a1a1aa;
+  --afw-float-hover: rgba(255, 255, 255, 0.12);
+  --afw-float-active: #a5b4fc;
+  --afw-menu-bg: #ffffff;
+  --afw-float-shadow: 0 10px 30px -10px rgba(24, 24, 27, 0.35), 0 2px 6px rgba(24, 24, 27, 0.08);
+
+  --afw-radius: 14px;
+  --afw-radius-sm: 8px;
+  --afw-shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 8px 24px -12px rgba(24, 24, 27, 0.12);
+  --afw-content-size: 1.125rem;
+  --afw-content-line: 1.75;
+  --afw-content-padding: 28px 32px 40px;
+  --afw-min-height: 280px;
+
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--afw-font);
+  color: var(--afw-text);
+  background: var(--afw-bg);
+  border: 1px solid var(--afw-border);
+  border-radius: var(--afw-radius);
+  box-shadow: var(--afw-shadow);
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.afw *,
+.afw *::before,
+.afw *::after {
+  box-sizing: border-box;
+}
+
+.afw:focus-within {
+  border-color: var(--afw-accent);
+  box-shadow: var(--afw-shadow), 0 0 0 4px var(--afw-accent-soft);
+}
+
+/* ---------- Dark mode: data-afw-theme="dark" atau "auto" ---------- */
+
+.afw[data-afw-theme='dark'] {
+  --afw-bg: #18181b;
+  --afw-surface: #27272a;
+  --afw-border: #3f3f46;
+  --afw-text: #f4f4f5;
+  --afw-muted: #a1a1aa;
+  --afw-placeholder: #71717a;
+  --afw-accent: #818cf8;
+  --afw-accent-soft: rgba(129, 140, 248, 0.16);
+  --afw-link: #a5b4fc;
+  --afw-quote-bar: #4f46e5;
+  --afw-float-bg: #3f3f46;
+  --afw-float-hover: rgba(255, 255, 255, 0.1);
+  --afw-menu-bg: #27272a;
+  --afw-float-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --afw-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  .afw[data-afw-theme='auto'] {
+    --afw-bg: #18181b;
+    --afw-surface: #27272a;
+    --afw-border: #3f3f46;
+    --afw-text: #f4f4f5;
+    --afw-muted: #a1a1aa;
+    --afw-placeholder: #71717a;
+    --afw-accent: #818cf8;
+    --afw-accent-soft: rgba(129, 140, 248, 0.16);
+    --afw-link: #a5b4fc;
+    --afw-quote-bar: #4f46e5;
+    --afw-float-bg: #3f3f46;
+    --afw-float-hover: rgba(255, 255, 255, 0.1);
+    --afw-menu-bg: #27272a;
+    --afw-float-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4);
+    --afw-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* ---------- Toolbar ---------- */
+
+.afw .afw-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--afw-bg);
+  border-bottom: 1px solid var(--afw-border);
+  border-radius: var(--afw-radius) var(--afw-radius) 0 0;
+}
+
+.afw [x-cloak],
+.afw .afw-is-hidden {
+  display: none !important;
+}
+
+.afw .afw-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.afw .afw-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: var(--afw-border);
+}
+
+.afw .afw-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  line-height: 1;
+  color: var(--afw-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--afw-radius-sm);
+  box-shadow: none;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease, transform 0.08s ease;
+}
+
+.afw .afw-btn:hover {
+  color: var(--afw-text);
+  background: var(--afw-surface);
+}
+
+.afw .afw-btn:active {
+  transform: scale(0.94);
+}
+
+.afw .afw-btn:focus-visible {
+  outline: 2px solid var(--afw-accent);
+  outline-offset: 1px;
+}
+
+.afw .afw-btn.afw-is-active {
+  color: var(--afw-accent);
+  background: var(--afw-accent-soft);
+}
+
+.afw .afw-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  max-width: none;
+}
+
+/* ---------- Area konten ---------- */
+
+/* Sengaja tanpa position: relative; UI melayang diposisikan terhadap root .afw. */
+.afw .afw-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.afw .afw-content {
+  position: relative;
+  flex: 1;
+  min-height: var(--afw-min-height);
+  margin: 0;
+  padding: var(--afw-content-padding);
+  font-family: var(--afw-font-content);
+  font-size: var(--afw-content-size);
+  line-height: var(--afw-content-line);
+  color: var(--afw-text);
+  background: transparent;
+  outline: none;
+  overflow-wrap: break-word;
+  caret-color: var(--afw-accent);
+}
+
+.afw .afw-content.afw-is-empty::before {
+  content: attr(data-afw-placeholder);
+  position: absolute;
+  pointer-events: none;
+  color: var(--afw-placeholder);
+}
+
+.afw .afw-content ::selection {
+  background: var(--afw-accent-soft);
+}
+
+/* Tipografi konten. Ditulis eksplisit agar tidak tergantung reset framework. */
+
+.afw .afw-content > :first-child {
+  margin-top: 0;
+}
+
+.afw .afw-content p {
+  margin: 0 0 0.9em;
+  font-size: inherit;
+}
+
+.afw .afw-content h2,
+.afw .afw-content h3 {
+  margin: 1.6em 0 0.5em;
+  font-family: var(--afw-font-content);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--afw-text);
+}
+
+.afw .afw-content h2 {
+  font-size: 1.75em;
+  line-height: 1.25;
+}
+
+.afw .afw-content h3 {
+  font-size: 1.3em;
+  line-height: 1.35;
+}
+
+.afw .afw-content b,
+.afw .afw-content strong {
+  font-weight: 700;
+}
+
+.afw .afw-content i,
+.afw .afw-content em {
+  font-style: italic;
+}
+
+.afw .afw-content a {
+  color: var(--afw-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: text;
+}
+
+.afw .afw-content blockquote {
+  margin: 1.2em 0;
+  padding: 0.1em 0 0.1em 1.1em;
+  font-style: italic;
+  color: var(--afw-text);
+  background: none;
+  border: 0;
+  border-left: 3px solid var(--afw-quote-bar);
+}
+
+.afw .afw-content ul,
+.afw .afw-content ol {
+  margin: 0 0 0.9em;
+  padding-left: 1.6em;
+}
+
+.afw .afw-content ul {
+  list-style: disc outside;
+}
+
+.afw .afw-content ol {
+  list-style: decimal outside;
+}
+
+.afw .afw-content li {
+  display: list-item;
+  margin: 0.25em 0;
+  padding-left: 0.2em;
+}
+
+.afw .afw-content li::marker {
+  color: var(--afw-muted);
+}
+
+.afw .afw-content code {
+  padding: 0.15em 0.35em;
+  font-family: var(--afw-font-mono);
+  font-size: 0.875em;
+  background: var(--afw-surface);
+  border-radius: 6px;
+}
+
+
+/* ---------- Tombol + (baris kosong) ---------- */
+
+.afw .afw-plus {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  left: 2px;
+  z-index: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  color: var(--afw-muted);
+  background: var(--afw-bg);
+  border: 1px solid var(--afw-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+
+.afw .afw-plus:hover {
+  color: var(--afw-accent);
+  border-color: var(--afw-accent);
+  transform: rotate(90deg);
+}
+
+.afw .afw-plus .afw-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Hanya di layar lebar dengan mouse; di HP pakai slash (/) atau toolbar. */
+@media (hover: hover) and (min-width: 641px) {
+  .afw .afw-plus.afw-is-open {
+    display: inline-flex;
+  }
+}
+
+/* ---------- Footer (statistik) ---------- */
+
+.afw .afw-footer {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 0.75rem;
+  color: var(--afw-muted);
+  border-top: 1px solid var(--afw-border);
+}
+
+/* ---------- Bubble toolbar ---------- */
+
+.afw .afw-bubble {
+  position: absolute;
+  z-index: 20;
+  display: none;
+  align-items: center;
+  padding: 4px;
+  color: var(--afw-float-text);
+  background: var(--afw-float-bg);
+  border-radius: 12px;
+  box-shadow: var(--afw-float-shadow);
+  opacity: 0;
+  transform: translateY(4px) scale(0.98);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  pointer-events: none;
+}
+
+.afw .afw-bubble.afw-is-open {
+  display: flex;
+}
+
+.afw .afw-bubble.afw-is-ready {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.afw .afw-bubble-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.afw .afw-bubble .afw-sep {
+  height: 18px;
+  margin: 0 4px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.afw .afw-btn.afw-btn-inverse {
+  width: 32px;
+  height: 32px;
+  color: var(--afw-float-text);
+}
+
+.afw .afw-btn.afw-btn-inverse:hover {
+  color: var(--afw-float-text);
+  background: var(--afw-float-hover);
+}
+
+.afw .afw-btn.afw-btn-inverse.afw-is-active {
+  color: var(--afw-float-active);
+  background: var(--afw-float-hover);
+}
+
+.afw .afw-link-form {
+  position: relative;
+  margin: 0;
+}
+
+.afw .afw-link-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: min(280px, 60vw);
+  height: 32px;
+  margin: 0 4px 0 0;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--afw-float-text);
+  background: var(--afw-float-hover);
+  border: 0;
+  border-radius: 8px;
+  outline: none;
+  box-shadow: none;
+}
+
+.afw .afw-link-input::placeholder {
+  color: var(--afw-float-muted);
+}
+
+.afw .afw-link-error {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  color: #fff;
+  white-space: nowrap;
+  background: #dc2626;
+  border-radius: 6px;
+}
+
+.afw .afw-link-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 240px;
+  padding: 0 8px;
+  font-size: 0.8125rem;
+  color: var(--afw-float-active);
+  text-decoration: none;
+}
+
+.afw .afw-link-preview span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.afw .afw-link-preview:hover span:first-child {
+  text-decoration: underline;
+}
+
+.afw .afw-link-preview-icon .afw-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------- Slash menu ---------- */
+
+.afw .afw-menu {
+  position: absolute;
+  z-index: 20;
+  display: none;
+  width: 280px;
+  max-width: calc(100vw - 16px);
+  max-height: 320px;
+  padding: 6px;
+  overflow-y: auto;
+  background: var(--afw-menu-bg);
+  border: 1px solid var(--afw-border);
+  border-radius: 12px;
+  box-shadow: var(--afw-float-shadow);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.afw .afw-menu.afw-is-open {
+  display: block;
+}
+
+.afw .afw-menu.afw-is-ready {
+  opacity: 1;
+  transform: none;
+}
+
+.afw .afw-menu-title {
+  padding: 6px 8px 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--afw-muted);
+}
+
+.afw .afw-menu-item {
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 6px 8px;
+  font: inherit;
+  text-align: left;
+  color: var(--afw-text);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.afw .afw-menu-item.afw-is-active {
+  background: var(--afw-surface);
+}
+
+.afw .afw-menu-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: var(--afw-text);
+  background: var(--afw-bg);
+  border: 1px solid var(--afw-border);
+  border-radius: 8px;
+}
+
+.afw .afw-menu-item.afw-is-active .afw-menu-icon {
+  color: var(--afw-accent);
+  border-color: var(--afw-accent);
+}
+
+.afw .afw-menu-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.afw .afw-menu-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.afw .afw-menu-desc {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--afw-muted);
+}
+
+.afw .afw-menu-kbd {
+  flex: none;
+  padding: 2px 6px;
+  font-family: var(--afw-font-mono);
+  font-size: 0.6875rem;
+  color: var(--afw-muted);
+  background: var(--afw-surface);
+  border: 0;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.afw .afw-menu-empty {
+  padding: 10px 8px;
+  font-size: 0.8125rem;
+  color: var(--afw-muted);
+}
+
+@media (max-width: 640px) {
+  .afw {
+    --afw-content-padding: 20px 18px 32px;
+    --afw-content-size: 1.0625rem;
+  }
+}
