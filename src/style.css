@@ -214,6 +214,7 @@
   background: transparent;
   outline: none;
   overflow-wrap: break-word;
+  white-space: pre-wrap; /* wajib untuk ProseMirror */
   caret-color: var(--afw-accent);
 }
 
@@ -321,6 +322,11 @@
   display: list-item;
   margin: 0.25em 0;
   padding-left: 0.2em;
+}
+
+.afw .afw-content li > p,
+.afw-prose li > p {
+  margin: 0;
 }
 
 .afw .afw-content li::marker,
@@ -445,13 +451,18 @@
   cursor: text;
 }
 
-.afw .afw-content figcaption:empty::before {
+.afw .afw-content figcaption.afw-is-empty::before {
   content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  width: 100%;
+  pointer-events: none;
   color: var(--afw-placeholder);
 }
 
 /* Keterangan kosong hanya terlihat saat gambar dipilih atau keterangan sedang diedit. */
-.afw .afw-content figure:not(.afw-is-selected) > figcaption:empty:not(:focus) {
+.afw .afw-content figure:not(.afw-is-selected):not(.afw-is-editing) > figcaption.afw-is-empty,
+.afw .afw-content.afw-is-readonly figure > figcaption.afw-is-empty {
   display: none;
 }
 
@@ -943,4 +954,51 @@
     --afw-content-gutter: 18px;
     --afw-content-size: 1.0625rem;
   }
+}
+
+/* ---------- Kebutuhan ProseMirror ---------- */
+
+.afw .afw-content.ProseMirror-hideselection *::selection {
+  background: transparent;
+}
+
+.afw .afw-content.ProseMirror-hideselection {
+  caret-color: transparent;
+}
+
+.afw .afw-content img.ProseMirror-separator {
+  display: inline !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+.afw .afw-content .ProseMirror-gapcursor {
+  display: none;
+  position: absolute;
+  margin: 0;
+  pointer-events: none;
+}
+
+.afw .afw-content .ProseMirror-gapcursor::after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: -2px;
+  width: 20px;
+  border-top: 2px solid var(--afw-accent);
+  animation: afw-cursor-blink 1.1s steps(2, start) infinite;
+}
+
+.afw .afw-content.ProseMirror-focused .ProseMirror-gapcursor {
+  display: block;
+}
+
+@keyframes afw-cursor-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.afw .afw-dropcursor {
+  background: var(--afw-accent);
 }

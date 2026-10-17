@@ -147,7 +147,7 @@ const filtered = await page.$$eval('.afw-menu-item .afw-menu-label', (els) => el
 check('filter "ju"', JSON.stringify(filtered) === '["Judul","Subjudul"]', JSON.stringify(filtered));
 await page.keyboard.press('Enter');
 await wait();
-check('Enter memilih Judul dan menghapus "/ju"', (await dom()).endsWith('<h2><br></h2>') || (await dom()).endsWith('<h2></h2>'), await dom());
+check('Enter memilih Judul dan menghapus "/ju"', /<h2>(<br[^>]*>)?<\/h2>$/.test(await dom()), await dom());
 check('slash menu tertutup', !(await visible('.afw-menu')));
 await page.keyboard.type('Judul baru');
 check('lanjut mengetik di judul', (await out()) === '<p>Paragraf</p><h2>Judul baru</h2>', await out());

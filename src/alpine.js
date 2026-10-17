@@ -178,7 +178,7 @@ export function wysiwygComponent(options = {}) {
     // Nilai input hidden: HTML, atau JSON jika format: 'json'.
     inputValue() {
       const html = this.html; // dependensi reaktif
-      return this.format === 'json' ? JSON.stringify(editor ? editor.getJSON() : { blocks: [] }) : html;
+      return this.format === 'json' ? JSON.stringify(editor ? editor.getJSON() : { type: 'doc', content: [] }) : html;
     },
 
     getJSON() {

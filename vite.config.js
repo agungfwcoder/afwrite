@@ -7,9 +7,11 @@ export default defineConfig({
       name: 'Wyswyg',
       fileName: 'wyswyg',
       cssFileName: 'wyswyg',
-      formats: ['es', 'umd'],
+      formats: ['es'],
     },
+    // Tiptap/ProseMirror tetap dependency (dipasang npm), tidak ikut di-bundle.
     rollupOptions: {
+      external: [/^@tiptap\//],
       output: { exports: 'named' },
     },
   },

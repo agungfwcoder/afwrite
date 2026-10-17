@@ -16,7 +16,8 @@ const bail = (e) => { console.log(results.join('\n')); console.log('ERROR', e.me
 process.on('uncaughtException', bail);
 process.on('unhandledRejection', bail);
 const check = (name, ok, extra = '') => results.push(`${ok ? 'PASS' : 'FAIL'}  ${name}${extra ? '  -> ' + extra : ''}`);
-const html = () => page.$eval('.afw-content', (el) => el.innerHTML);
+// Output editor (sudah dinormalisasi). DOM editor bisa berbeda, mis. <li><p> di ProseMirror.
+const html = () => page.evaluate(() => Alpine.$data(document.querySelector('.afw')).getHTML());
 const reset = async () => {
   await page.evaluate(() => Alpine.$data(document.querySelector('.afw')).setHTML(''));
   await page.click('.afw-content');
@@ -130,8 +131,8 @@ check('panel render ikut terisi', rendered === '<p>Sinkron</p>', rendered);
 
 // Delete everything → back to empty <p>
 await page.keyboard.press('ControlOrMeta+a'); await page.keyboard.press('Backspace');
-h = await html();
-check('hapus semua kembali ke <p><br></p>', h === '<p><br></p>', h);
+h = await page.$eval('.afw-content', (el) => el.children.length === 1 && el.firstElementChild.tagName === 'P' && !el.textContent);
+check('hapus semua kembali ke satu paragraf kosong', h);
 check('hidden kosong saat editor kosong', (await page.$eval('input[name=content]', (i) => i.value)) === '');
 
 // Alpine directive injection through editor content

@@ -137,12 +137,13 @@ await page.screenshot({ path: `${SHOTS}/16-kode.png`, clip: { x: 0, y: 100, widt
 // ---------- JSON ----------
 await set('<h2>Judul</h2><p>Halo <b>dunia</b></p>');
 const json = await page.evaluate(() => Alpine.$data(document.querySelector('.afw')).getJSON());
-check('getJSON', JSON.stringify(json.blocks) === JSON.stringify([
-  { type: 'heading', level: 2, text: 'Judul', marks: [] },
-  { type: 'paragraph', text: 'Halo dunia', marks: [{ type: 'bold', start: 5, end: 10 }] },
-]), JSON.stringify(json));
+check('getJSON', JSON.stringify(json) === JSON.stringify({ type: 'doc', content: [
+  { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Judul' }] },
+  { type: 'paragraph', content: [{ type: 'text', text: 'Halo ' }, { type: 'text', marks: [{ type: 'bold' }], text: 'dunia' }] },
+] }), JSON.stringify(json));
 await page.evaluate(() => Alpine.$data(document.querySelector('.afw')).setJSON({
-  blocks: [{ type: 'quote', text: 'dari JSON', marks: [{ type: 'italic', start: 5, end: 9 }] }],
+  type: 'doc',
+  content: [{ type: 'blockquote', content: [{ type: 'text', text: 'dari ' }, { type: 'text', text: 'JSON', marks: [{ type: 'italic' }] }] }],
 }));
 check('setJSON', (await out()) === '<blockquote>dari <i>JSON</i></blockquote>', await out());
 
@@ -155,7 +156,8 @@ await page.evaluate(() => {
 await page.waitForSelector('#json-form input[name=doc]', { state: 'attached' });
 await wait();
 const docValue = JSON.parse(await page.$eval('#json-form input[name=doc]', (i) => i.value));
-check('format: json -> input hidden berisi JSON', docValue.blocks?.[0]?.text === 'isi JSON' && docValue.blocks[0].marks[0].type === 'bold', JSON.stringify(docValue));
+const jsonText = docValue.content?.[0]?.content || [];
+check('format: json -> input hidden berisi JSON', jsonText.map((n) => n.text).join('') === 'isi JSON' && jsonText[1]?.marks?.[0]?.type === 'bold', JSON.stringify(docValue));
 await page.evaluate(() => document.getElementById('json-form').remove());
 
 // ---------- Autosave ----------

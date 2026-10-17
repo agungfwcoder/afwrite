@@ -1,15 +1,12 @@
 {
   "name": "wyswyg",
   "version": "1.1.0",
-  "description": "Editor WYSIWYG modern berbasis vanilla JS + Alpine.js: bubble toolbar, slash command, markdown, gambar & video, sanitasi HTML.",
+  "description": "Editor WYSIWYG modern berbasis vanilla JS + Alpine.js dengan engine Tiptap/ProseMirror: bubble toolbar, slash command, markdown, gambar & video, sanitasi HTML.",
   "type": "module",
-  "main": "./dist/wyswyg.umd.cjs",
+  "main": "./dist/wyswyg.js",
   "module": "./dist/wyswyg.js",
   "exports": {
-    ".": {
-      "import": "./dist/wyswyg.js",
-      "require": "./dist/wyswyg.umd.cjs"
-    },
+    ".": "./dist/wyswyg.js",
     "./style.css": "./dist/wyswyg.css"
   },
   "files": [
@@ -42,5 +39,17 @@
     "contenteditable",
     "alpinejs",
     "markdown"
-  ]
+  ],
+  "dependencies": {
+    "@tiptap/core": "^3.32.0",
+    "@tiptap/extension-code-block": "^3.32.0",
+    "@tiptap/extension-document": "^3.32.0",
+    "@tiptap/extension-hard-break": "^3.32.0",
+    "@tiptap/extension-heading": "^3.32.0",
+    "@tiptap/extension-list": "^3.32.0",
+    "@tiptap/extension-paragraph": "^3.32.0",
+    "@tiptap/extension-text": "^3.32.0",
+    "@tiptap/extensions": "^3.32.0",
+    "@tiptap/pm": "^3.32.0"
+  }
 }

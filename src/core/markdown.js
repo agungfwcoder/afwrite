@@ -1,6 +1,6 @@
-// Shortcut markdown saat mengetik.
+// Shortcut markdown saat mengetik (input rule ProseMirror).
 //
-// Di awal paragraf (diikuti spasi):
+// Di awal paragraf tingkat teratas (diikuti spasi):
 //   # atau ##  -> Judul      ###  -> Subjudul    >  -> Kutipan
 //   - * +      -> Daftar berpoin                1. -> Daftar bernomor
 //   ---        -> Pemisah                     ```  -> Blok kode
@@ -8,80 +8,49 @@
 // Di dalam teks:
 //   **tebal**   *miring*   _miring_   `kode`
 
-import { closestInRoot, getRange, restoreSelection } from './selection.js';
-import { escapeHtml } from './sanitize.js';
+import { InputRule, markInputRule } from '@tiptap/core';
 
+// Blok: hanya di paragraf tingkat teratas (bukan di dalam list).
 const BLOCK_RULES = [
-  { marker: /^#{1,2}$/, command: 'h2' },
-  { marker: /^###$/, command: 'h3' },
-  { marker: /^>$/, command: 'quote' },
-  { marker: /^[-*+]$/, command: 'ul' },
-  { marker: /^\d+[.)]$/, command: 'ol' },
-  { marker: /^(-{3,}|\*{3,}|_{3,})$/, command: 'hr' },
-  { marker: /^```$/, command: 'codeblock' },
+  { find: /^#{1,2}\s$/, run: (chain) => chain.setNode('heading', { level: 2 }) },
+  { find: /^###\s$/, run: (chain) => chain.setNode('heading', { level: 3 }) },
+  { find: /^>\s$/, run: (chain) => chain.setNode('blockquote') },
+  { find: /^[-*+]\s$/, run: (chain) => chain.toggleBulletList() },
+  { find: /^\d+[.)]\s$/, run: (chain) => chain.toggleOrderedList() },
+  { find: /^(-{3,}|\*{3,}|_{3,})\s$/, run: (chain) => chain.insertMediaBlock({ type: 'horizontalRule' }) },
+  { find: /^```\s$/, run: (chain) => chain.setNode('codeBlock') },
 ];
 
 const INLINE_RULES = [
-  { pattern: /\*\*([^*\s](?:[^*]*[^*\s])?)\*\*$/, delim: 2, tag: 'b', command: 'bold' },
-  { pattern: /(?:^|[^*\w])\*([^*\s](?:[^*]*[^*\s])?)\*$/, delim: 1, tag: 'i', command: 'italic' },
-  { pattern: /(?:^|[^_\w])_([^_\s](?:[^_]*[^_\s])?)_$/, delim: 1, tag: 'i', command: 'italic' },
-  { pattern: /`([^`]+)`$/, delim: 1, tag: 'code' },
+  { find: /\*\*([^*\s](?:[^*]*[^*\s])?)\*\*$/, mark: 'bold' },
+  { find: /(?<![*\w])\*([^*\s](?:[^*]*[^*\s])?)\*$/, mark: 'italic' },
+  { find: /(?<![_\w])_([^_\s](?:[^_]*[^_\s])?)_$/, mark: 'italic' },
+  { find: /`([^`]+)`$/, mark: 'code' },
 ];
 
-// Dipanggil setelah spasi diketik. Mengembalikan true jika shortcut dijalankan.
-export function applyBlockShortcut(editor) {
-  const range = getRange();
-  if (!range || !range.collapsed) return false;
+export function markdownRules(schema) {
+  const blocks = BLOCK_RULES.map(({ find, run }) => new InputRule({
+    find,
+    handler: ({ state, range, chain }) => {
+      const $from = state.doc.resolve(range.from);
+      if ($from.depth !== 1 || $from.parent.type.name !== 'paragraph') return null;
+      run(chain().deleteRange(range)).run();
+    },
+  }));
 
-  const block = closestInRoot(editor.el, 'p');
-  if (!block || block.closest('li, blockquote')) return false;
+  const inline = INLINE_RULES.map(({ find, mark }) => {
+    const type = schema.marks[mark];
+    const rule = markInputRule({ find, type });
+    return new InputRule({
+      find,
+      handler: (props) => {
+        // Keterangan gambar tidak menerima format: tanda * dsb. dibiarkan sebagai teks.
+        const $from = props.state.doc.resolve(props.range.from);
+        if (!$from.parent.type.allowsMarkType(type)) return null;
+        return rule.handler(props);
+      },
+    });
+  });
 
-  const before = document.createRange();
-  before.setStart(block, 0);
-  before.setEnd(range.startContainer, range.startOffset);
-
-  const match = before.toString().match(/^(\S+)[\s ]$/);
-  const rule = match && BLOCK_RULES.find((r) => r.marker.test(match[1]));
-  if (!rule) return false;
-
-  restoreSelection(before);
-  document.execCommand('delete');
-  editor.exec(rule.command);
-  return true;
-}
-
-// Dipanggil setelah karakter penutup (* _ `) diketik.
-export function applyInlineShortcut(editor, char) {
-  if (!['*', '_', '`'].includes(char)) return false;
-
-  const range = getRange();
-  if (!range || !range.collapsed) return false;
-
-  const node = range.startContainer;
-  if (node.nodeType !== Node.TEXT_NODE || node.parentElement.closest('code')) return false;
-
-  const text = node.data.slice(0, range.startOffset);
-
-  for (const rule of INLINE_RULES) {
-    const match = text.match(rule.pattern);
-    if (!match) continue;
-
-    const inner = match[1];
-    const start = text.length - inner.length - rule.delim * 2;
-    const target = document.createRange();
-    target.setStart(node, start);
-    target.setEnd(node, range.startOffset);
-    restoreSelection(target);
-
-    // Zero-width space setelah elemen agar ketikan berikutnya berada di luar <b>/<i>/<code>
-    // (Safari tetap mengetik di dalam elemen tanpa ini). Dibuang oleh sanitize() di output.
-    document.execCommand('insertHTML', false, `<${rule.tag}>${escapeHtml(inner)}</${rule.tag}>\u200b`);
-
-    // Matikan format untuk ketikan berikutnya (tebal/miring tidak "menular").
-    if (rule.command && document.queryCommandState(rule.command)) {
-      document.execCommand(rule.command);
-    }
-    return true;
-  }
-  return false;
+  return [...blocks, ...inline];
 }

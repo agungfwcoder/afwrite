@@ -87,9 +87,10 @@ await page.waitForFunction(() => document.querySelector('.afw-content figure img
 // ---------- Gambar awal ----------
 let o = await out();
 check('output gambar bersih (tanpa atribut editor)', o.includes('<figure><img src="/demo/sample.png" alt="Ilustrasi pegunungan"><figcaption>Klik gambar untuk mengatur ukuran, alt text, atau menghapusnya.</figcaption></figure>') && !/contenteditable|draggable|class=/.test(o), o.slice(o.indexOf('<figure'), o.indexOf('</figure>') + 9));
+// Isi node figure hanya keterangan (<figcaption>); gambar berada di luar area isi.
 check('figure tidak bisa diketik, keterangan bisa', await page.evaluate(() => {
   const f = document.querySelector('.afw-content figure');
-  return f.contentEditable === 'false' && f.querySelector('figcaption').contentEditable === 'true';
+  return f.pmViewDesc?.contentDOM === f.querySelector('figcaption') && f.querySelector('img').getAttribute('draggable') === 'false';
 }));
 
 // ---------- Pilih gambar ----------
@@ -269,7 +270,7 @@ check('tempel URL di atas teks terseleksi -> link', (await out()) === '<p>baca <
 await set('<figure><img src="https://example.com/a.png" onerror="alert(1)"></figure><iframe src="https://evil.com/x"></iframe><hr>');
 o = await out();
 check('setHTML: media dari luar disanitasi', o === '<figure><img src="https://example.com/a.png" alt=""></figure><hr>', o);
-check('setHTML: paragraf ditambahkan setelah media terakhir', (await dom()).endsWith('<p><br></p>'));
+check('setHTML: paragraf ditambahkan setelah media terakhir', /<p>(<br[^>]*>)?<\/p>$/.test(await dom()));
 
 // ---------- Klik celah di sebelah pemisah ----------
 await set('<p>Atas</p><hr><blockquote>Kutipan</blockquote>');

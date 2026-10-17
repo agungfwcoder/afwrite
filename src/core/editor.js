@@ -1,4 +1,5 @@
-// Inti editor. Tidak bergantung pada Alpine sehingga bisa dipakai mandiri:
+// Inti editor (engine: Tiptap / ProseMirror). Tidak bergantung pada Alpine sehingga bisa
+// dipakai mandiri:
 //
 //   const editor = new Editor(document.querySelector('#el'), { placeholder: 'Tulis…' });
 //   editor.on('change', (html) => console.log(html));
@@ -14,39 +15,24 @@
 //   error        ({message, error?}) mis. upload gagal / file terlalu besar
 //   history      ({canUndo, canRedo})
 //   readonly     (boolean)
-//   draft        ({html, time}) ada draf autosave yang berbeda dari isi saat ini
 //   focus / blur
+//
+// Instance Tiptap tersedia di editor.tiptap untuk pemakaian lanjutan.
 
+import { createDocument, Editor as TiptapEditor, Extension } from '@tiptap/core';
+import { Dropcursor, Gapcursor, UndoRedo } from '@tiptap/extensions';
+import { Fragment, Slice } from '@tiptap/pm/model';
+import { EditorState, NodeSelection, Plugin, Selection, TextSelection } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { getStrings } from '../i18n.js';
 import { BLOCKS, filterBlocks } from './blocks.js';
-import { History, restoreSerializedSelection, serializeSelection } from './history.js';
-import { fromJSON, toJSON } from './model.js';
 import { COMMANDS } from './commands.js';
-import { cleanLive } from './cleanup.js';
-import { handleCodeKey, inCodeBlock, normalizeCodeBlocks, replaceInCode } from './codeblock.js';
 import { parseEmbed } from './embed.js';
-import { applyBlockShortcut, applyInlineShortcut } from './markdown.js';
-import {
-  createEmbedFigure,
-  emptyParagraph,
-  insertImageFiles,
-  insertMediaBlock,
-  isMediaNode,
-  mediaKind,
-  placeCaretIn,
-  prepareMedia,
-  setMediaSize,
-  topBlockAtCaret,
-} from './media.js';
+import { markdownRules } from './markdown.js';
+import { insertImageFiles, insertMediaBlock, isMediaNode, mediaKind, SIZES } from './media.js';
+import { fromJSON, toJSON } from './model.js';
 import { sanitize, sanitizeToElement, textToHtml } from './sanitize.js';
-import {
-  closestInRoot,
-  getRange,
-  isSelectionInside,
-  placeCaretAtEnd,
-  restoreSelection,
-  saveSelection,
-} from './selection.js';
+import { createExtensions } from './schema.js';
 
 const DEFAULTS = {
   content: '',
@@ -66,10 +52,10 @@ const DEFAULTS = {
   allowDataImages: true, // izinkan <img src="data:image/..."> di output
 };
 
-const EMPTY_PARAGRAPH = '<p><br></p>';
 const CLOSED_SLASH = { open: false, query: '', items: [], index: 0, rect: null };
 
-// Shortcut keyboard. Mod = Ctrl (Windows/Linux) atau Cmd (macOS).
+// Shortcut keyboard. Mod = Ctrl (Windows/Linux) atau Cmd (macOS). Dicocokkan lewat
+// event.code agar tetap jalan di layout keyboard non-latin.
 const SHORTCUTS = [
   { code: 'KeyB', command: 'bold' },
   { code: 'KeyI', command: 'italic' },
@@ -83,6 +69,10 @@ const SHORTCUTS = [
   { code: 'KeyC', alt: true, command: 'codeblock' },
 ];
 
+const CODE_INDENT = '  ';
+const isCaption = (node) => node.type.name === 'image' || node.type.name === 'embed';
+const isDocEmpty = (doc) => doc.childCount === 1 && doc.firstChild.type.name === 'paragraph' && doc.firstChild.content.size === 0;
+
 export class Editor {
   constructor(el, options = {}) {
     if (!el) throw new Error('[wyswyg] Elemen editor tidak ditemukan.');
@@ -90,13 +80,12 @@ export class Editor {
     this.el = el;
     this.options = { ...DEFAULTS, ...options };
     this.strings = getStrings(this.options.lang, this.options.strings);
-    this.history = new History({ limit: this.options.historyLimit });
     this.readOnly = false;
     this.listeners = {};
     this.commands = COMMANDS;
     this.slash = { ...CLOSED_SLASH };
 
-    this._setup();
+    this._setup(this.options.content || el.innerHTML);
   }
 
   // ---------- API publik ----------
@@ -108,18 +97,13 @@ export class Editor {
     const command = this.commands[name];
     if (!command) return console.warn(`[wyswyg] Perintah tidak dikenal: ${name}`);
 
-    if (!isSelectionInside(this.el)) {
-      this.el.focus();
-      placeCaretAtEnd(this.el);
-    }
-
-    this._applyBrowserDefaults();
-    command.run(this, ...args);
-    this._handleChange();
+    if (!this.hasFocus()) this.focus();
+    this._syncSelection();
+    return command.run(this, ...args);
   }
 
   isActive(name) {
-    if (!isSelectionInside(this.el)) return false;
+    if (!this.hasFocus()) return false;
     try {
       return !!this.commands[name]?.active(this);
     } catch {
@@ -131,38 +115,49 @@ export class Editor {
     return Object.fromEntries(Object.keys(this.commands).map((name) => [name, this.isActive(name)]));
   }
 
+  hasFocus() {
+    return !!this.tiptap.view?.hasFocus();
+  }
+
   isEmpty() {
-    return this.el.textContent.trim() === '' && !this.el.querySelector('img, hr, iframe, li');
+    return isDocEmpty(this.tiptap.state.doc);
   }
 
   // Output selalu lewat sanitize(): tag whitelist, tanpa atribut, tanpa paragraf kosong.
   getHTML() {
-    return this.isEmpty() ? '' : sanitize(this.el.innerHTML, this._sanitizeOptions());
+    return this.isEmpty() ? '' : sanitize(this.tiptap.getHTML(), this._sanitizeOptions());
   }
 
   // Konten dari luar (database, dll.) disanitasi sebelum masuk editor.
   // Riwayat undo dimulai ulang, kecuali { resetHistory: false }.
   setHTML(html, { silent = false, resetHistory = true } = {}) {
-    this._clearMediaSelection();
-    this.el.innerHTML = sanitize(html, this._sanitizeOptions()) || EMPTY_PARAGRAPH;
-    this._prepareMedia();
-    this._updatePlaceholder();
+    const doc = this._parse(sanitize(html, this._sanitizeOptions()));
+    const { view } = this.tiptap;
+
     if (resetHistory) {
-      this.history.reset(this._snapshot());
-      this._emitHistory();
+      view.updateState(EditorState.create({ doc, plugins: view.state.plugins, selection: Selection.atStart(doc) }));
+      this._afterUpdate({ docChanged: !silent });
     } else {
-      this._record();
+      const tr = view.state.tr.replaceWith(0, view.state.doc.content.size, doc.content);
+      tr.setSelection(Selection.atEnd(tr.doc));
+      this._silent = silent;
+      view.dispatch(tr);
+      this._silent = false;
     }
-    if (!silent) this.emit('change', this.getHTML());
   }
 
   // Teks polos dengan blok dipisah baris baru (untuk hitung kata, dll.).
   getText() {
-    return [...this.el.querySelectorAll('p, h2, h3, blockquote, li, pre')]
-      .filter((block) => !block.querySelector('p, li'))
-      .map((block) => block.textContent)
-      .join('\n')
-      .replace(/​/g, '');
+    const parts = [];
+    this.tiptap.state.doc.descendants((node) => {
+      if (isCaption(node)) return false;
+      if (node.isTextblock) {
+        parts.push(node.textBetween(0, node.content.size, '\n', '\n'));
+        return false;
+      }
+      return true;
+    });
+    return parts.join('\n');
   }
 
   stats() {
@@ -172,63 +167,89 @@ export class Editor {
 
   // Sisipkan HTML di posisi kursor (disanitasi). Dipakai oleh paste & drop.
   insertHTML(html) {
+    this._syncSelection();
     const clean = sanitizeToElement(html, this._sanitizeOptions());
     if (!clean.childNodes.length) return;
+    if (!this.hasFocus()) this.focus();
+
+    const { state, view } = this.tiptap;
+    let content = this._parse(clean.innerHTML).content;
 
     // Satu paragraf saja -> sisipkan isinya, agar tidak memecah paragraf tempat kursor berada.
     // Spasi di ujung (yang dibuang sanitize) dikembalikan agar kata tidak menempel.
-    const only = clean.children.length === 1 ? clean.firstElementChild : null;
-    let markup = clean.innerHTML;
-    if (only && only.tagName === 'P') {
+    if (content.childCount === 1 && content.firstChild.type.name === 'paragraph') {
       const source = new DOMParser().parseFromString(String(html), 'text/html').body.textContent;
-      // &nbsp;: Safari membuang spasi biasa di ujung HTML yang disisipkan.
-      markup = (/^\s/.test(source) ? '&nbsp;' : '') + only.innerHTML + (/\s$/.test(source) ? '&nbsp;' : '');
+      let inline = content.firstChild.content;
+      if (/^\s/.test(source)) inline = Fragment.from(state.schema.text(' ')).append(inline);
+      if (/\s$/.test(source)) inline = inline.append(Fragment.from(state.schema.text(' ')));
+      view.dispatch(state.tr.replaceSelection(new Slice(inline, 0, 0)).scrollIntoView());
+      return;
     }
-
-    if (!isSelectionInside(this.el)) this.focus();
-    this._applyBrowserDefaults();
-    document.execCommand('insertHTML', false, markup);
-    this._handleChange();
+    content = trimTrailingEmpty(content);
+    view.dispatch(state.tr.replaceSelection(Slice.maxOpen(content)).scrollIntoView());
   }
 
   insertText(text) {
+    this._syncSelection();
     const value = String(text || '').replace(/\r\n?/g, '\n');
+    if (!value) return;
     if (!value.includes('\n')) {
       // Satu baris: sisipkan apa adanya (spasi di ujung tetap terjaga).
-      if (!isSelectionInside(this.el)) this.focus();
-      document.execCommand('insertText', false, value);
-      this._handleChange();
+      if (!this.hasFocus()) this.focus();
+      const { state, view } = this.tiptap;
+      view.dispatch(state.tr.insertText(value).scrollIntoView());
       return;
     }
     this.insertHTML(textToHtml(value));
   }
 
   focus() {
-    this.el.focus();
-    placeCaretAtEnd(this.el);
+    this.tiptap.commands.focus('end');
   }
 
   // Simpan & pulihkan seleksi, mis. saat fokus pindah ke input link.
   saveSelection() {
-    return isSelectionInside(this.el) ? saveSelection() : null;
+    if (this.hasFocus()) this._syncSelection();
+    return this.hasFocus() ? this.tiptap.state.selection.toJSON() : null;
   }
 
-  restoreSelection(range) {
-    this.el.focus({ preventScroll: true });
-    if (range) restoreSelection(range);
+  restoreSelection(saved) {
+    const { view } = this.tiptap;
+    view.focus();
+    if (!saved) return;
+    try {
+      view.dispatch(view.state.tr.setSelection(Selection.fromJSON(view.state.doc, saved)));
+    } catch {
+      // posisi lama tidak valid lagi (isi berubah): biarkan seleksi saat ini
+    }
   }
 
   // Posisi seleksi/kursor di layar (DOMRect), untuk menempatkan UI melayang.
   selectionRect() {
-    const range = getRange();
-    return range && this.el.contains(range.startContainer) ? rangeRect(range) : null;
+    const { view, state } = this.tiptap;
+    const { from, to, empty } = state.selection;
+    if (!empty && view.hasFocus()) {
+      const range = getRange();
+      if (range && this.el.contains(range.startContainer)) {
+        const rect = range.getBoundingClientRect();
+        if (rect.width || rect.height) return rect;
+      }
+    }
+    try {
+      const a = view.coordsAtPos(from);
+      const b = empty ? a : view.coordsAtPos(to);
+      const left = Math.min(a.left, b.left);
+      return new DOMRect(left, a.top, Math.max(a.right, b.right) - left, b.bottom - a.top);
+    } catch {
+      return null;
+    }
   }
 
   clear() {
     this.setHTML('', { resetHistory: false });
   }
 
-  // ----- JSON -----
+  // ----- JSON (format dokumen ProseMirror/Tiptap) -----
 
   getJSON() {
     return toJSON(this.getHTML());
@@ -264,35 +285,29 @@ export class Editor {
   // ----- Undo / redo -----
 
   undo() {
-    const snapshot = this.history.undo();
-    if (snapshot) this._restoreSnapshot(snapshot);
+    if (!this.readOnly) this.tiptap.chain().focus().undo().run();
   }
 
   redo() {
-    const snapshot = this.history.redo();
-    if (snapshot) this._restoreSnapshot(snapshot);
+    if (!this.readOnly) this.tiptap.chain().focus().redo().run();
   }
 
   canUndo() {
-    return this.history.canUndo();
+    return this.tiptap.can().undo();
   }
 
   canRedo() {
-    return this.history.canRedo();
+    return this.tiptap.can().redo();
   }
 
   // ----- Mode baca saja -----
 
   setReadOnly(readOnly = true) {
     this.readOnly = !!readOnly;
-    this.el.setAttribute('contenteditable', this.readOnly ? 'false' : 'true');
-    this.el.setAttribute('aria-readonly', String(this.readOnly));
-    this.el.classList.toggle('afw-is-readonly', this.readOnly);
+    this.tiptap.setEditable(!this.readOnly, false);
     this.closeSlash();
-    this._clearMediaSelection();
-    this._prepareMedia();
-    this._updatePlaceholder();
     this.emit('readonly', this.readOnly);
+    this.emit('state', this.state());
     this._scheduleSelection();
   }
 
@@ -302,87 +317,71 @@ export class Editor {
     return insertImageFiles(this, files);
   }
 
-  selectMedia(node) {
-    if (this.readOnly || !isMediaNode(node) || node.parentNode !== this.el) return;
-    if (this._selectedMedia !== node) {
-      this._clearMediaSelection();
-      this._selectedMedia = node;
-      node.classList.add('afw-is-selected');
-    }
-    // Seleksi DOM diletakkan mengelilingi media agar fokus & keyboard tetap di editor.
-    this._selectingMedia = true;
-    this.el.focus({ preventScroll: true });
-    const range = document.createRange();
-    range.selectNode(node);
-    restoreSelection(range);
-    this._selectingMedia = false;
-    this.emit('state', this.state());
-    this._scheduleSelection();
+  // `target`: elemen <figure>/<hr> di editor, atau posisi node di dokumen.
+  selectMedia(target) {
+    if (this.readOnly) return;
+    const { state, view } = this.tiptap;
+    const pos = typeof target === 'number' ? target : this._posOfDOM(target);
+    if (pos == null || !isMediaNode(state.doc.nodeAt(pos))) return;
+    view.focus();
+    view.dispatch(state.tr.setSelection(NodeSelection.create(state.doc, pos)));
   }
 
   deselectMedia() {
-    if (!this._selectedMedia) return;
-    this._clearMediaSelection();
-    this._scheduleSelection();
+    const media = this._selectedMediaNode();
+    if (!media) return;
+    const { state, view } = this.tiptap;
+    view.dispatch(state.tr.setSelection(Selection.near(state.doc.resolve(media.pos + media.node.nodeSize))));
   }
 
   // { kind: 'image' | 'embed' | 'divider', size, alt } atau null
   selectedMedia() {
-    const node = this._selectedMedia;
-    if (!node) return null;
-    return {
-      kind: mediaKind(node),
-      size: node.getAttribute('data-size') || 'normal',
-      alt: node.querySelector('img')?.getAttribute('alt') || '',
-    };
+    const media = this._selectedMediaNode();
+    if (!media) return null;
+    const { node } = media;
+    return { kind: mediaKind(node), size: node.attrs.size || 'normal', alt: node.attrs.alt || '' };
   }
 
   setMediaSize(size) {
-    if (!this._selectedMedia) return;
-    setMediaSize(this._selectedMedia, size);
-    this._handleChange();
-    this.selectMedia(this._selectedMedia);
+    this._updateMedia((node) => node.type.name !== 'horizontalRule' && { size: SIZES.includes(size) ? size : null });
   }
 
   setMediaAlt(alt) {
-    const img = this._selectedMedia?.querySelector('img');
-    if (!img) return;
-    img.setAttribute('alt', String(alt || '').trim());
-    this._handleChange();
-    this.selectMedia(this._selectedMedia);
+    this._updateMedia((node) => node.type.name === 'image' && { alt: String(alt || '').trim() });
   }
 
   removeMedia() {
-    const node = this._selectedMedia;
-    if (!node) return;
-    const next = node.nextElementSibling;
-    const prev = node.previousElementSibling;
-    this._clearMediaSelection();
-    node.remove();
+    const media = this._selectedMediaNode();
+    if (!media) return;
+    const { state, view } = this.tiptap;
+    const tr = state.tr.delete(media.pos, media.pos + media.node.nodeSize);
+    const $pos = tr.doc.resolve(media.pos);
+    const next = $pos.nodeAfter;
+    const prev = $pos.nodeBefore;
 
-    const target = next && !isMediaNode(next) ? next : prev && !isMediaNode(prev) ? prev : null;
-    if (target) placeCaretIn(target, target === next ? 'start' : 'end');
-    else if (isMediaNode(next)) this.selectMedia(next);
+    if (next && !isMediaNode(next)) tr.setSelection(Selection.findFrom($pos, 1, true) || Selection.near($pos));
+    else if (prev && !isMediaNode(prev)) tr.setSelection(Selection.findFrom($pos, -1, true) || Selection.near($pos));
+    else if (next) tr.setSelection(NodeSelection.create(tr.doc, media.pos));
     else {
-      const p = emptyParagraph();
-      this.el.append(p);
-      placeCaretIn(p);
+      tr.insert(media.pos, state.schema.nodes.paragraph.create());
+      tr.setSelection(TextSelection.create(tr.doc, media.pos + 1));
     }
-    this._handleChange();
+    view.dispatch(tr.scrollIntoView());
   }
 
   // ----- Slash menu -----
 
   // Buka slash menu dari tombol "+": ketik "/" di posisi kursor.
   openSlash() {
-    if (!isSelectionInside(this.el)) this.focus();
+    if (!this.hasFocus()) this.focus();
+    this._syncSelection();
     this._slashDismissed = null;
-    document.execCommand('insertText', false, '/');
-    this._handleChange();
+    const { state, view } = this.tiptap;
+    view.dispatch(state.tr.insertText('/'));
   }
 
   closeSlash({ dismiss = false } = {}) {
-    if (dismiss) this._slashDismissed = this._slashBlock;
+    if (dismiss) this._slashDismissed = this._slashContext()?.from ?? null;
     if (!this.slash.open) return;
     this.slash = { ...CLOSED_SLASH };
     this.emit('slash', this.slash);
@@ -403,8 +402,8 @@ export class Editor {
     if (!item) return;
 
     if (context) {
-      restoreSelection(context.before);
-      document.execCommand('delete');
+      const { state, view } = this.tiptap;
+      view.dispatch(state.tr.delete(context.from, context.to));
     }
     this.exec(item.command);
   }
@@ -423,56 +422,107 @@ export class Editor {
   }
 
   destroy() {
-    const el = this.el;
     this._events.forEach(([target, type, handler]) => target.removeEventListener(type, handler));
     cancelAnimationFrame(this._selectionFrame);
     clearTimeout(this._autosaveTimer);
-    el.removeAttribute('contenteditable');
+    this.tiptap.destroy();
     this.listeners = {};
+  }
+
+  // Tempel secara terprogram dengan aturan yang sama seperti paste dari clipboard:
+  //   editor.paste({ html: '<p>..</p>', text: '..', files: [File, ...] })
+  paste({ html = '', text = '', files = [] } = {}) {
+    if (this.readOnly) return;
+    if (!this.hasFocus()) this.focus();
+    this._syncSelection();
+    const { state, view } = this.tiptap;
+    const parent = state.selection.$from.parent;
+
+    // Blok kode & keterangan gambar: teks polos (keterangan: satu baris).
+    if (parent.type.name === 'codeBlock' || (isCaption(parent) && !(state.selection instanceof NodeSelection))) {
+      const value = parent.type.name === 'codeBlock' ? text.replace(/\r\n?/g, '\n') : text.replace(/\s+/g, ' ').trim();
+      if (value) view.dispatch(state.tr.insertText(value).scrollIntoView());
+      return;
+    }
+
+    // Gambar dari clipboard (screenshot, salin gambar). Jika HTML-nya hanya <img> ber-URL
+    // dan tidak ada fungsi upload, pakai URL-nya saja (lebih ringan dari base64).
+    const htmlIsOnlyImage = !html || /^\s*(<meta[^>]*>\s*)?(<!--[^]*?-->\s*)*<img[^>]*>\s*(<!--[^]*?-->\s*)*$/i.test(html);
+    if (files.length && htmlIsOnlyImage && !this.options.pasteAsPlainText) {
+      const httpImage = html && /<img[^>]*src=["']?https?:/i.test(html);
+      if (httpImage && !this.options.upload) this.insertHTML(html);
+      else this.insertImages(files);
+      return;
+    }
+
+    if (this._pasteUrl(text, html)) return;
+
+    if (html && !this.options.pasteAsPlainText) this.insertHTML(html);
+    else if (text) this.insertText(text);
   }
 
   // ---------- Internal ----------
 
-  _setup() {
+  _setup(content) {
     const el = this.el;
+    const options = this.options;
+    el.innerHTML = '';
+    el.dataset.afwPlaceholder = options.placeholder ?? this.strings.placeholder;
 
-    el.setAttribute('contenteditable', 'true');
-    el.setAttribute('role', 'textbox');
-    el.setAttribute('aria-multiline', 'true');
-    el.setAttribute('aria-label', this.options.label || this.strings.editorLabel);
-    el.classList.add('afw-content');
-    el.dataset.afwPlaceholder = this.options.placeholder ?? this.strings.placeholder;
+    const behavior = Extension.create({
+      name: 'afwBehavior',
+      addCommands: () => ({ insertMediaBlock }),
+      addInputRules() {
+        return options.markdown ? markdownRules(this.editor.schema) : [];
+      },
+      addProseMirrorPlugins: () => [decorationsPlugin(), trailingParagraphPlugin()],
+    });
 
-    this.setHTML(this.options.content || el.innerHTML, { silent: true });
-    if (this.options.readonly) this.setReadOnly(true);
+    this.tiptap = new TiptapEditor({
+      element: { mount: el },
+      extensions: [
+        ...createExtensions({ allowDataImages: options.allowDataImages, captionPlaceholder: this.strings.captionPlaceholder }),
+        behavior,
+        UndoRedo.configure({ depth: options.historyLimit, newGroupDelay: 1000 }),
+        Gapcursor,
+        Dropcursor.configure({ color: false, class: 'afw-dropcursor' }),
+      ],
+      content: this._initialHTML(content),
+      injectCSS: false,
+      enableInputRules: ['afwBehavior'],
+      enablePasteRules: false,
+      editorProps: {
+        attributes: (state) => this._viewAttributes(state),
+        handleKeyDown: (view, e) => this._handleKeydown(e),
+        // Mengetik saat media terpilih tidak mengganti media.
+        handleTextInput: () => !!this._selectedMediaNode(),
+        handlePaste: (view, e) => this._handlePaste(e),
+        handleDrop: (view, e, slice, moved) => this._handleDrop(e, moved),
+        handleClickOn: (view, pos, node, nodePos, e) => this._handleClickOn(node, nodePos, e),
+        handleClick: (view, pos, e) => this._handleClick(e),
+        transformPastedHTML: (html) => sanitize(html, this._sanitizeOptions()),
+      },
+    });
+    this.tiptap.on('transaction', ({ transaction }) => this._afterUpdate(transaction));
+
+    if (options.readonly) this.setReadOnly(true);
     this._setupAutosave();
 
     this._events = [
-      // Saat IME composition (keyboard mobile, input Jepang/Cina) DOM tidak boleh diubah.
-      [el, 'input', (e) => !e.isComposing && this._handleInput(e)],
-      [el, 'keydown', (e) => this._handleKeydown(e)],
-      // Undo/redo dari menu Edit browser atau gerakan di perangkat sentuh.
-      [el, 'beforeinput', (e) => {
-        if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') {
-          e.preventDefault();
-          e.inputType === 'historyUndo' ? this.undo() : this.redo();
-        }
-      }],
       [el, 'focus', () => {
-        this._applyBrowserDefaults();
+        // Seleksi yang dipasang lewat script tepat setelah focus() langsung dibaca; tanpa ini
+        // ProseMirror bisa mengembalikan kursor ke posisi lamanya.
+        queueMicrotask(() => this._syncSelection());
         this.emit('focus');
+        this.emit('state', this.state());
+        this._scheduleSelection();
       }],
       [el, 'blur', () => {
         this.closeSlash();
         this.emit('blur');
         this.emit('state', this.state());
+        this._scheduleSelection();
       }],
-      [el, 'paste', (e) => this._handlePaste(e)],
-      [el, 'click', (e) => this._handleClick(e)],
-      [el, 'drop', (e) => this._handleDrop(e)],
-      // Drag dari dalam editor sendiri (memindah teks) dibiarkan ke browser.
-      [el, 'dragstart', () => (this._internalDrag = true)],
-      [el, 'dragend', () => (this._internalDrag = false)],
       // Selama mouse ditekan (sedang memblok teks), bubble belum ditampilkan.
       [el, 'mousedown', () => (this._pointerDown = true)],
       [document, 'mouseup', () => {
@@ -480,20 +530,45 @@ export class Editor {
         this._pointerDown = false;
         this._scheduleSelection();
       }],
-      [document, 'selectionchange', () => {
-        this._checkMediaSelection();
-        if (isSelectionInside(this.el)) this.emit('state', this.state());
-        if (this.slash.open) this._updateSlash();
-        this._scheduleSelection();
-      }],
     ];
     this._events.forEach(([target, type, handler]) => target.addEventListener(type, handler));
   }
 
-  // Enter menghasilkan <p> (bukan <div>), dan format memakai tag (<b>), bukan <span style>.
-  _applyBrowserDefaults() {
-    document.execCommand('defaultParagraphSeparator', false, 'p');
-    document.execCommand('styleWithCSS', false, false);
+  _initialHTML(content) {
+    return sanitize(content, this._sanitizeOptions()) || '<p></p>';
+  }
+
+  _parse(html) {
+    const doc = createDocument(html || '<p></p>', this.tiptap.schema);
+    // Selalu ada paragraf setelah media terakhir agar kursor bisa diletakkan di sana.
+    if (isMediaNode(doc.lastChild)) {
+      return doc.copy(doc.content.append(Fragment.from(this.tiptap.schema.nodes.paragraph.create())));
+    }
+    return doc;
+  }
+
+  _viewAttributes(state) {
+    const classes = ['afw-content'];
+    if (isDocEmpty(state.doc)) classes.push('afw-is-empty');
+    if (this.readOnly) classes.push('afw-is-readonly');
+    return {
+      class: classes.join(' '),
+      role: 'textbox',
+      'aria-multiline': 'true',
+      'aria-label': this.options.label || this.strings.editorLabel,
+      'aria-readonly': String(this.readOnly),
+    };
+  }
+
+  _afterUpdate(tr) {
+    if (tr.docChanged) {
+      this._scheduleDraftSave();
+      if (!this._silent) this.emit('change', this.getHTML());
+    }
+    this._emitHistory();
+    this._updateSlash();
+    this.emit('state', this.state());
+    this._scheduleSelection();
   }
 
   _setupAutosave() {
@@ -529,215 +604,222 @@ export class Editor {
     return { allowDataImages: this.options.allowDataImages };
   }
 
-  _prepareMedia() {
-    prepareMedia(this.el, this.strings.captionPlaceholder, !this.readOnly);
-  }
-
-  _snapshot() {
-    return { html: this.el.innerHTML, selection: serializeSelection(this.el) };
-  }
-
-  _record(options) {
-    this.history.record(this._snapshot(), options);
-    this._emitHistory();
+  // Baca seleksi DOM sekarang juga. ProseMirror biasanya membacanya dari event
+  // selectionchange, yang bisa datang terlambat jika tombol ditekan sangat cepat
+  // (mis. Shift+Panah lalu langsung Ctrl+B).
+  _syncSelection() {
+    const observer = this.tiptap.view.domObserver;
+    if (!observer || this.tiptap.isDestroyed) return;
+    observer.forceFlush();
+    observer.flush();
   }
 
   _emitHistory() {
-    this.emit('history', { canUndo: this.history.canUndo(), canRedo: this.history.canRedo() });
+    const value = { canUndo: this.canUndo(), canRedo: this.canRedo() };
+    if (this._history?.canUndo === value.canUndo && this._history?.canRedo === value.canRedo) return;
+    this._history = value;
+    this.emit('history', value);
   }
 
-  _restoreSnapshot(snapshot) {
-    this._clearMediaSelection();
-    this.el.innerHTML = snapshot.html;
-    this.el.querySelectorAll('.afw-is-selected').forEach((node) => node.classList.remove('afw-is-selected'));
-    this.el.focus({ preventScroll: true });
-    if (!restoreSerializedSelection(this.el, snapshot.selection)) placeCaretAtEnd(this.el);
-    this._handleChange({ record: false });
-    this._emitHistory();
+  // ----- Media -----
+
+  _selectedMediaNode() {
+    const { selection } = this.tiptap.state;
+    return selection instanceof NodeSelection && isMediaNode(selection.node)
+      ? { node: selection.node, pos: selection.from }
+      : null;
   }
 
-  _clearMediaSelection() {
-    this._selectedMedia?.classList.remove('afw-is-selected');
-    this._selectedMedia = null;
+  _updateMedia(getAttrs) {
+    const media = this._selectedMediaNode();
+    const attrs = media && getAttrs(media.node);
+    if (!attrs) return;
+    const { state, view } = this.tiptap;
+    const tr = state.tr.setNodeMarkup(media.pos, null, { ...media.node.attrs, ...attrs });
+    tr.setSelection(NodeSelection.create(tr.doc, media.pos));
+    view.focus();
+    view.dispatch(tr);
   }
 
-  // Seleksi pindah ke tempat lain di editor -> media tidak lagi terpilih.
-  _checkMediaSelection() {
-    const node = this._selectedMedia;
-    if (!node || this._selectingMedia) return;
-    if (!node.isConnected) return this._clearMediaSelection();
+  // Posisi node tingkat teratas yang DOM-nya `dom`.
+  _posOfDOM(dom) {
+    const { view, state } = this.tiptap;
+    let found = null;
+    state.doc.forEach((node, offset) => {
+      if (found === null && view.nodeDOM(offset) === dom) found = offset;
+    });
+    return found;
+  }
 
-    const range = getRange();
-    if (!range || !this.el.contains(range.commonAncestorContainer)) return; // fokus di toolbar/input
-    const index = [...this.el.childNodes].indexOf(node);
-    const stillAround = range.startContainer === this.el && range.startOffset === index &&
-      range.endContainer === this.el && range.endOffset === index + 1;
-    if (!stillAround) this._clearMediaSelection();
+  _handleClickOn(node, nodePos, e) {
+    if (this.readOnly || !isMediaNode(node) || e.target.closest?.('figcaption')) return false;
+    const { state, view } = this.tiptap;
+    view.dispatch(state.tr.setSelection(NodeSelection.create(state.doc, nodePos)));
+    return true;
   }
 
   _handleClick(e) {
-    if (this.readOnly) return;
-    const media = e.target.closest?.('figure, hr');
-    if (media && media.parentNode === this.el && !e.target.closest('figcaption')) {
-      e.preventDefault();
-      this.selectMedia(media);
-      return;
-    }
-    if (e.target === this.el) this._clickGap(e.clientY);
+    if (this.readOnly || e.target !== this.el) return false;
+    return this._clickGap(e.clientY);
   }
 
   // Klik di celah antar blok yang bersebelahan dengan media (mis. pemisah langsung diikuti
   // kutipan) -> buat paragraf kosong di sana, karena kursor tidak bisa diletakkan di celah itu.
   _clickGap(y) {
-    const blocks = [...this.el.children];
-    const after = blocks.find((node) => node.getBoundingClientRect().bottom >= y);
-    if (after && after.getBoundingClientRect().top <= y) return; // di dalam blok, bukan celah
-    const before = after ? after.previousElementSibling : blocks[blocks.length - 1];
-    if (!isMediaNode(before) && !isMediaNode(after)) return;
+    const { state, view } = this.tiptap;
+    const blocks = [];
+    state.doc.forEach((node, offset) => blocks.push({ node, offset, rect: view.nodeDOM(offset)?.getBoundingClientRect() }));
 
-    const p = emptyParagraph();
-    after ? after.before(p) : this.el.append(p);
-    this._clearMediaSelection();
-    placeCaretIn(p);
-    this._handleChange();
-    this._scheduleSelection();
-  }
+    const index = blocks.findIndex((b) => b.rect && b.rect.bottom >= y);
+    const after = blocks[index];
+    if (after && after.rect.top <= y) return false; // di dalam blok, bukan celah
+    const before = index === -1 ? blocks[blocks.length - 1] : blocks[index - 1];
+    if (!isMediaNode(before?.node) && !isMediaNode(after?.node)) return false;
 
-  _inCaption() {
-    const range = getRange();
-    let node = range?.startContainer;
-    if (node && node.nodeType !== Node.ELEMENT_NODE) node = node.parentElement;
-    return !!node?.closest?.('figcaption') && this.el.contains(node);
+    const pos = after ? after.offset : state.doc.content.size;
+    const tr = state.tr.insert(pos, state.schema.nodes.paragraph.create());
+    tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+    view.dispatch(tr);
+    return true;
   }
 
   // Keyboard saat media terpilih. Mengembalikan true jika ditangani.
-  _handleMediaKey(e) {
-    const node = this._selectedMedia;
+  _handleMediaKey(e, media) {
     const key = e.key;
-
     if (key === 'Backspace' || key === 'Delete') {
-      e.preventDefault();
       this.removeMedia();
       return true;
     }
     if (key === 'Enter') {
-      e.preventDefault();
-      const p = emptyParagraph();
-      node.after(p);
-      this._clearMediaSelection();
-      placeCaretIn(p);
-      this._handleChange();
+      this._insertParagraphAt(media.pos + media.node.nodeSize);
       return true;
     }
     if (['ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Escape'].includes(key)) {
-      e.preventDefault();
-      this._moveFromMedia(node, ['ArrowUp', 'ArrowLeft'].includes(key) ? 'before' : 'after');
+      this._moveFromMedia(media, ['ArrowUp', 'ArrowLeft'].includes(key) ? -1 : 1);
       return true;
     }
     // Mengetik saat media terpilih tidak mengganti media.
-    if (key.length === 1 && !e.ctrlKey && !e.metaKey) {
-      e.preventDefault();
+    return key.length === 1 && !e.ctrlKey && !e.metaKey;
+  }
+
+  _moveFromMedia({ node, pos }, dir) {
+    const { state, view } = this.tiptap;
+    const edge = dir < 0 ? pos : pos + node.nodeSize;
+    const $edge = state.doc.resolve(edge);
+    const target = dir < 0 ? $edge.nodeBefore : $edge.nodeAfter;
+
+    if (isMediaNode(target)) {
+      view.dispatch(state.tr.setSelection(NodeSelection.create(state.doc, dir < 0 ? edge - target.nodeSize : edge)));
+    } else if (target) {
+      view.dispatch(state.tr.setSelection(Selection.findFrom($edge, dir, true) || Selection.near($edge, dir)).scrollIntoView());
+    } else {
+      this._insertParagraphAt(edge);
+    }
+  }
+
+  _insertParagraphAt(pos) {
+    const { state, view } = this.tiptap;
+    const tr = state.tr.insert(pos, state.schema.nodes.paragraph.create());
+    tr.setSelection(TextSelection.create(tr.doc, pos + 1));
+    view.dispatch(tr.scrollIntoView());
+  }
+
+  // Kursor di keterangan gambar, atau di tepi blok yang bersebelahan dengan media.
+  _handleKeyNearMedia(e) {
+    const { state, view } = this.tiptap;
+    const { selection } = state;
+    if (!selection.empty) return false;
+    const { $from } = selection;
+    const parent = $from.parent;
+    const atStart = $from.parentOffset === 0;
+    const atEnd = $from.parentOffset === parent.content.size;
+
+    if (isCaption(parent)) {
+      // Enter di keterangan -> lanjut ke paragraf setelah gambar.
+      if (e.key === 'Enter') {
+        const after = $from.after();
+        const next = state.doc.nodeAt(after);
+        if (next && !isMediaNode(next)) {
+          view.dispatch(state.tr.setSelection(Selection.findFrom(state.doc.resolve(after), 1, true)).scrollIntoView());
+        } else {
+          this._insertParagraphAt(after);
+        }
+        return true;
+      }
+      // Keterangan tidak boleh tergabung dengan blok di sekitarnya.
+      return (e.key === 'Backspace' && atStart) || (e.key === 'Delete' && atEnd);
+    }
+
+    // Backspace di awal paragraf setelah media / Delete di akhir paragraf sebelum media
+    // -> pilih media itu dulu (bukan langsung menghapus).
+    if ($from.depth !== 1 || !parent.isTextblock) return false;
+    const back = e.key === 'Backspace' && atStart;
+    const forward = e.key === 'Delete' && atEnd;
+    if (!back && !forward) return false;
+
+    const $block = state.doc.resolve(back ? $from.before() : $from.after());
+    const media = back ? $block.nodeBefore : $block.nodeAfter;
+    if (!isMediaNode(media)) return false;
+
+    const tr = state.tr;
+    let mediaPos = back ? $block.pos - media.nodeSize : $block.pos;
+    if (parent.type.name === 'paragraph' && parent.content.size === 0) {
+      tr.delete($from.before(), $from.after());
+      if (forward) mediaPos -= parent.nodeSize;
+    }
+    tr.setSelection(NodeSelection.create(tr.doc, mediaPos));
+    view.dispatch(tr);
+    return true;
+  }
+
+  // Enter / Tab di blok kode. Mengembalikan true jika ditangani.
+  _handleCodeKey(e) {
+    const { state, view } = this.tiptap;
+    const { $from, from, to, empty } = state.selection;
+    if ($from.parent.type.name !== 'codeBlock' || e.ctrlKey || e.metaKey || e.altKey) return false;
+    const text = $from.parent.textContent;
+    const start = $from.start();
+
+    if (e.key === 'Enter') {
+      // Enter di baris kosong terakhir -> keluar dari blok kode.
+      if (empty && $from.parentOffset === text.length && text.endsWith('\n')) {
+        const tr = state.tr.delete(from - 1, from);
+        const after = tr.mapping.map($from.after());
+        tr.insert(after, state.schema.nodes.paragraph.create());
+        tr.setSelection(TextSelection.create(tr.doc, after + 1));
+        view.dispatch(tr.scrollIntoView());
+      } else {
+        view.dispatch(state.tr.insertText('\n', from, to).scrollIntoView());
+      }
+      return true;
+    }
+
+    if (e.key === 'Tab') {
+      if (!e.shiftKey) {
+        view.dispatch(state.tr.insertText(CODE_INDENT, from, to));
+      } else {
+        const lineStart = start + text.lastIndexOf('\n', $from.parentOffset - 1) + 1;
+        const offset = lineStart - start;
+        const remove = text.slice(offset, offset + CODE_INDENT.length).match(/^ */)[0].length;
+        if (remove) view.dispatch(state.tr.delete(lineStart, lineStart + remove));
+      }
       return true;
     }
     return false;
   }
 
-  _moveFromMedia(node, direction) {
-    const target = direction === 'before' ? node.previousElementSibling : node.nextElementSibling;
-    if (isMediaNode(target)) return this.selectMedia(target);
-
-    this._clearMediaSelection();
-    if (target) {
-      placeCaretIn(target, direction === 'before' ? 'end' : 'start');
-    } else {
-      const p = emptyParagraph();
-      direction === 'before' ? node.before(p) : node.after(p);
-      placeCaretIn(p);
-      this._handleChange();
-    }
-    this._scheduleSelection();
-  }
-
-  // Backspace di awal paragraf setelah media / Delete di akhir paragraf sebelum media
-  // -> pilih media itu dulu (bukan langsung menghapus).
-  _handleKeyNearMedia(e) {
-    if (e.key !== 'Backspace' && e.key !== 'Delete') return false;
-    const range = getRange();
-    if (!range || !range.collapsed) return false;
-
-    const block = topBlockAtCaret(this.el);
-    if (!block || isMediaNode(block)) return false;
-
-    const edge = document.createRange();
-    if (e.key === 'Backspace') {
-      edge.setStart(block, 0);
-      edge.setEnd(range.startContainer, range.startOffset);
-    } else {
-      edge.setStart(range.startContainer, range.startOffset);
-      edge.setEnd(block, block.childNodes.length);
-    }
-    if (edge.toString().replace(/\u200b/g, '')) return false;
-
-    const media = e.key === 'Backspace' ? block.previousElementSibling : block.nextElementSibling;
-    if (!isMediaNode(media)) return false;
-
-    e.preventDefault();
-    if (!block.textContent.trim() && block.tagName === 'P') block.remove();
-    this.selectMedia(media);
-    this._handleChange();
-    return true;
-  }
-
-  _handleInput(e) {
-    if (this.options.markdown && e.inputType === 'insertText' && e.data && !this._inCaption()) {
-      const char = e.data.slice(-1);
-      if (char === ' ' && applyBlockShortcut(this)) return;
-      if (applyInlineShortcut(this, char)) return this._handleChange();
-    }
-    // Ketikan & hapus karakter beruntun digabung menjadi satu langkah undo.
-    this._handleChange({ typing: /^(insertText|insertCompositionText|deleteContent)/.test(e.inputType) });
-  }
-
   _handleKeydown(e) {
-    if (this.readOnly) return;
+    if (this.readOnly) return false;
+    this._syncSelection();
+    const { state } = this.tiptap;
 
-    // Undo / redo memakai riwayat editor sendiri.
-    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
-      const key = e.key.toLowerCase();
-      if (key === 'z' || key === 'y') {
-        e.preventDefault();
-        if (key === 'z' && !e.shiftKey) this.undo();
-        else this.redo();
-        return;
-      }
-    }
+    const media = this._selectedMediaNode();
+    if (media) return this._handleMediaKey(e, media);
 
-    if (this._selectedMedia && this._handleMediaKey(e)) return;
-
-    // Enter di keterangan gambar -> lanjut ke paragraf setelah gambar.
-    if (e.key === 'Enter' && this._inCaption()) {
-      e.preventDefault();
-      const figure = topBlockAtCaret(this.el);
-      let next = figure.nextElementSibling;
-      if (!next || isMediaNode(next)) {
-        next = emptyParagraph();
-        figure.after(next);
-      }
-      this.el.focus({ preventScroll: true });
-      placeCaretIn(next);
-      this._handleChange();
-      return;
-    }
-
-    if (this._handleKeyNearMedia(e)) return;
-
-    if (!this.slash.open && handleCodeKey(this, e)) {
-      this._handleChange();
-      return;
-    }
+    if (this._handleKeyNearMedia(e)) return true;
 
     // Navigasi slash menu.
-    if (this.slash.open) {
+    if (this.slash.open && !e.shiftKey) {
       const keys = {
         ArrowDown: () => this.setSlashIndex(this.slash.index + 1),
         ArrowUp: () => this.setSlashIndex(this.slash.index - 1),
@@ -745,77 +827,47 @@ export class Editor {
         Tab: () => this.slash.items.length && this.applySlash(),
         Escape: () => this.closeSlash({ dismiss: true }),
       };
-      if (keys[e.key] && !e.shiftKey) {
-        e.preventDefault();
+      if (keys[e.key]) {
         keys[e.key]();
-        return;
+        return true;
       }
+    }
+
+    if (this._handleCodeKey(e)) return true;
+
+    // Enter di judul/kutipan kosong -> kembali menjadi paragraf.
+    const parent = state.selection.$from.parent;
+    if (e.key === 'Enter' && !e.shiftKey && state.selection.empty && ['heading', 'blockquote'].includes(parent.type.name) && !parent.content.size) {
+      this.tiptap.commands.setNode('paragraph');
+      return true;
     }
 
     // Tab / Shift+Tab di dalam list = naik/turun tingkat. Di luar list, Tab dibiarkan
     // (untuk pindah fokus, penting bagi pengguna keyboard).
-    if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey && !e.altKey && closestInRoot(this.el, 'li')) {
-      e.preventDefault();
+    if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (!this.tiptap.isActive('listItem')) return false;
       this.exec(e.shiftKey ? 'outdent' : 'indent');
-      return;
+      return true;
     }
 
-    if (!(e.ctrlKey || e.metaKey)) return;
-
+    if (!(e.ctrlKey || e.metaKey)) return false;
     const shortcut = SHORTCUTS.find(
       (s) => s.code === e.code && !!s.alt === e.altKey && !!s.shift === e.shiftKey,
     );
-    if (!shortcut) return;
-
-    e.preventDefault();
+    if (!shortcut) return false;
     this.exec(shortcut.command);
+    return true;
   }
 
   _handlePaste(e) {
     const data = e.clipboardData;
-    if (!data || this.readOnly) return;
-    e.preventDefault();
+    if (!data || this.readOnly) return false;
     this.paste({
       html: data.getData('text/html'),
       text: data.getData('text/plain'),
       files: [...(data.files || [])],
     });
-  }
-
-  // Tempel secara terprogram dengan aturan yang sama seperti paste dari clipboard:
-  //   editor.paste({ html: '<p>..</p>', text: '..', files: [File, ...] })
-  paste({ html = '', text = '', files = [] } = {}) {
-    if (this.readOnly) return;
-    if (!isSelectionInside(this.el)) this.focus();
-
-    // Blok kode: teks apa adanya.
-    const pre = inCodeBlock(this.el);
-    if (pre) {
-      replaceInCode(pre.querySelector('code'), text.replace(/\r\n?/g, '\n'));
-      this._handleChange();
-      return;
-    }
-
-    // Keterangan gambar: hanya teks satu baris.
-    if (this._inCaption()) {
-      document.execCommand('insertText', false, text.replace(/\s+/g, ' ').trim());
-      return;
-    }
-
-    // Gambar dari clipboard (screenshot, salin gambar). Jika HTML-nya hanya <img> ber-URL
-    // dan tidak ada fungsi upload, pakai URL-nya saja (lebih ringan dari base64).
-    const htmlIsOnlyImage = !html || /^\s*(<meta[^>]*>\s*)?(<!--[^]*?-->\s*)*<img[^>]*>\s*(<!--[^]*?-->\s*)*$/i.test(html);
-    if (files.length && htmlIsOnlyImage && !this.options.pasteAsPlainText) {
-      const httpImage = html && /<img[^>]*src=["']?https?:/i.test(html);
-      if (httpImage && !this.options.upload) this.insertHTML(html);
-      else this.insertImages(files);
-      return;
-    }
-
-    if (this._pasteUrl(text, html)) return;
-
-    if (html && !this.options.pasteAsPlainText) this.insertHTML(html);
-    else if (text) this.insertText(text);
+    return true;
   }
 
   // Tempel satu URL:
@@ -826,93 +878,65 @@ export class Editor {
     if (!/^https?:\/\/\S+$/i.test(url)) return false;
     if (html && !/^\s*(<meta[^>]*>\s*)?<a [^>]*>[^<]*<\/a>\s*$/i.test(html) && html.replace(/<[^>]+>/g, '').trim() !== url) return false;
 
-    const range = getRange();
-    if (range && !range.collapsed && !closestInRoot(this.el, 'a')) {
+    const { selection } = this.tiptap.state;
+    if (!selection.empty && !this.tiptap.isActive('link')) {
       this.exec('link', url);
       return true;
     }
 
-    const block = topBlockAtCaret(this.el);
-    const isEmptyParagraph = block?.tagName === 'P' && !block.textContent.trim();
-    if (isEmptyParagraph && parseEmbed(url)) {
-      insertMediaBlock(this.el, createEmbedFigure(url), this.strings.captionPlaceholder);
-      this._handleChange();
+    const { $from } = selection;
+    const isEmptyParagraph = $from.depth === 1 && $from.parent.type.name === 'paragraph' && !$from.parent.content.size;
+    const embed = isEmptyParagraph && parseEmbed(url);
+    if (embed) {
+      this.tiptap.commands.insertMediaBlock({ type: 'embed', attrs: { provider: embed.provider, id: embed.id } });
       return true;
     }
     return false;
   }
 
-  _handleDrop(e) {
-    if (this._internalDrag || this.readOnly) return;
+  // Drop dari luar editor (file, HTML, teks) ditangani dengan aturan yang sama seperti paste.
+  // Memindah isi di dalam editor sendiri dibiarkan ke ProseMirror.
+  _handleDrop(e, moved) {
+    if (this.readOnly) return true;
+    if (moved) return false;
     const data = e.dataTransfer;
-    const html = data?.getData('text/html');
-    const text = data?.getData('text/plain');
+    const html = data?.getData('text/html') || '';
+    const text = data?.getData('text/plain') || '';
     const files = [...(data?.files || [])];
-    if (!html && !text && !files.length) return;
+    if (!html && !text && !files.length) return false;
 
-    e.preventDefault();
-    const range = rangeFromPoint(e.clientX, e.clientY);
-    if (range && this.el.contains(range.startContainer)) {
-      this.el.focus();
-      restoreSelection(range);
-    }
-    if (files.length) {
-      this.insertImages(files);
-      return;
-    }
-    if (html && !this.options.pasteAsPlainText) this.insertHTML(html);
+    const { state, view } = this.tiptap;
+    const target = view.posAtCoords({ left: e.clientX, top: e.clientY });
+    view.focus();
+    if (target) view.dispatch(state.tr.setSelection(Selection.near(state.doc.resolve(target.pos))));
+
+    if (files.length) this.insertImages(files);
+    else if (html && !this.options.pasteAsPlainText) this.insertHTML(html);
     else this.insertText(text);
+    return true;
   }
 
-  // typing: perubahan berasal dari ketikan (digabung di riwayat undo)
-  // record: false saat memulihkan snapshot undo/redo
-  _handleChange({ typing = false, record = true } = {}) {
-    this._ensureParagraph();
-    cleanLive(this.el);
-    normalizeCodeBlocks(this.el);
-    this._prepareMedia();
-    if (this._selectedMedia && !this._selectedMedia.isConnected) this._clearMediaSelection();
-    this._updatePlaceholder();
-    this._updateSlash();
-    if (record) this._record({ typing });
-    this._scheduleDraftSave();
-    this.emit('change', this.getHTML());
-    this.emit('state', this.state());
-    this._scheduleSelection();
-  }
-
-  // Teks dari awal paragraf sampai kursor, jika kursor di akhir paragraf.
+  // Teks dari awal paragraf sampai kursor, jika kursor di akhir paragraf tingkat teratas.
   _slashContext() {
-    const range = getRange();
-    if (!range || !range.collapsed) return null;
-
-    const block = closestInRoot(this.el, 'p');
-    if (!block || block.closest('li, blockquote')) return null;
-
-    const before = document.createRange();
-    before.setStart(block, 0);
-    before.setEnd(range.startContainer, range.startOffset);
-
-    const after = document.createRange();
-    after.setStart(range.startContainer, range.startOffset);
-    after.setEnd(block, block.childNodes.length);
-    if (after.toString().replace(/​/g, '')) return null;
-
-    return { block, before, text: before.toString() };
+    const { selection } = this.tiptap.state;
+    if (!selection.empty) return null;
+    const { $from } = selection;
+    const parent = $from.parent;
+    if ($from.depth !== 1 || parent.type.name !== 'paragraph' || $from.parentOffset !== parent.content.size) return null;
+    return { from: $from.start(), to: $from.pos, text: parent.textContent };
   }
 
   _updateSlash() {
     if (!this.options.slash) return;
 
-    const context = this._slashContext();
+    const context = this.hasFocus() ? this._slashContext() : null;
     const match = context?.text.match(/^\/([^\s/]{0,24})$/);
-    this._slashBlock = context?.block || null;
 
     if (!match) {
       this._slashDismissed = null;
       return this.closeSlash();
     }
-    if (this._slashDismissed === context.block) return;
+    if (this._slashDismissed === context.from) return;
 
     const query = match[1];
     const items = filterBlocks(query, this.options.blocks, this.strings);
@@ -936,53 +960,87 @@ export class Editor {
   }
 
   _selectionInfo() {
-    if (this._selectedMedia) {
+    if (!this.hasFocus()) return { inside: false };
+    const { state, view } = this.tiptap;
+
+    const media = this._selectedMediaNode();
+    if (media) {
       return {
         inside: true,
         collapsed: false,
         dragging: !!this._pointerDown,
-        media: { ...this.selectedMedia(), rect: this._selectedMedia.getBoundingClientRect() },
+        media: { ...this.selectedMedia(), rect: view.nodeDOM(media.pos).getBoundingClientRect() },
       };
     }
 
-    const range = getRange();
-    const inside = !!range && this.el.contains(range.commonAncestorContainer) && document.activeElement === this.el;
-    if (!inside) return { inside: false };
-
+    const { $from, empty } = state.selection;
+    const parent = $from.parent;
     const anchor = closestInRoot(this.el, 'a');
-    const block = closestInRoot(this.el, 'p, h2, h3, blockquote, li');
-    const isEmptyParagraph = block?.tagName === 'P' && !block.closest('li, blockquote') && !block.textContent.replace(/​/g, '');
+    const isEmptyParagraph = $from.depth === 1 && parent.type.name === 'paragraph' && !parent.content.size;
 
     return {
       inside: true,
-      inCode: !!inCodeBlock(this.el),
-      collapsed: range.collapsed,
+      inCode: parent.type.name === 'codeBlock',
+      collapsed: empty,
       dragging: !!this._pointerDown,
-      rect: rangeRect(range),
+      rect: this.selectionRect(),
       link: anchor ? { href: anchor.getAttribute('href'), rect: anchor.getBoundingClientRect() } : null,
-      emptyBlock: isEmptyParagraph ? { rect: block.getBoundingClientRect() } : null,
+      emptyBlock: isEmptyParagraph ? { rect: view.nodeDOM($from.before()).getBoundingClientRect() } : null,
     };
   }
+}
 
-  // Pastikan isi editor selalu dibungkus blok (<p>), tidak pernah teks lepas.
-  _ensureParagraph() {
-    const el = this.el;
+// Penanda visual: media terpilih (afw-is-selected) dan gambar yang keterangannya sedang
+// diedit (afw-is-editing; keterangan kosong hanya tampil saat itu).
+function decorationsPlugin() {
+  return new Plugin({
+    props: {
+      decorations(state) {
+        const { selection } = state;
+        const decorations = [];
+        if (selection instanceof NodeSelection && isMediaNode(selection.node)) {
+          decorations.push(Decoration.node(selection.from, selection.to, { class: 'afw-is-selected' }));
+        } else if (isCaption(selection.$from.parent)) {
+          decorations.push(Decoration.node(selection.$from.before(), selection.$from.after(), { class: 'afw-is-editing' }));
+        }
+        return DecorationSet.create(state.doc, decorations);
+      },
+    },
+  });
+}
 
-    if (!el.firstChild || el.innerHTML === '<br>') {
-      el.innerHTML = EMPTY_PARAGRAPH;
-      placeCaretAtEnd(el.firstChild);
-      return;
-    }
+// Selalu ada paragraf setelah media terakhir agar kursor bisa diletakkan di sana.
+function trailingParagraphPlugin() {
+  return new Plugin({
+    appendTransaction(transactions, oldState, state) {
+      if (!transactions.some((tr) => tr.docChanged) || !isMediaNode(state.doc.lastChild)) return null;
+      return state.tr.insert(state.doc.content.size, state.schema.nodes.paragraph.create());
+    },
+  });
+}
 
-    const hasLooseText = [...el.childNodes].some(
-      (n) => n.nodeType === Node.TEXT_NODE && n.textContent.trim() !== '',
-    );
-    if (hasLooseText) document.execCommand('formatBlock', false, '<p>');
+// Paragraf kosong di akhir hasil parse tidak ikut disisipkan.
+function trimTrailingEmpty(fragment) {
+  let content = fragment;
+  while (content.childCount > 1 && content.lastChild.type.name === 'paragraph' && !content.lastChild.content.size) {
+    content = content.cut(0, content.size - content.lastChild.nodeSize);
   }
+  return content;
+}
 
-  _updatePlaceholder() {
-    this.el.classList.toggle('afw-is-empty', this.isEmpty() && this.el.children.length <= 1);
-  }
+function getRange() {
+  const sel = window.getSelection();
+  return sel && sel.rangeCount ? sel.getRangeAt(0) : null;
+}
+
+// Elemen terdekat (dari posisi kursor DOM) yang cocok dengan selector, dibatasi di dalam root.
+function closestInRoot(root, selector) {
+  const range = getRange();
+  if (!range || !root.contains(range.startContainer)) return null;
+  let node = range.startContainer;
+  if (node.nodeType !== Node.ELEMENT_NODE) node = node.parentElement;
+  const found = node?.closest(selector);
+  return found && found !== root && root.contains(found) ? found : null;
 }
 
 // localStorage bisa tidak tersedia (mode privat, kuota penuh, dll.): jangan sampai error.
@@ -995,29 +1053,4 @@ function storage(action, key, value) {
     return null;
   }
   return null;
-}
-
-// DOMRect seleksi. Range yang collapsed di paragraf kosong sering memberi rect nol,
-// jadi jatuh ke rect elemen terdekat.
-function rangeRect(range) {
-  const rect = range.getBoundingClientRect();
-  if (rect.width || rect.height) return rect;
-
-  const first = range.getClientRects()[0];
-  if (first) return first;
-
-  let node = range.startContainer;
-  if (node.nodeType !== Node.ELEMENT_NODE) node = node.parentElement;
-  const box = node.getBoundingClientRect();
-  return new DOMRect(box.left, box.top, 0, Math.min(box.height, 28));
-}
-
-function rangeFromPoint(x, y) {
-  if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
-  const pos = document.caretPositionFromPoint?.(x, y);
-  if (!pos) return null;
-  const range = document.createRange();
-  range.setStart(pos.offsetNode, pos.offset);
-  range.collapse(true);
-  return range;
 }
