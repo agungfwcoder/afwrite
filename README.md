@@ -1,18 +1,20 @@
 # wyswyg
 
-Editor WYSIWYG ringan bergaya modern, berbasis vanilla JS + Alpine.js.
-Semua CSS memakai prefix `afw` sehingga aman dipakai bersama Bootstrap, Tailwind, dll.
+Editor WYSIWYG modern berbasis **vanilla JS + Alpine.js**, ringan (~21 KB gzip) tanpa dependency lain.
 
-## Menjalankan demo
+- Bubble toolbar saat teks diblok, slash command `/`, tombol `+` di baris kosong
+- Shortcut markdown: `##`, `>`, `-`, `1.`, `---`, `**tebal**`, `*miring*`, `` `kode` ``
+- Gambar (upload, caption, alt text, 3 ukuran), video YouTube/Vimeo, pemisah
+- Paste dari Word, Google Docs, dan web selalu bersih; output HTML ter-sanitasi
+- Undo/redo andal, mode baca saja, `x-model`, bahasa Indonesia & Inggris
+- CSS terisolasi dengan prefix `afw` — aman bersama Bootstrap, Tailwind, dll.
+- Teruji di Chrome, Firefox, dan Safari (WebKit)
+
+## Instalasi
 
 ```bash
-npm install
-npm run dev     # buka http://localhost:5173
-npm run build   # hasil di dist/
-npm test        # unit test (Vitest)
+npm install wyswyg alpinejs
 ```
-
-## Pemakaian (Alpine)
 
 ```js
 import Alpine from 'alpinejs';
@@ -23,101 +25,208 @@ Alpine.plugin(wyswyg);
 Alpine.start();
 ```
 
+Lewat `<script>` (tanpa bundler) — plugin terdaftar otomatis:
+
 ```html
-<div class="afw" x-data="wysiwyg({ placeholder: 'Tulis…' })">
-  <div class="afw-toolbar">
-    <template x-for="(group, gi) in toolbar" :key="gi">
-      <div style="display: contents">
-        <span class="afw-toolbar-sep" x-show="gi > 0"></span>
-        <template x-for="item in group" :key="item.command">
-          <button type="button" class="afw-btn"
-                  :class="{ 'afw-is-active': isActive(item.command) }"
-                  :title="`${item.label} (${item.shortcut})`"
-                  @mousedown.prevent @click="exec(item.command)"
-                  x-html="icon(item.command)"></button>
-        </template>
-      </div>
-    </template>
+<link rel="stylesheet" href="dist/wyswyg.css">
+<script src="dist/wyswyg.umd.cjs"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+```
+
+## Pemakaian
+
+```html
+<form method="post">
+  <div x-data="wysiwyg({ name: 'body', upload: uploadImage })">
+    <p>Konten awal (opsional)</p>
   </div>
+  <button>Simpan</button>
+</form>
+```
 
-  <!-- x-ignore wajib: mencegah Alpine mengeksekusi atribut di dalam konten -->
-  <div data-afw-editor x-ignore></div>
+Markup UI (toolbar, bubble, menu) dibuat otomatis. Isi elemen menjadi konten awal, dan
+`name` membuat `<input type="hidden">` berisi HTML yang ikut terkirim bersama form.
 
-  <input type="hidden" name="content" :value="html">
+Dengan `x-model`:
+
+```html
+<div x-data="{ body: '' }">
+  <div x-data="wysiwyg()" x-modelable="html" x-model="body"></div>
 </div>
 ```
 
-Tema: tambahkan `data-afw-theme="dark"` atau `"auto"` pada `.afw`.
-Warna, font, dan ukuran bisa diubah lewat variabel `--afw-*`.
+### Opsi
 
-## Pemakaian tanpa Alpine
+| Opsi | Default | Keterangan |
+|---|---|---|
+| `name` | `''` | Nama input hidden untuk form |
+| `lang` | `'id'` | Bahasa antarmuka: `'id'` atau `'en'` |
+| `strings` | `{}` | Timpa sebagian teks, mis. `{ placeholder: 'Tulis…' }` (lihat `src/i18n.js`) |
+| `placeholder` | dari `lang` | Teks saat editor kosong |
+| `toolbar` | `true` | Toolbar di atas; `false` = hanya bubble (ala Medium) |
+| `bubble` | `true` | Bubble toolbar saat teks diblok |
+| `stats` | `true` | Jumlah kata & waktu baca |
+| `readonly` | `false` | Mode baca saja |
+| `upload` | `null` | `async (file) => url`. Tanpa ini gambar disimpan sebagai base64 |
+| `maxImageSize` | `5 MB` | Batas ukuran gambar (byte); `0` = tanpa batas |
+| `allowDataImages` | `true` | Izinkan `<img src="data:image/…">` di output |
+| `markdown` | `true` | Shortcut markdown |
+| `slash` | `true` | Slash menu |
+| `pasteAsPlainText` | `false` | Buang semua format saat paste |
+| `toolbarItems`, `bubbleItems` | bawaan | Susunan tombol (lihat `src/icons.js`) |
+| `historyLimit` | `100` | Jumlah langkah undo |
+
+Contoh `upload`:
+
+```js
+async function uploadImage(file) {
+  const body = new FormData();
+  body.append('image', file);
+  const res = await fetch('/upload', { method: 'POST', body });
+  return (await res.json()).url;
+}
+```
+
+### Method komponen Alpine
+
+Dipanggil dari markup di dalam komponen atau lewat `Alpine.$data(el)`:
+
+| Method | Keterangan |
+|---|---|
+| `getHTML()` / `setHTML(html)` | Ambil / ganti isi (selalu disanitasi) |
+| `exec(perintah, ...arg)` | Jalankan perintah, lihat tabel perintah |
+| `isActive(perintah)` | Format aktif di posisi kursor |
+| `setReadOnly(bool)` | Ubah mode baca saja |
+| `focus()` | Fokus ke akhir editor |
+| `editor()` | Instance `Editor` (API lengkap di bawah) |
+
+### Event
+
+Dikirim dari elemen editor dan *bubbling*, jadi bisa ditangkap di parent:
+
+```html
+<div x-data="wysiwyg()" @wysiwyg-change="console.log($event.detail.html)"></div>
+```
+
+`wysiwyg-ready` (`{ editor }`), `wysiwyg-change` (`{ html }`), `wysiwyg-focus`, `wysiwyg-blur`,
+`wysiwyg-error` (`{ message }`).
+
+### Perintah & shortcut
+
+| Perintah | Shortcut | Markdown |
+|---|---|---|
+| `bold` / `italic` | Ctrl/⌘ + B / I | `**teks**` / `*teks*` |
+| `link` | Ctrl/⌘ + K | tempel URL di atas teks terseleksi |
+| `h2` / `h3` | Ctrl/⌘ + Alt + 2 / 3 | `## ` / `### ` |
+| `paragraph` | Ctrl/⌘ + Alt + 0 | |
+| `quote` | Ctrl/⌘ + Shift + 9 | `> ` |
+| `ul` / `ol` | Ctrl/⌘ + Shift + 8 / 7 | `- ` / `1. ` |
+| `indent` / `outdent` | Tab / Shift + Tab (di dalam list) | |
+| `image` | | `/gambar`, seret file, tempel screenshot |
+| `embed` | | `/video`, tempel link YouTube di baris kosong |
+| `hr` | | `--- ` |
+| `undo` / `redo` | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (atau Ctrl + Y) | |
+| `unlink` | | |
+
+Saat gambar/video/pemisah dipilih: **Backspace/Delete** menghapus, **Enter** membuat paragraf
+baru di bawahnya, **panah** keluar dari media.
+
+## Tanpa Alpine
+
+Inti editor tidak bergantung pada Alpine (tanpa UI melayang; link & video memakai `prompt()`):
 
 ```js
 import { Editor } from 'wyswyg';
+import 'wyswyg/style.css';
 
-const editor = new Editor(document.querySelector('#editor'), { placeholder: 'Tulis…' });
-editor.on('change', (html) => console.log(html));
-editor.exec('bold');
+const editor = new Editor(document.querySelector('#editor'), { lang: 'en' });
+editor.on('change', (html) => (input.value = html));
+document.querySelector('#bold').onclick = () => editor.exec('bold');
 ```
 
-## Perintah & shortcut
+Elemen `#editor` perlu dibungkus elemen berclass `afw` agar style berlaku.
 
-| Perintah | Shortcut |
+| API `Editor` | Keterangan |
 |---|---|
-| `bold` | Ctrl/⌘ + B |
-| `italic` | Ctrl/⌘ + I |
-| `link` | Ctrl/⌘ + K |
-| `h2` / `h3` | Ctrl/⌘ + Alt + 2 / 3 |
-| `quote` | Ctrl/⌘ + Shift + 9 |
-| `ul` / `ol` | Ctrl/⌘ + Shift + 8 / 7 |
+| `exec(nama, ...arg)`, `isActive(nama)`, `state()` | Perintah & status format |
+| `getHTML()`, `setHTML(html, { resetHistory })`, `getText()`, `clear()`, `isEmpty()` | Isi |
+| `insertHTML(html)`, `insertText(teks)`, `paste({ html, text, files })`, `insertImages(files)` | Sisipkan |
+| `undo()`, `redo()`, `canUndo()`, `canRedo()` | Riwayat |
+| `setReadOnly(bool)`, `focus()`, `stats()` | Lainnya |
+| `on(event, fn)` → fungsi untuk berhenti, `off()`, `destroy()` | Event |
 
-## Sanitasi & paste
+Event `Editor`: `change`, `state`, `selection`, `slash`, `history`, `readonly`, `linkrequest`,
+`embedrequest`, `error`, `focus`, `blur`.
 
-Semua HTML yang masuk dan keluar editor lewat whitelist:
+## Menampilkan hasil
 
-- **Tag yang diizinkan:** `p, h2, h3, blockquote, ul, ol, li, b, i, a, code, br`
-- **Atribut:** tidak ada, kecuali `href` pada `<a>` (hanya `http(s)`, `mailto`, `tel`, dan URL relatif)
-- `h1` menjadi `h2`, `h4`–`h6` menjadi `h3`, `strong`/`em` menjadi `b`/`i`, dan `div` menjadi `p`
-- Paste dari Google Docs dan Word dibersihkan (format tebal/miring dari `style` tetap terbaca)
-- Paragraf kosong, spasi ganda, dan `<br>` berlebih dibuang dari output
+Pakai class `afw-prose` agar tipografi sama dengan di editor:
+
+```html
+<article class="afw-prose">{!! $post->body !!}</article>
+```
+
+Tema gelap: `data-afw-theme="dark"` (atau `"auto"`) pada `.afw` maupun `.afw-prose`.
+Media ukuran penuh di `.afw-prose` melebar keluar sebesar `--afw-prose-bleed` (default `0`).
+
+## Kustomisasi tampilan
+
+Semua warna, font, dan ukuran memakai variabel CSS `--afw-*`:
+
+```css
+.afw, .afw-prose {
+  --afw-accent: #e11d48;
+  --afw-font-content: Georgia, serif;
+  --afw-content-size: 1.25rem;
+}
+```
+
+## Keamanan
+
+Semua HTML yang masuk (paste, drop, `setHTML`) dan keluar (`getHTML`) melewati whitelist:
+
+- Tag: `p h2 h3 blockquote ul ol li b i a code br figure img figcaption iframe hr`
+- Atribut: `a[href]` (http/https/mailto/tel/relatif), `img[src alt]` (src divalidasi; data URL
+  hanya PNG/JPG/GIF/WebP/AVIF), `figure[data-size data-embed]`, iframe hanya YouTube/Vimeo
+  dengan `src` yang dibangun ulang dari ID video.
+
+> **Penting:** sanitasi di browser tidak menggantikan sanitasi di server. Request bisa dikirim
+> tanpa melewati editor, jadi server wajib menyaring HTML sebelum menyimpan atau menampilkannya
+> (mis. HTMLPurifier / `mews/purifier` di Laravel) dengan whitelist yang sama.
+
+`sanitize()` juga bisa dipakai langsung:
 
 ```js
 import { sanitize } from 'wyswyg';
 sanitize('<div style="x">Hai <script>x()</script><b>kamu</b></div>'); // '<p>Hai <b>kamu</b></p>'
 ```
 
-Opsi `pasteAsPlainText: true` membuang semua format saat paste.
+## Pengembangan
 
-> **Penting:** sanitasi di browser tidak menggantikan sanitasi di server. Request bisa
-> dikirim tanpa melewati editor, jadi server tetap wajib menyaring HTML sebelum
-> menyimpan atau menampilkannya (mis. HTMLPurifier / `mews/purifier` di Laravel),
-> dengan whitelist yang sama seperti di atas.
+```bash
+npm install
+npm run dev            # demo di http://localhost:5173
+npm run build          # dist/
+npm test               # unit test (Vitest)
 
-## Gambar, video, dan pemisah
-
-- **Gambar:** pilih lewat slash menu (`/gambar`), seret file ke editor, atau tempel screenshot.
-  Klik gambar untuk mengatur ukuran (normal / lebar / penuh), alt text, atau menghapusnya.
-- **Video:** `/video`, lalu tempel link YouTube atau Vimeo; menempel link YouTube di baris kosong juga langsung menjadi embed.
-  URL iframe selalu dibangun ulang dari ID video (YouTube memakai `youtube-nocookie.com`).
-- **Pemisah:** `/pemisah` atau ketik `---` lalu spasi.
-
-```js
-wysiwyg({
-  // Wajib untuk produksi: tanpa ini gambar disimpan sebagai base64 di dalam HTML.
-  upload: async (file) => {
-    const body = new FormData();
-    body.append('image', file);
-    const res = await fetch('/upload', { method: 'POST', body });
-    return (await res.json()).url;
-  },
-  maxImageSize: 5 * 1024 * 1024, // default 5 MB
-})
+npx playwright install chromium firefox webkit   # sekali saja
+npm run test:browser                             # test browser di Chromium
+npm run test:browser -- all                      # Chromium, Firefox, WebKit
 ```
 
-Output media:
+Struktur:
 
-```html
-<figure data-size="wide"><img src="..." alt="..."><figcaption>Keterangan</figcaption></figure>
-<figure data-embed="youtube"><iframe src="https://www.youtube-nocookie.com/embed/ID" ...></iframe></figure>
-<hr>
 ```
+src/
+  core/        inti editor tanpa Alpine (editor, perintah, sanitasi, media, riwayat, markdown)
+  alpine.js    komponen Alpine: bubble, slash menu, toolbar media, input link
+  template.js  markup UI default
+  i18n.js      teks bahasa Indonesia & Inggris
+  style.css    seluruh CSS (prefix afw)
+demo/          halaman demo
+tests/         unit test (Vitest) & test browser (Playwright)
+```
+
+## Lisensi
+
+MIT

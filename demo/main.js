@@ -3,6 +3,9 @@ import wyswyg from '../src/index.js';
 import './demo.css';
 import { PASTE_SAMPLES } from './paste-samples.js';
 
+const params = new URLSearchParams(location.search);
+window.demoLang = params.get('lang') || 'id';
+
 const FRAMEWORKS = {
   bootstrap: { tag: 'link', attrs: { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css' } },
   tailwind: { tag: 'script', attrs: { src: 'https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11/dist/index.global.js' } },
@@ -21,28 +24,23 @@ function pretty(html) {
 Alpine.data('demo', () => ({
   theme: 'light',
   mode: 'full',
+  lang: params.get('lang') || 'id',
+  readonly: false,
   framework: 'none',
   output: '',
   submitted: null,
   samples: PASTE_SAMPLES,
   pretty,
 
-  // Meniru paste sungguhan: event 'paste' dengan isi clipboard, di akhir editor.
+  // Tempel contoh isi clipboard di akhir editor lewat API editor.paste(), yang menjalankan
+  // aturan yang sama dengan paste sungguhan (event sintetis tidak membawa data di Firefox).
   simulatePaste(key) {
     const sample = PASTE_SAMPLES[key];
-    const editor = document.querySelector('[data-afw-editor]');
+    const editor = Alpine.$data(document.querySelector('.afw')).editor();
     editor.focus();
-    const range = document.createRange();
-    range.selectNodeContents(editor);
-    range.collapse(false);
-    getSelection().removeAllRanges();
-    getSelection().addRange(range);
-
-    const data = new DataTransfer();
-    if (sample.html) data.setData('text/html', sample.html);
-    data.setData('text/plain', sample.text || '');
-    editor.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
+    editor.paste({ html: sample.html || '', text: sample.text || '' });
   },
+
 
   init() {
     const render = document.querySelector('[data-demo-render]');
@@ -55,15 +53,15 @@ Alpine.data('demo', () => ({
     });
   },
 
-  loadFramework() {
-    // Tailwind CDN tidak bisa dilepas lagi setelah aktif, jadi halaman dimuat ulang.
+  // Bahasa editor & framework CSS hanya berlaku saat inisialisasi -> muat ulang halaman.
+  reloadWith(key, value) {
     const url = new URL(location.href);
-    url.searchParams.set('fw', this.framework);
+    url.searchParams.set(key, value);
     location.href = url.toString();
   },
 }));
 
-const fw = new URLSearchParams(location.search).get('fw');
+const fw = params.get('fw');
 if (FRAMEWORKS[fw]) {
   const { tag, attrs } = FRAMEWORKS[fw];
   const el = Object.assign(document.createElement(tag), attrs);

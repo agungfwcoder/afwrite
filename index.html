@@ -11,7 +11,7 @@
   <div class="demo" x-data="demo()">
     <header class="demo-header">
       <div>
-        <h1 class="demo-title">wyswyg <span class="demo-badge">Termin 4</span></h1>
+        <h1 class="demo-title">wyswyg <span class="demo-badge">v1.0</span></h1>
         <p class="demo-sub">Bubble toolbar, slash command, markdown, gambar &amp; video — plus sanitasi paste dari Word &amp; Google Docs.</p>
       </div>
 
@@ -24,6 +24,17 @@
           </select>
         </label>
         <label class="demo-field">
+          <span>Bahasa</span>
+          <select x-model="lang" @change="reloadWith('lang', lang)">
+            <option value="id">Indonesia</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+        <label class="demo-field demo-check">
+          <input type="checkbox" x-model="readonly">
+          <span>Baca saja</span>
+        </label>
+        <label class="demo-field">
           <span>Tema</span>
           <select x-model="theme">
             <option value="light">Terang</option>
@@ -33,7 +44,7 @@
         </label>
         <label class="demo-field">
           <span>Uji bentrok CSS</span>
-          <select x-model="framework" @change="loadFramework()">
+          <select x-model="framework" @change="reloadWith('fw', framework)">
             <option value="none">Tanpa framework</option>
             <option value="bootstrap">Bootstrap 5</option>
             <option value="tailwind">Tailwind 4</option>
@@ -48,8 +59,8 @@
         <h2 class="demo-panel-title">Editor</h2>
 
         <div :data-afw-theme="theme"
-             x-data="wysiwyg({ name: 'content', placeholder: 'Tulis cerita Anda… ketik / untuk pilihan blok', upload: demoUpload })"
-             x-effect="showToolbar = mode === 'full'"
+             x-data="wysiwyg({ name: 'content', lang: demoLang, upload: demoUpload })"
+             x-effect="showToolbar = mode === 'full'; setReadOnly(readonly)"
              @wysiwyg-change="output = $event.detail.html">
           <h2>Selamat datang 👋</h2>
           <p>Ini editor <b>wyswyg</b>. Coba <b>blok teks ini</b> untuk memunculkan bubble toolbar, atau taruh kursor di <a href="https://example.com">link ini</a>.</p>
@@ -75,10 +86,12 @@
 
       <!-- ====== Hasil render ====== -->
       <section class="demo-panel">
-        <h2 class="demo-panel-title">Hasil render</h2>
+        <h2 class="demo-panel-title">Hasil render <small>class="afw-prose"</small></h2>
         <!-- Diisi lewat JS dan diberi x-ignore: x-html milik Alpine akan ikut mengeksekusi
              atribut x-init/@click di dalam konten. -->
-        <article class="demo-render" data-demo-render x-ignore></article>
+        <div class="demo-render" :data-theme="theme">
+          <article class="afw-prose" :data-afw-theme="theme" data-demo-render x-ignore></article>
+        </div>
       </section>
 
       <!-- ====== HTML mentah ====== -->

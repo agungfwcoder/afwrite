@@ -6,11 +6,14 @@
 // browser dan otomatis masuk riwayat undo). Implementasinya bisa diganti nanti
 // tanpa mengubah UI, karena UI hanya mengenal nama perintah.
 
-import { createEmbedFigure, insertImageFiles, insertMediaBlock, pickImageFiles } from './media.js';
+import { createEmbedFigure, insertImageFiles, insertMediaBlock, pickImageFiles, topBlockAtCaret } from './media.js';
 import { normalizeUrl } from './url.js';
 import { escapeHtml } from './sanitize.js';
 import {
   getRange,
+  placeCaretAtEnd,
+  placeCaretAtTextOffset,
+  textOffsetIn,
   rememberSelection,
   restoreRemembered,
   closestInRoot,
@@ -38,15 +41,75 @@ function toggleList(editor, command) {
   const target = command === 'insertOrderedList' ? 'OL' : 'UL';
   const list = closestInRoot(editor.el, 'ul, ol');
   const saved = rememberSelection();
+  let fallback = null;
 
   if (list && list.tagName !== target) {
     renameElement(list, target);
+  } else if (list) {
+    // Mematikan list ditangani sendiri: Safari membuat list bertingkat alih-alih menghapusnya.
+    fallback = listItemToParagraph(closestInRoot(editor.el, 'li'));
+    if (fallback) fallback = { el: fallback, offset: Infinity };
   } else {
+    // Cadangan posisi kursor: Safari mengganti node teks saat membuat list sehingga
+    // posisi tersimpan tidak bisa dipulihkan; kursor dikembalikan lewat offset karakter.
+    const top = topBlockAtCaret(editor.el);
+    const index = top ? [...editor.el.children].indexOf(top) : -1;
+    const offset = top ? textOffsetIn(top) : 0;
     exec(command);
     unwrapBlocksFromParagraphs(editor.el);
+    if (index >= 0) fallback = { el: editor.el.children[index], offset };
   }
 
-  restoreRemembered(saved, editor.el);
+  removeTrailingBreaks(editor.el);
+  if (!restoreRemembered(saved, editor.el) && fallback?.el) placeCaretAtTextOffset(fallback.el, fallback.offset);
+}
+
+// <li> di posisi kursor menjadi <p>; item sesudahnya pindah ke list baru di bawahnya.
+// List bertingkat di dalam item itu tetap menjadi list setelah paragraf.
+function listItemToParagraph(li) {
+  if (!li) return null;
+  const list = li.parentElement;
+
+  if (list.parentElement?.tagName === 'LI') {
+    exec('outdent');
+    return null;
+  }
+
+  const p = document.createElement('p');
+  const nested = [];
+  [...li.childNodes].forEach((child) => {
+    if (child.nodeName === 'UL' || child.nodeName === 'OL') nested.push(child);
+    else p.appendChild(child);
+  });
+  if (!p.textContent && !p.querySelector('br')) p.appendChild(document.createElement('br'));
+
+  const after = [];
+  for (let next = li.nextElementSibling; next; next = next.nextElementSibling) after.push(next);
+
+  list.after(p);
+  let anchor = p;
+  nested.forEach((sub) => {
+    anchor.after(sub);
+    anchor = sub;
+  });
+  if (after.length) {
+    const tail = document.createElement(list.tagName);
+    tail.append(...after);
+    anchor.after(tail);
+  }
+
+  li.remove();
+  if (!list.children.length) list.remove();
+  return p;
+}
+
+// Safari menambahkan <br> di akhir <li> berisi teks; tanpa dibuang, Enter di akhir item
+// dianggap di "baris kosong" dan langsung keluar dari list.
+function removeTrailingBreaks(root) {
+  root.querySelectorAll('li').forEach((li) => {
+    const last = li.lastChild;
+    if (last?.nodeName === 'BR' && li.textContent.trim() && last.previousSibling?.nodeName !== 'BR') last.remove();
+  });
 }
 
 export function renameElement(el, tagName) {
@@ -131,7 +194,7 @@ export const COMMANDS = {
         }
         if (anchor) return COMMANDS.unlink.run(ed);
         const saved = saveSelection();
-        href = window.prompt('Masukkan URL', 'https://');
+        href = window.prompt(ed.strings.promptUrl, 'https://');
         ed.el.focus();
         restoreSelection(saved);
       }
@@ -180,22 +243,30 @@ export const COMMANDS = {
           return;
         }
         const saved = saveSelection();
-        url = window.prompt('Tempel link YouTube atau Vimeo');
+        url = window.prompt(ed.strings.promptEmbed);
         if (!url) return;
         ed.el.focus();
         restoreSelection(saved);
       }
       const figure = createEmbedFigure(url);
       if (!figure) {
-        ed.emit('error', { message: 'Link video tidak dikenali. Gunakan link YouTube atau Vimeo.' });
+        ed.emit('error', { message: ed.strings.errorEmbed });
         return;
       }
-      insertMediaBlock(ed.el, figure);
+      insertMediaBlock(ed.el, figure, ed.strings.captionPlaceholder);
     },
     active: () => false,
   },
   hr: {
-    run: (ed) => insertMediaBlock(ed.el, document.createElement('hr')),
+    run: (ed) => insertMediaBlock(ed.el, document.createElement('hr'), ed.strings.captionPlaceholder),
+    active: () => false,
+  },
+  undo: {
+    run: (ed) => ed.undo(),
+    active: () => false,
+  },
+  redo: {
+    run: (ed) => ed.redo(),
     active: () => false,
   },
   indent: {

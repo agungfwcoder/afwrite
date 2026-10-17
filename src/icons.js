@@ -3,6 +3,8 @@ const svg = (body) =>
   `<svg class="afw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 
 export const ICONS = {
+  undo: svg('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'),
+  redo: svg('<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
   image: svg('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
   embed: svg('<path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/>'),
   hr: svg('<path d="M3 12h18"/><path d="M8 6h8" opacity=".35"/><path d="M8 18h8" opacity=".35"/>'),
@@ -36,31 +38,35 @@ const shift = isMac ? '⇧' : 'Shift+';
 // Bubble toolbar (muncul saat teks diblok).
 export const BUBBLE = [
   [
-    { command: 'bold', label: 'Tebal', shortcut: `${mod}B` },
-    { command: 'italic', label: 'Miring', shortcut: `${mod}I` },
-    { command: 'link', label: 'Link', shortcut: `${mod}K` },
+    { command: 'bold', shortcut: `${mod}B` },
+    { command: 'italic', shortcut: `${mod}I` },
+    { command: 'link', shortcut: `${mod}K` },
   ],
   [
-    { command: 'h2', label: 'Judul', shortcut: `${mod}${alt}2` },
-    { command: 'h3', label: 'Subjudul', shortcut: `${mod}${alt}3` },
-    { command: 'quote', label: 'Kutipan', shortcut: `${mod}${shift}9` },
+    { command: 'h2', shortcut: `${mod}${alt}2` },
+    { command: 'h3', shortcut: `${mod}${alt}3` },
+    { command: 'quote', shortcut: `${mod}${shift}9` },
   ],
 ];
 
 // Toolbar default, dikelompokkan. Setiap grup dipisah garis tipis.
 export const TOOLBAR = [
   [
-    { command: 'bold', label: 'Tebal', shortcut: `${mod}B` },
-    { command: 'italic', label: 'Miring', shortcut: `${mod}I` },
-    { command: 'link', label: 'Link', shortcut: `${mod}K` },
+    { command: 'bold', shortcut: `${mod}B` },
+    { command: 'italic', shortcut: `${mod}I` },
+    { command: 'link', shortcut: `${mod}K` },
   ],
   [
-    { command: 'h2', label: 'Judul', shortcut: `${mod}${alt}2` },
-    { command: 'h3', label: 'Subjudul', shortcut: `${mod}${alt}3` },
-    { command: 'quote', label: 'Kutipan', shortcut: `${mod}${shift}9` },
+    { command: 'h2', shortcut: `${mod}${alt}2` },
+    { command: 'h3', shortcut: `${mod}${alt}3` },
+    { command: 'quote', shortcut: `${mod}${shift}9` },
   ],
   [
-    { command: 'ul', label: 'Daftar berpoin', shortcut: `${mod}${shift}8` },
-    { command: 'ol', label: 'Daftar bernomor', shortcut: `${mod}${shift}7` },
+    { command: 'ul', shortcut: `${mod}${shift}8` },
+    { command: 'ol', shortcut: `${mod}${shift}7` },
+  ],
+  [
+    { command: 'undo', shortcut: `${mod}Z` },
+    { command: 'redo', shortcut: `${mod}${shift}Z` },
   ],
 ];

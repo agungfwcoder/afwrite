@@ -10,11 +10,12 @@
  *  5. Tidak memakai @layer, sehingga tetap menang atas style Tailwind v4 yang berada di layer.
  */
 
-.afw {
+/* Variabel tema: berlaku untuk editor (.afw) dan tampilan hasil (.afw-prose). */
+.afw,
+.afw-prose {
   --afw-font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --afw-font-content: var(--afw-font);
   --afw-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-
   --afw-bg: #ffffff;
   --afw-surface: #f6f6f7;
   --afw-border: #e4e4e7;
@@ -32,7 +33,6 @@
   --afw-float-active: #a5b4fc;
   --afw-menu-bg: #ffffff;
   --afw-float-shadow: 0 10px 30px -10px rgba(24, 24, 27, 0.35), 0 2px 6px rgba(24, 24, 27, 0.08);
-
   --afw-radius: 14px;
   --afw-radius-sm: 8px;
   --afw-shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 8px 24px -12px rgba(24, 24, 27, 0.12);
@@ -40,7 +40,9 @@
   --afw-content-line: 1.75;
   --afw-content-gutter: 32px; /* jarak kiri-kanan konten; juga dipakai media ukuran penuh */
   --afw-min-height: 280px;
+}
 
+.afw {
   position: relative;
   box-sizing: border-box;
   display: flex;
@@ -68,7 +70,8 @@
 
 /* ---------- Dark mode: data-afw-theme="dark" atau "auto" ---------- */
 
-.afw[data-afw-theme='dark'] {
+.afw[data-afw-theme='dark'],
+.afw-prose[data-afw-theme='dark'] {
   --afw-bg: #18181b;
   --afw-surface: #27272a;
   --afw-border: #3f3f46;
@@ -87,7 +90,8 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .afw[data-afw-theme='auto'] {
+  .afw[data-afw-theme='auto'],
+  .afw-prose[data-afw-theme='auto'] {
     --afw-bg: #18181b;
     --afw-surface: #27272a;
     --afw-border: #3f3f46;
@@ -226,17 +230,21 @@
 
 /* Tipografi konten. Ditulis eksplisit agar tidak tergantung reset framework. */
 
-.afw .afw-content > :first-child {
+.afw .afw-content > :first-child,
+.afw-prose > :first-child {
   margin-top: 0;
 }
 
-.afw .afw-content p {
+.afw .afw-content p,
+.afw-prose p {
   margin: 0 0 0.9em;
   font-size: inherit;
 }
 
 .afw .afw-content h2,
-.afw .afw-content h3 {
+.afw .afw-content h3,
+.afw-prose h2,
+.afw-prose h3 {
   margin: 1.6em 0 0.5em;
   font-family: var(--afw-font-content);
   font-weight: 700;
@@ -244,27 +252,34 @@
   color: var(--afw-text);
 }
 
-.afw .afw-content h2 {
+.afw .afw-content h2,
+.afw-prose h2 {
   font-size: 1.75em;
   line-height: 1.25;
 }
 
-.afw .afw-content h3 {
+.afw .afw-content h3,
+.afw-prose h3 {
   font-size: 1.3em;
   line-height: 1.35;
 }
 
 .afw .afw-content b,
-.afw .afw-content strong {
+.afw .afw-content strong,
+.afw-prose b,
+.afw-prose strong {
   font-weight: 700;
 }
 
 .afw .afw-content i,
-.afw .afw-content em {
+.afw .afw-content em,
+.afw-prose i,
+.afw-prose em {
   font-style: italic;
 }
 
-.afw .afw-content a {
+.afw .afw-content a,
+.afw-prose a {
   color: var(--afw-link);
   text-decoration: underline;
   text-decoration-thickness: 1px;
@@ -272,7 +287,8 @@
   cursor: text;
 }
 
-.afw .afw-content blockquote {
+.afw .afw-content blockquote,
+.afw-prose blockquote {
   margin: 1.2em 0;
   padding: 0.1em 0 0.1em 1.1em;
   font-style: italic;
@@ -283,30 +299,37 @@
 }
 
 .afw .afw-content ul,
-.afw .afw-content ol {
+.afw .afw-content ol,
+.afw-prose ul,
+.afw-prose ol {
   margin: 0 0 0.9em;
   padding-left: 1.6em;
 }
 
-.afw .afw-content ul {
+.afw .afw-content ul,
+.afw-prose ul {
   list-style: disc outside;
 }
 
-.afw .afw-content ol {
+.afw .afw-content ol,
+.afw-prose ol {
   list-style: decimal outside;
 }
 
-.afw .afw-content li {
+.afw .afw-content li,
+.afw-prose li {
   display: list-item;
   margin: 0.25em 0;
   padding-left: 0.2em;
 }
 
-.afw .afw-content li::marker {
+.afw .afw-content li::marker,
+.afw-prose li::marker {
   color: var(--afw-muted);
 }
 
-.afw .afw-content code {
+.afw .afw-content code,
+.afw-prose code {
   padding: 0.15em 0.35em;
   font-family: var(--afw-font-mono);
   font-size: 0.875em;
@@ -318,7 +341,8 @@
 
 /* ---------- Media: gambar, video, pemisah ---------- */
 
-.afw .afw-content figure {
+.afw .afw-content figure,
+.afw-prose figure {
   position: relative;
   margin: 1.6em auto;
   padding: 0;
@@ -327,7 +351,8 @@
   cursor: default;
 }
 
-.afw .afw-content figure > img {
+.afw .afw-content figure > img,
+.afw-prose figure > img {
   display: block;
   max-width: 100%;
   height: auto;
@@ -337,21 +362,27 @@
 }
 
 .afw .afw-content figure[data-size='wide'] > img,
-.afw .afw-content figure[data-size='full'] > img {
+.afw .afw-content figure[data-size='full'] > img,
+.afw-prose figure[data-size='wide'] > img,
+.afw-prose figure[data-size='full'] > img {
   width: 100%;
 }
 
-.afw .afw-content figure[data-size='full'] {
+.afw .afw-content figure[data-size='full'],
+.afw-prose figure[data-size='full'] {
   margin-left: calc(var(--afw-content-gutter) * -1);
   margin-right: calc(var(--afw-content-gutter) * -1);
 }
 
 .afw .afw-content figure[data-size='full'] > img,
-.afw .afw-content figure[data-size='full'] > iframe {
+.afw .afw-content figure[data-size='full'] > iframe,
+.afw-prose figure[data-size='full'] > img,
+.afw-prose figure[data-size='full'] > iframe {
   border-radius: 0;
 }
 
-.afw .afw-content figure > iframe {
+.afw .afw-content figure > iframe,
+.afw-prose figure > iframe {
   display: block;
   width: 100%;
   height: auto;
@@ -363,12 +394,14 @@
   pointer-events: none;
 }
 
-.afw .afw-content figure:not([data-size]) > iframe {
+.afw .afw-content figure:not([data-size]) > iframe,
+.afw-prose figure:not([data-size]) > iframe {
   max-width: 640px;
   margin: 0 auto;
 }
 
-.afw .afw-content figcaption {
+.afw .afw-content figcaption,
+.afw-prose figcaption {
   margin: 0.6em auto 0;
   padding: 0 1em;
   font-size: 0.875em;
@@ -389,7 +422,8 @@
   display: none;
 }
 
-.afw .afw-content hr {
+.afw .afw-content hr,
+.afw-prose hr {
   height: auto;
   margin: 2em 0;
   padding: 0.3em 0;
@@ -402,7 +436,8 @@
   cursor: default;
 }
 
-.afw .afw-content hr::before {
+.afw .afw-content hr::before,
+.afw-prose hr::before {
   content: '···';
   display: block;
   font-size: 1.5em;
@@ -475,6 +510,69 @@
   opacity: 1;
   visibility: visible;
   transform: none;
+}
+
+/* ---------- Tampilan hasil (.afw-prose) ----------
+ * Pasang class ini pada wadah HTML hasil editor di halaman publik:
+ *   <article class="afw-prose">{!! $post->body !!}</article>
+ * Tipografinya sama dengan di editor. Media ukuran "penuh" melebar keluar sebesar
+ * --afw-prose-bleed (default 0). */
+
+.afw-prose {
+  font-family: var(--afw-font-content);
+  font-size: var(--afw-content-size);
+  line-height: var(--afw-content-line);
+  color: var(--afw-text);
+  text-align: left;
+  overflow-wrap: break-word;
+}
+
+.afw-prose a {
+  cursor: pointer;
+}
+
+.afw-prose figure,
+.afw-prose hr,
+.afw-prose figcaption {
+  cursor: auto;
+}
+
+.afw-prose figure > img {
+  user-select: auto;
+}
+
+.afw-prose figure > iframe {
+  pointer-events: auto;
+}
+
+.afw-prose figure[data-size='full'] {
+  margin-left: calc(var(--afw-prose-bleed, 0px) * -1);
+  margin-right: calc(var(--afw-prose-bleed, 0px) * -1);
+}
+
+/* ---------- Mode baca saja & tombol nonaktif ---------- */
+
+.afw .afw-content.afw-is-readonly {
+  caret-color: transparent;
+}
+
+.afw .afw-content.afw-is-readonly figure > iframe {
+  pointer-events: auto;
+}
+
+.afw .afw-content.afw-is-readonly a {
+  cursor: pointer;
+}
+
+/* aria-disabled (bukan disabled) agar tombol tetap bisa difokus di toolbar (pola ARIA). */
+.afw .afw-btn[aria-disabled='true'] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.afw .afw-btn[aria-disabled='true']:hover {
+  background: transparent;
+  color: var(--afw-muted);
 }
 
 /* ---------- Tombol + (baris kosong) ---------- */
@@ -767,7 +865,8 @@
 }
 
 @media (max-width: 640px) {
-  .afw {
+  .afw,
+  .afw-prose {
     --afw-content-gutter: 18px;
     --afw-content-size: 1.0625rem;
   }

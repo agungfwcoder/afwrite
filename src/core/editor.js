@@ -12,9 +12,13 @@
 //   linkrequest  ({href}) perintah link dijalankan tanpa URL; UI diminta menampilkan input
 //   embedrequest ()       perintah embed dijalankan tanpa URL
 //   error        ({message, error?}) mis. upload gagal / file terlalu besar
+//   history      ({canUndo, canRedo})
+//   readonly     (boolean)
 //   focus / blur
 
+import { getStrings } from '../i18n.js';
 import { BLOCKS, filterBlocks } from './blocks.js';
+import { History, restoreSerializedSelection, serializeSelection } from './history.js';
 import { COMMANDS } from './commands.js';
 import { cleanLive } from './cleanup.js';
 import { parseEmbed } from './embed.js';
@@ -43,7 +47,12 @@ import {
 
 const DEFAULTS = {
   content: '',
-  placeholder: 'Mulai menulis… ketik / untuk pilihan blok',
+  lang: 'id', // 'id' | 'en'
+  strings: {}, // timpa sebagian teks antarmuka, lihat src/i18n.js
+  placeholder: null, // default dari teks bahasa
+  label: null, // aria-label editor; default dari teks bahasa
+  readonly: false,
+  historyLimit: 100,
   pasteAsPlainText: false, // true: semua format dari clipboard dibuang
   markdown: true, // shortcut markdown saat mengetik
   slash: true, // slash menu
@@ -75,6 +84,9 @@ export class Editor {
 
     this.el = el;
     this.options = { ...DEFAULTS, ...options };
+    this.strings = getStrings(this.options.lang, this.options.strings);
+    this.history = new History({ limit: this.options.historyLimit });
+    this.readOnly = false;
     this.listeners = {};
     this.commands = COMMANDS;
     this.slash = { ...CLOSED_SLASH };
@@ -85,6 +97,9 @@ export class Editor {
   // ---------- API publik ----------
 
   exec(name, ...args) {
+    if (this.readOnly) return;
+    if (name === 'undo' || name === 'redo') return this[name]();
+
     const command = this.commands[name];
     if (!command) return console.warn(`[wyswyg] Perintah tidak dikenal: ${name}`);
 
@@ -121,11 +136,18 @@ export class Editor {
   }
 
   // Konten dari luar (database, dll.) disanitasi sebelum masuk editor.
-  setHTML(html, { silent = false } = {}) {
+  // Riwayat undo dimulai ulang, kecuali { resetHistory: false }.
+  setHTML(html, { silent = false, resetHistory = true } = {}) {
     this._clearMediaSelection();
     this.el.innerHTML = sanitize(html, this._sanitizeOptions()) || EMPTY_PARAGRAPH;
-    prepareMedia(this.el);
+    this._prepareMedia();
     this._updatePlaceholder();
+    if (resetHistory) {
+      this.history.reset(this._snapshot());
+      this._emitHistory();
+    } else {
+      this._record();
+    }
     if (!silent) this.emit('change', this.getHTML());
   }
 
@@ -154,7 +176,8 @@ export class Editor {
     let markup = clean.innerHTML;
     if (only && only.tagName === 'P') {
       const source = new DOMParser().parseFromString(String(html), 'text/html').body.textContent;
-      markup = (/^\s/.test(source) ? ' ' : '') + only.innerHTML + (/\s$/.test(source) ? ' ' : '');
+      // &nbsp;: Safari membuang spasi biasa di ujung HTML yang disisipkan.
+      markup = (/^\s/.test(source) ? '&nbsp;' : '') + only.innerHTML + (/\s$/.test(source) ? '&nbsp;' : '');
     }
 
     if (!isSelectionInside(this.el)) this.focus();
@@ -196,6 +219,45 @@ export class Editor {
     return range && this.el.contains(range.startContainer) ? rangeRect(range) : null;
   }
 
+  clear() {
+    this.setHTML('', { resetHistory: false });
+  }
+
+  // ----- Undo / redo -----
+
+  undo() {
+    const snapshot = this.history.undo();
+    if (snapshot) this._restoreSnapshot(snapshot);
+  }
+
+  redo() {
+    const snapshot = this.history.redo();
+    if (snapshot) this._restoreSnapshot(snapshot);
+  }
+
+  canUndo() {
+    return this.history.canUndo();
+  }
+
+  canRedo() {
+    return this.history.canRedo();
+  }
+
+  // ----- Mode baca saja -----
+
+  setReadOnly(readOnly = true) {
+    this.readOnly = !!readOnly;
+    this.el.setAttribute('contenteditable', this.readOnly ? 'false' : 'true');
+    this.el.setAttribute('aria-readonly', String(this.readOnly));
+    this.el.classList.toggle('afw-is-readonly', this.readOnly);
+    this.closeSlash();
+    this._clearMediaSelection();
+    this._prepareMedia();
+    this._updatePlaceholder();
+    this.emit('readonly', this.readOnly);
+    this._scheduleSelection();
+  }
+
   // ----- Media (gambar, video, pemisah) -----
 
   insertImages(files) {
@@ -203,7 +265,7 @@ export class Editor {
   }
 
   selectMedia(node) {
-    if (!isMediaNode(node) || node.parentNode !== this.el) return;
+    if (this.readOnly || !isMediaNode(node) || node.parentNode !== this.el) return;
     if (this._selectedMedia !== node) {
       this._clearMediaSelection();
       this._selectedMedia = node;
@@ -338,15 +400,24 @@ export class Editor {
     el.setAttribute('contenteditable', 'true');
     el.setAttribute('role', 'textbox');
     el.setAttribute('aria-multiline', 'true');
+    el.setAttribute('aria-label', this.options.label || this.strings.editorLabel);
     el.classList.add('afw-content');
-    el.dataset.afwPlaceholder = this.options.placeholder;
+    el.dataset.afwPlaceholder = this.options.placeholder ?? this.strings.placeholder;
 
     this.setHTML(this.options.content || el.innerHTML, { silent: true });
+    if (this.options.readonly) this.setReadOnly(true);
 
     this._events = [
       // Saat IME composition (keyboard mobile, input Jepang/Cina) DOM tidak boleh diubah.
       [el, 'input', (e) => !e.isComposing && this._handleInput(e)],
       [el, 'keydown', (e) => this._handleKeydown(e)],
+      // Undo/redo dari menu Edit browser atau gerakan di perangkat sentuh.
+      [el, 'beforeinput', (e) => {
+        if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') {
+          e.preventDefault();
+          e.inputType === 'historyUndo' ? this.undo() : this.redo();
+        }
+      }],
       [el, 'focus', () => {
         this._applyBrowserDefaults();
         this.emit('focus');
@@ -389,6 +460,33 @@ export class Editor {
     return { allowDataImages: this.options.allowDataImages };
   }
 
+  _prepareMedia() {
+    prepareMedia(this.el, this.strings.captionPlaceholder, !this.readOnly);
+  }
+
+  _snapshot() {
+    return { html: this.el.innerHTML, selection: serializeSelection(this.el) };
+  }
+
+  _record(options) {
+    this.history.record(this._snapshot(), options);
+    this._emitHistory();
+  }
+
+  _emitHistory() {
+    this.emit('history', { canUndo: this.history.canUndo(), canRedo: this.history.canRedo() });
+  }
+
+  _restoreSnapshot(snapshot) {
+    this._clearMediaSelection();
+    this.el.innerHTML = snapshot.html;
+    this.el.querySelectorAll('.afw-is-selected').forEach((node) => node.classList.remove('afw-is-selected'));
+    this.el.focus({ preventScroll: true });
+    if (!restoreSerializedSelection(this.el, snapshot.selection)) placeCaretAtEnd(this.el);
+    this._handleChange({ record: false });
+    this._emitHistory();
+  }
+
   _clearMediaSelection() {
     this._selectedMedia?.classList.remove('afw-is-selected');
     this._selectedMedia = null;
@@ -409,6 +507,7 @@ export class Editor {
   }
 
   _handleClick(e) {
+    if (this.readOnly) return;
     const media = e.target.closest?.('figure, hr');
     if (media && media.parentNode === this.el && !e.target.closest('figcaption')) {
       e.preventDefault();
@@ -507,10 +606,24 @@ export class Editor {
       if (char === ' ' && applyBlockShortcut(this)) return;
       if (applyInlineShortcut(this, char)) return this._handleChange();
     }
-    this._handleChange();
+    // Ketikan & hapus karakter beruntun digabung menjadi satu langkah undo.
+    this._handleChange({ typing: /^(insertText|insertCompositionText|deleteContent)/.test(e.inputType) });
   }
 
   _handleKeydown(e) {
+    if (this.readOnly) return;
+
+    // Undo / redo memakai riwayat editor sendiri.
+    if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+      const key = e.key.toLowerCase();
+      if (key === 'z' || key === 'y') {
+        e.preventDefault();
+        if (key === 'z' && !e.shiftKey) this.undo();
+        else this.redo();
+        return;
+      }
+    }
+
     if (this._selectedMedia && this._handleMediaKey(e)) return;
 
     // Enter di keterangan gambar -> lanjut ke paragraf setelah gambar.
@@ -567,12 +680,20 @@ export class Editor {
 
   _handlePaste(e) {
     const data = e.clipboardData;
-    if (!data) return;
+    if (!data || this.readOnly) return;
     e.preventDefault();
+    this.paste({
+      html: data.getData('text/html'),
+      text: data.getData('text/plain'),
+      files: [...(data.files || [])],
+    });
+  }
 
-    const html = data.getData('text/html');
-    const text = data.getData('text/plain');
-    const files = [...(data.files || [])];
+  // Tempel secara terprogram dengan aturan yang sama seperti paste dari clipboard:
+  //   editor.paste({ html: '<p>..</p>', text: '..', files: [File, ...] })
+  paste({ html = '', text = '', files = [] } = {}) {
+    if (this.readOnly) return;
+    if (!isSelectionInside(this.el)) this.focus();
 
     // Keterangan gambar: hanya teks satu baris.
     if (this._inCaption()) {
@@ -613,7 +734,7 @@ export class Editor {
     const block = topBlockAtCaret(this.el);
     const isEmptyParagraph = block?.tagName === 'P' && !block.textContent.trim();
     if (isEmptyParagraph && parseEmbed(url)) {
-      insertMediaBlock(this.el, createEmbedFigure(url));
+      insertMediaBlock(this.el, createEmbedFigure(url), this.strings.captionPlaceholder);
       this._handleChange();
       return true;
     }
@@ -621,7 +742,7 @@ export class Editor {
   }
 
   _handleDrop(e) {
-    if (this._internalDrag) return;
+    if (this._internalDrag || this.readOnly) return;
     const data = e.dataTransfer;
     const html = data?.getData('text/html');
     const text = data?.getData('text/plain');
@@ -642,13 +763,16 @@ export class Editor {
     else this.insertText(text);
   }
 
-  _handleChange() {
+  // typing: perubahan berasal dari ketikan (digabung di riwayat undo)
+  // record: false saat memulihkan snapshot undo/redo
+  _handleChange({ typing = false, record = true } = {}) {
     this._ensureParagraph();
     cleanLive(this.el);
-    prepareMedia(this.el);
+    this._prepareMedia();
     if (this._selectedMedia && !this._selectedMedia.isConnected) this._clearMediaSelection();
     this._updatePlaceholder();
     this._updateSlash();
+    if (record) this._record({ typing });
     this.emit('change', this.getHTML());
     this.emit('state', this.state());
     this._scheduleSelection();
@@ -688,7 +812,7 @@ export class Editor {
     if (this._slashDismissed === context.block) return;
 
     const query = match[1];
-    const items = filterBlocks(query, this.options.blocks);
+    const items = filterBlocks(query, this.options.blocks, this.strings);
     const sameQuery = this.slash.open && this.slash.query === query;
 
     this.slash = {

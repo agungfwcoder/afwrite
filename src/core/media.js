@@ -4,10 +4,9 @@
 // sebagian, sementara <figcaption> di dalamnya tetap bisa diedit. Atribut khusus editor
 // ini dibuang oleh sanitize() saat output.
 
+import { format } from '../i18n.js';
 import { createEmbedIframe, parseEmbed } from './embed.js';
-import { restoreSelection } from './selection.js';
-
-export const CAPTION_PLACEHOLDER = 'Tulis keterangan (opsional)';
+import { placeCaretAtEnd, restoreSelection } from './selection.js';
 const SIZES = ['wide', 'full'];
 
 export const isMediaNode = (node) =>
@@ -19,9 +18,14 @@ export function mediaKind(node) {
 }
 
 // Siapkan media setelah konten berubah (setHTML, paste, dll.).
-export function prepareMedia(root) {
+export function prepareMedia(root, captionPlaceholder = '', editable = true) {
   root.querySelectorAll(':scope > figure').forEach((figure) => {
     if (figure.getAttribute('contenteditable') !== 'false') figure.setAttribute('contenteditable', 'false');
+    // Mode baca saja: keterangan kosong tidak perlu ditampilkan/dibuat.
+    if (!editable) {
+      figure.querySelector(':scope > figcaption')?.setAttribute('contenteditable', 'false');
+      return;
+    }
 
     let caption = figure.querySelector(':scope > figcaption');
     if (!caption) {
@@ -29,7 +33,7 @@ export function prepareMedia(root) {
       figure.append(caption);
     }
     if (caption.getAttribute('contenteditable') !== 'true') caption.setAttribute('contenteditable', 'true');
-    caption.dataset.placeholder = CAPTION_PLACEHOLDER;
+    caption.dataset.placeholder = captionPlaceholder;
 
     figure.querySelector(':scope > img')?.setAttribute('draggable', 'false');
     figure.querySelector(':scope > iframe')?.setAttribute('tabindex', '-1');
@@ -77,7 +81,7 @@ export function topBlockAtCaret(root) {
 
 // Sisipkan blok media di posisi kursor: paragraf kosong diganti, selain itu disisipkan
 // setelah blok tempat kursor. Kursor pindah ke paragraf setelah media.
-export function insertMediaBlock(root, node) {
+export function insertMediaBlock(root, node, captionPlaceholder = '') {
   const current = topBlockAtCaret(root);
   const isEmptyParagraph = current?.tagName === 'P' && !current.textContent.trim() && !current.querySelector('img');
 
@@ -90,15 +94,16 @@ export function insertMediaBlock(root, node) {
     next = emptyParagraph();
     node.after(next);
   }
-  prepareMedia(root);
+  prepareMedia(root, captionPlaceholder);
   placeCaretIn(next, 'start');
   return node;
 }
 
 export function placeCaretIn(block, where = 'start') {
+  if (where === 'end') return placeCaretAtEnd(block);
   const range = document.createRange();
   range.selectNodeContents(block);
-  range.collapse(where === 'start');
+  range.collapse(true);
   restoreSelection(range);
 }
 
@@ -122,17 +127,18 @@ const readAsDataUrl = (file) =>
 // tanpa itu, gambar disimpan sebagai data URL (base64) di dalam HTML.
 export async function insertImageFiles(editor, files) {
   const { upload, maxImageSize } = editor.options;
+  const t = editor.strings;
   const images = [...files].filter((f) => /^image\/(png|jpe?g|gif|webp|avif)$/.test(f.type));
 
   if (!images.length) {
-    if (files.length) editor.emit('error', { message: 'Format gambar tidak didukung (pakai PNG, JPG, GIF, WebP, atau AVIF).' });
+    if (files.length) editor.emit('error', { message: t.errorImageType });
     return;
   }
 
   for (const file of images) {
     if (maxImageSize && file.size > maxImageSize) {
       const mb = (maxImageSize / 1024 / 1024).toFixed(1).replace(/\.0$/, '');
-      editor.emit('error', { message: `"${file.name}" lebih dari ${mb} MB.` });
+      editor.emit('error', { message: format(t.errorImageSize, { name: file.name, size: mb }) });
       continue;
     }
 
@@ -140,7 +146,7 @@ export async function insertImageFiles(editor, files) {
     const preview = URL.createObjectURL(file);
     const figure = createImageFigure(preview, '');
     figure.setAttribute('data-afw-uploading', '');
-    insertMediaBlock(editor.el, figure);
+    insertMediaBlock(editor.el, figure, editor.strings.captionPlaceholder);
     editor._handleChange();
 
     try {
@@ -150,10 +156,10 @@ export async function insertImageFiles(editor, files) {
       figure.removeAttribute('data-afw-uploading');
     } catch (err) {
       figure.remove();
-      editor.emit('error', { message: `Gagal mengunggah "${file.name}".`, error: err });
+      editor.emit('error', { message: format(t.errorUpload, { name: file.name }), error: err });
     } finally {
       URL.revokeObjectURL(preview);
-      prepareMedia(editor.el);
+      prepareMedia(editor.el, t.captionPlaceholder);
       editor._handleChange();
     }
   }

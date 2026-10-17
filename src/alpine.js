@@ -11,7 +11,13 @@
 //   </div>
 //
 // Opsi UI: toolbar (true), bubble (true), stats (true), name (nama input hidden).
-// Opsi lain diteruskan ke Editor (placeholder, markdown, slash, pasteAsPlainText, ...).
+// Opsi lain diteruskan ke Editor (lang, placeholder, upload, readonly, markdown, ...).
+//
+// x-model: tambahkan x-modelable="html", mis.
+//   <div x-data="wysiwyg()" x-modelable="html" x-model="post.body"></div>
+//
+// Event (bubbling dari elemen .afw): wysiwyg-ready, wysiwyg-change, wysiwyg-focus,
+// wysiwyg-blur, wysiwyg-error.
 //
 // Untuk layout sendiri, sediakan <div data-afw-editor x-ignore> di dalam komponen;
 // markup default tidak akan disuntikkan.
@@ -19,21 +25,19 @@
 import { Editor } from './core/editor.js';
 import { parseEmbed } from './core/embed.js';
 import { normalizeUrl } from './core/url.js';
+import { getStrings } from './i18n.js';
 import { BUBBLE, ICONS, TOOLBAR } from './icons.js';
 import { TEMPLATE } from './template.js';
 
 const GAP = 10;
 const EDGE = 8;
-const INPUT_PLACEHOLDERS = {
-  link: 'Tempel atau ketik URL…',
-  embed: 'Tempel link YouTube atau Vimeo…',
-  alt: 'Deskripsikan gambar untuk pembaca layar…',
-};
+const INPUT_PLACEHOLDERS = { link: 'inputLink', embed: 'inputEmbed', alt: 'inputAlt' };
 const MEDIA_SIZES = [
-  { value: 'normal', label: 'Ukuran normal', icon: 'sizeNormal' },
-  { value: 'wide', label: 'Lebar', icon: 'sizeWide' },
-  { value: 'full', label: 'Penuh', icon: 'sizeFull' },
+  { value: 'normal', label: 'sizeNormal', icon: 'sizeNormal' },
+  { value: 'wide', label: 'sizeWide', icon: 'sizeWide' },
+  { value: 'full', label: 'sizeFull', icon: 'sizeFull' },
 ];
+let uidCounter = 0;
 const isCoarsePointer = () => typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
 
 export function wysiwygComponent(options = {}) {
@@ -44,10 +48,15 @@ export function wysiwygComponent(options = {}) {
   let savedRange = null;
   let inputBusy = false;
   let toastTimer = null;
+  const strings = getStrings(options.lang, options.strings);
 
   return {
     html: '',
     active: {},
+    uid: `afw-${++uidCounter}`,
+    readOnly: !!options.readonly,
+    canUndo: false,
+    canRedo: false,
     name: options.name || '',
     toolbar: options.toolbarItems || TOOLBAR,
     bubbleItems: options.bubbleItems || BUBBLE,
@@ -90,17 +99,46 @@ export function wysiwygComponent(options = {}) {
       editor.on('change', (html) => {
         this.html = html;
         this.stats = editor.stats();
-        this.$dispatch('wysiwyg-change', { html });
+        root.dispatchEvent(new CustomEvent('wysiwyg-change', { detail: { html }, bubbles: true }));
       });
+      editor.on('history', ({ canUndo, canRedo }) => {
+        this.canUndo = canUndo;
+        this.canRedo = canRedo;
+      });
+      editor.on('readonly', (value) => {
+        this.readOnly = value;
+        if (value) {
+          this.closeBubble();
+          this.hideMediaBar();
+          this.plus.visible = false;
+        }
+      });
+      editor.on('focus', () => root.dispatchEvent(new CustomEvent('wysiwyg-focus', { bubbles: true })));
+      editor.on('blur', () => root.dispatchEvent(new CustomEvent('wysiwyg-blur', { bubbles: true })));
       editor.on('state', (state) => (this.active = state));
       editor.on('selection', (info) => this.onSelection(info));
       editor.on('slash', (state) => this.onSlash(state));
       editor.on('linkrequest', ({ href }) => this.openInput('link', href));
       editor.on('embedrequest', () => this.openInput('embed'));
-      editor.on('error', ({ message }) => this.showToast(message));
+      editor.on('error', (detail) => {
+        this.showToast(detail.message);
+        root.dispatchEvent(new CustomEvent('wysiwyg-error', { detail, bubbles: true }));
+      });
 
       this.html = editor.getHTML();
       this.stats = editor.stats();
+      this.canUndo = editor.canUndo();
+      this.readOnly = editor.readOnly;
+
+      // Nilai dari luar (x-model / x-modelable) -> isi editor.
+      this.$watch('html', (value) => {
+        if (editor && (value || '') !== editor.getHTML()) editor.setHTML(value || '');
+      });
+
+      this.$nextTick(() => {
+        this.initToolbarFocus();
+        root.dispatchEvent(new CustomEvent('wysiwyg-ready', { detail: { editor }, bubbles: true }));
+      });
     },
 
     destroy() {
@@ -120,6 +158,48 @@ export function wysiwygComponent(options = {}) {
 
     icon(name) {
       return ICONS[name] || '';
+    },
+
+    t(key) {
+      return strings[key] ?? key;
+    },
+
+    isDisabled(name) {
+      if (name === 'undo') return !this.canUndo;
+      if (name === 'redo') return !this.canRedo;
+      return false;
+    },
+
+    setReadOnly(value = true) {
+      editor?.setReadOnly(value);
+    },
+
+    // Instance Editor untuk pemakaian lanjutan (mis. editor.on(...)).
+    editor() {
+      return editor;
+    },
+
+    // ---------- Aksesibilitas toolbar ----------
+    // Pola toolbar ARIA: satu tab stop; tombol panah/Home/End berpindah antartombol.
+
+    toolbarButtons() {
+      return [...root.querySelectorAll('.afw-toolbar .afw-btn')].filter((b) => b.offsetParent !== null);
+    },
+
+    initToolbarFocus() {
+      this.toolbarButtons().forEach((b, i) => b.setAttribute('tabindex', i === 0 ? '0' : '-1'));
+    },
+
+    moveFocus(event, step) {
+      const buttons = this.toolbarButtons();
+      const current = buttons.indexOf(document.activeElement);
+      if (current < 0) return;
+      let next = current + step;
+      if (step === Infinity) next = buttons.length - 1;
+      else if (step === -Infinity) next = 0;
+      else next = (next + buttons.length) % buttons.length;
+      buttons.forEach((b, i) => b.setAttribute('tabindex', i === next ? '0' : '-1'));
+      buttons[next].focus();
     },
 
     setHTML(html) {
@@ -162,6 +242,7 @@ export function wysiwygComponent(options = {}) {
     onSelection(info) {
       // Sedang mengisi input (URL/alt): fokus ada di input, seleksi editor diabaikan.
       if (this.bubble.open && this.bubble.mode === 'input') return;
+      if (this.readOnly) return;
 
       this.updatePlus(info);
 
@@ -206,7 +287,7 @@ export function wysiwygComponent(options = {}) {
     // ---------- Input: link, video, alt text ----------
 
     inputPlaceholder() {
-      return INPUT_PLACEHOLDERS[this.bubble.purpose] || '';
+      return this.t(INPUT_PLACEHOLDERS[this.bubble.purpose]) || '';
     },
 
     openInput(purpose, value = '') {
@@ -236,12 +317,12 @@ export function wysiwygComponent(options = {}) {
       const purpose = this.bubble.purpose;
 
       if (purpose === 'link') {
-        if (value && !normalizeUrl(value)) return (this.bubble.error = 'URL tidak valid');
+        if (value && !normalizeUrl(value)) return (this.bubble.error = this.t('errorUrl'));
         return this.withEditorFocus(() => (value ? editor.exec('link', value) : editor.exec('unlink')));
       }
       if (purpose === 'embed') {
         if (!value) return this.cancelInput();
-        if (!parseEmbed(value)) return (this.bubble.error = 'Link video tidak dikenali (YouTube/Vimeo)');
+        if (!parseEmbed(value)) return (this.bubble.error = this.t('errorEmbed'));
         return this.withEditorFocus(() => editor.exec('embed', value));
       }
       if (purpose === 'alt') {
@@ -320,6 +401,14 @@ export function wysiwygComponent(options = {}) {
     onSlash(state) {
       this.slash.items = state.items;
       this.slash.index = state.index;
+
+      // Pembaca layar: editor "mengendalikan" listbox slash menu.
+      if (state.open && state.items.length) {
+        editor.el.setAttribute('aria-controls', `${this.uid}-menu`);
+        editor.el.setAttribute('aria-activedescendant', `${this.uid}-opt-${state.index}`);
+      } else {
+        editor.el.removeAttribute('aria-activedescendant');
+      }
 
       if (!state.open) {
         this.slash.open = false;

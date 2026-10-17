@@ -72,10 +72,9 @@ export function applyInlineShortcut(editor, char) {
     target.setEnd(node, range.startOffset);
     restoreSelection(target);
 
-    // Zero-width space setelah <code> agar ketikan berikutnya keluar dari kode;
-    // karakter ini dibuang lagi oleh sanitize() di output.
-    const suffix = rule.tag === 'code' ? '​' : '';
-    document.execCommand('insertHTML', false, `<${rule.tag}>${escapeHtml(inner)}</${rule.tag}>${suffix}`);
+    // Zero-width space setelah elemen agar ketikan berikutnya berada di luar <b>/<i>/<code>
+    // (Safari tetap mengetik di dalam elemen tanpa ini). Dibuang oleh sanitize() di output.
+    document.execCommand('insertHTML', false, `<${rule.tag}>${escapeHtml(inner)}</${rule.tag}>\u200b`);
 
     // Matikan format untuk ketikan berikutnya (tebal/miring tidak "menular").
     if (rule.command && document.queryCommandState(rule.command)) {

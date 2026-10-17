@@ -47,11 +47,52 @@ export function selectNode(node) {
   restoreSelection(range);
 }
 
+const TEXT_CONTAINERS = /^(P|H[1-6]|BLOCKQUOTE|UL|OL|LI|DIV)$/;
+
+// Kursor di akhir isi elemen. Turun ke blok teks terakhir, dan jika blok diakhiri
+// <br> placeholder, kursor diletakkan SEBELUM <br>: Chrome menormalkan ini sendiri,
+// tetapi Safari/Firefox akan mengetik setelah <br> (baris baru yang tidak terlihat).
 export function placeCaretAtEnd(el) {
+  let target = el;
+  while (target.lastElementChild && TEXT_CONTAINERS.test(target.lastElementChild.tagName)) {
+    target = target.lastElementChild;
+  }
   const range = document.createRange();
-  range.selectNodeContents(el);
-  range.collapse(false);
+  if (target.lastChild?.nodeName === 'BR') {
+    range.setStartBefore(target.lastChild);
+    range.collapse(true);
+  } else {
+    range.selectNodeContents(target);
+    range.collapse(false);
+  }
   restoreSelection(range);
+}
+
+// Jumlah karakter dari awal `el` sampai kursor.
+export function textOffsetIn(el) {
+  const range = getRange();
+  if (!range || !el.contains(range.startContainer)) return 0;
+  const before = document.createRange();
+  before.setStart(el, 0);
+  before.setEnd(range.startContainer, range.startOffset);
+  return before.toString().length;
+}
+
+// Letakkan kursor setelah karakter ke-`offset` di dalam `el` (atau di akhir).
+export function placeCaretAtTextOffset(el, offset) {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let remaining = offset;
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (remaining <= node.length) {
+      const range = document.createRange();
+      range.setStart(node, remaining);
+      range.collapse(true);
+      return restoreSelection(range);
+    }
+    remaining -= node.length;
+  }
+  placeCaretAtEnd(el);
 }
 
 // Range ikut bergeser saat node dipindah, jadi yang disimpan adalah node + offset mentah.
@@ -67,10 +108,11 @@ const nodeLength = (node) =>
   node.nodeType === Node.TEXT_NODE ? node.length : node.childNodes.length;
 
 export function restoreRemembered(saved, root) {
-  if (!saved || !saved.sc.isConnected || !saved.ec.isConnected || !root.contains(saved.sc)) return;
+  if (!saved || !saved.sc.isConnected || !saved.ec.isConnected || !root.contains(saved.sc)) return false;
 
   const range = document.createRange();
   range.setStart(saved.sc, Math.min(saved.so, nodeLength(saved.sc)));
   range.setEnd(saved.ec, Math.min(saved.eo, nodeLength(saved.ec)));
   restoreSelection(range);
+  return true;
 }

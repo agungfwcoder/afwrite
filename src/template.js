@@ -8,9 +8,10 @@ const buttonGroup = (list, extraClass = '') => `
       <template x-for="item in group" :key="item.command">
         <button type="button" class="afw-btn ${extraClass}"
                 :class="{ 'afw-is-active': isActive(item.command) }"
-                :title="\`\${item.label} (\${item.shortcut})\`"
-                :aria-label="item.label"
+                :title="\`\${t(item.command)} (\${item.shortcut})\`"
+                :aria-label="t(item.command)"
                 :aria-pressed="isActive(item.command)"
+                :aria-disabled="isDisabled(item.command)"
                 @mousedown.prevent
                 @click="exec(item.command)"
                 x-html="icon(item.command)"></button>
@@ -19,7 +20,9 @@ const buttonGroup = (list, extraClass = '') => `
   </template>`;
 
 export const TEMPLATE = `
-<div class="afw-toolbar" role="toolbar" aria-label="Format teks" x-show="showToolbar">
+<div class="afw-toolbar" role="toolbar" :aria-label="t('toolbarLabel')" x-show="showToolbar && !readOnly"
+     @keydown.arrow-right.prevent="moveFocus($event, 1)" @keydown.arrow-left.prevent="moveFocus($event, -1)"
+     @keydown.home.prevent="moveFocus($event, -Infinity)" @keydown.end.prevent="moveFocus($event, Infinity)">
   ${buttonGroup('toolbar')}
 </div>
 
@@ -28,15 +31,15 @@ export const TEMPLATE = `
 
   <button type="button" class="afw-plus" :class="{ 'afw-is-open': plus.visible }"
           :style="\`top: \${plus.y}px\`"
-          title="Tambah blok" aria-label="Tambah blok"
+          :title="t('addBlock')" :aria-label="t('addBlock')"
           @mousedown.prevent @click="openBlockMenu()"
           x-html="icon('plus')"></button>
 </div>
 
 <div class="afw-footer" x-show="showStats" x-cloak>
-  <span x-text="stats.words + ' kata'"></span>
+  <span x-text="stats.words + ' ' + t('words')"></span>
   <span aria-hidden="true">·</span>
-  <span x-text="stats.minutes + ' menit baca'"></span>
+  <span x-text="stats.minutes + ' ' + t('minutesRead')"></span>
 </div>
 
 <!-- Bubble toolbar -->
@@ -44,7 +47,7 @@ export const TEMPLATE = `
 <div class="afw-bubble" x-ref="bubble"
      :class="{ 'afw-is-open': bubble.open, 'afw-is-ready': bubble.ready }"
      :style="\`left: \${bubble.x}px; top: \${bubble.y}px\`"
-     role="toolbar" aria-label="Format teks"
+     role="toolbar" :aria-label="t('toolbarLabel')"
      @keydown.escape.prevent.stop="cancelInput()">
 
   <div class="afw-bubble-row" :class="{ 'afw-is-hidden': bubble.mode !== 'format' }">
@@ -61,9 +64,9 @@ export const TEMPLATE = `
            @input="bubble.error = ''"
            @keydown.enter.prevent="applyInput()"
            @blur="onInputBlur()">
-    <button type="button" class="afw-btn afw-btn-inverse" title="Simpan (Enter)" aria-label="Simpan" @mousedown.prevent @click="applyInput()" x-html="icon('check')"></button>
-    <button type="button" class="afw-btn afw-btn-inverse" :class="{ 'afw-is-hidden': !(bubble.purpose === 'link' && bubble.hasLink) }" title="Hapus link" aria-label="Hapus link" @mousedown.prevent @click="removeLink()" x-html="icon('unlink')"></button>
-    <button type="button" class="afw-btn afw-btn-inverse" title="Batal (Esc)" aria-label="Batal" @mousedown.prevent @click="cancelInput()" x-html="icon('close')"></button>
+    <button type="button" class="afw-btn afw-btn-inverse" x-bind:title="t('save') + ' (Enter)'" x-bind:aria-label="t('save')" @mousedown.prevent @click="applyInput()" x-html="icon('check')"></button>
+    <button type="button" class="afw-btn afw-btn-inverse" :class="{ 'afw-is-hidden': !(bubble.purpose === 'link' && bubble.hasLink) }" x-bind:title="t('removeLink')" x-bind:aria-label="t('removeLink')" @mousedown.prevent @click="removeLink()" x-html="icon('unlink')"></button>
+    <button type="button" class="afw-btn afw-btn-inverse" x-bind:title="t('cancel') + ' (Esc)'" x-bind:aria-label="t('cancel')" @mousedown.prevent @click="cancelInput()" x-html="icon('close')"></button>
     <span class="afw-link-error" x-show="bubble.error" x-text="bubble.error"></span>
   </div>
 
@@ -74,8 +77,8 @@ export const TEMPLATE = `
       <span class="afw-link-preview-icon" x-html="icon('external')"></span>
     </a>
     <span class="afw-sep"></span>
-    <button type="button" class="afw-btn afw-btn-inverse" title="Ubah link" aria-label="Ubah link" @mousedown.prevent @click="openLinkInput({ href: bubble.href })" x-html="icon('edit')"></button>
-    <button type="button" class="afw-btn afw-btn-inverse" title="Hapus link" aria-label="Hapus link" @mousedown.prevent @click="exec('unlink')" x-html="icon('unlink')"></button>
+    <button type="button" class="afw-btn afw-btn-inverse" x-bind:title="t('editLink')" x-bind:aria-label="t('editLink')" @mousedown.prevent @click="openLinkInput({ href: bubble.href })" x-html="icon('edit')"></button>
+    <button type="button" class="afw-btn afw-btn-inverse" x-bind:title="t('removeLink')" x-bind:aria-label="t('removeLink')" @mousedown.prevent @click="exec('unlink')" x-html="icon('unlink')"></button>
   </div>
 </div>
 
@@ -83,14 +86,14 @@ export const TEMPLATE = `
 <div class="afw-bubble afw-mediabar" x-ref="mediabar"
      :class="{ 'afw-is-open': media.open, 'afw-is-ready': media.ready }"
      :style="\`left: \${media.x}px; top: \${media.y}px\`"
-     role="toolbar" aria-label="Atur media">
+     role="toolbar" :aria-label="t('mediaToolbarLabel')">
   <div class="afw-bubble-row">
     <template x-if="media.kind !== 'divider'">
       <div class="afw-group">
         <template x-for="size in mediaSizes" :key="size.value">
           <button type="button" class="afw-btn afw-btn-inverse"
                   :class="{ 'afw-is-active': media.size === size.value }"
-                  :title="size.label" :aria-label="size.label" :aria-pressed="media.size === size.value"
+                  :title="t(size.label)" :aria-label="t(size.label)" :aria-pressed="media.size === size.value"
                   @mousedown.prevent @click="setMediaSize(size.value)"
                   x-html="icon(size.icon)"></button>
         </template>
@@ -99,9 +102,9 @@ export const TEMPLATE = `
     </template>
     <button type="button" class="afw-btn afw-btn-inverse" x-show="media.kind === 'image'"
             :class="{ 'afw-is-active': !!media.alt }"
-            title="Alt text (deskripsi untuk pembaca layar)" aria-label="Alt text"
+            :title="t('altText')" :aria-label="t('altText')"
             @mousedown.prevent @click="editAlt()" x-html="icon('alt')"></button>
-    <button type="button" class="afw-btn afw-btn-inverse" title="Hapus (Backspace)" aria-label="Hapus media"
+    <button type="button" class="afw-btn afw-btn-inverse" :title="t('removeMedia') + ' (Backspace)'" :aria-label="t('removeMedia')"
             @mousedown.prevent @click="removeMedia()" x-html="icon('trash')"></button>
   </div>
 </div>
@@ -113,10 +116,10 @@ export const TEMPLATE = `
 <div class="afw-menu" x-ref="menu"
      :class="{ 'afw-is-open': slash.open, 'afw-is-ready': slash.ready }"
      :style="\`left: \${slash.x}px; top: \${slash.y}px\`"
-     role="listbox" aria-label="Pilih jenis blok">
-  <div class="afw-menu-title">Blok</div>
+     role="listbox" :id="uid + '-menu'" :aria-label="t('blocksTitle')">
+  <div class="afw-menu-title" x-text="t('blocksTitle')"></div>
   <template x-for="(item, i) in slash.items" :key="item.command">
-    <button type="button" class="afw-menu-item" role="option"
+    <button type="button" class="afw-menu-item" role="option" tabindex="-1" :id="uid + '-opt-' + i"
             :class="{ 'afw-is-active': i === slash.index }"
             :aria-selected="i === slash.index"
             @mousedown.prevent
@@ -130,7 +133,7 @@ export const TEMPLATE = `
       <kbd class="afw-menu-kbd" x-show="item.markdown" x-text="item.markdown"></kbd>
     </button>
   </template>
-  <div class="afw-menu-empty" x-show="!slash.items.length">Tidak ada hasil</div>
+  <div class="afw-menu-empty" x-show="!slash.items.length" x-text="t('noResults')"></div>
 </div>
 
 <template x-if="name">
