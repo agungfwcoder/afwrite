@@ -14,13 +14,16 @@
 //   error        ({message, error?}) mis. upload gagal / file terlalu besar
 //   history      ({canUndo, canRedo})
 //   readonly     (boolean)
+//   draft        ({html, time}) ada draf autosave yang berbeda dari isi saat ini
 //   focus / blur
 
 import { getStrings } from '../i18n.js';
 import { BLOCKS, filterBlocks } from './blocks.js';
 import { History, restoreSerializedSelection, serializeSelection } from './history.js';
+import { fromJSON, toJSON } from './model.js';
 import { COMMANDS } from './commands.js';
 import { cleanLive } from './cleanup.js';
+import { handleCodeKey, inCodeBlock, normalizeCodeBlocks, replaceInCode } from './codeblock.js';
 import { parseEmbed } from './embed.js';
 import { applyBlockShortcut, applyInlineShortcut } from './markdown.js';
 import {
@@ -53,6 +56,7 @@ const DEFAULTS = {
   label: null, // aria-label editor; default dari teks bahasa
   readonly: false,
   historyLimit: 100,
+  autosave: null, // 'kunci' atau { key, delay }: simpan draf ke localStorage
   pasteAsPlainText: false, // true: semua format dari clipboard dibuang
   markdown: true, // shortcut markdown saat mengetik
   slash: true, // slash menu
@@ -76,6 +80,7 @@ const SHORTCUTS = [
   { code: 'Digit7', shift: true, command: 'ol' },
   { code: 'Digit8', shift: true, command: 'ul' },
   { code: 'Digit9', shift: true, command: 'quote' },
+  { code: 'KeyC', alt: true, command: 'codeblock' },
 ];
 
 export class Editor {
@@ -153,7 +158,7 @@ export class Editor {
 
   // Teks polos dengan blok dipisah baris baru (untuk hitung kata, dll.).
   getText() {
-    return [...this.el.querySelectorAll('p, h2, h3, blockquote, li')]
+    return [...this.el.querySelectorAll('p, h2, h3, blockquote, li, pre')]
       .filter((block) => !block.querySelector('p, li'))
       .map((block) => block.textContent)
       .join('\n')
@@ -221,6 +226,39 @@ export class Editor {
 
   clear() {
     this.setHTML('', { resetHistory: false });
+  }
+
+  // ----- JSON -----
+
+  getJSON() {
+    return toJSON(this.getHTML());
+  }
+
+  setJSON(doc, options) {
+    this.setHTML(fromJSON(doc), options);
+  }
+
+  // ----- Autosave draf -----
+  // Selama ada draf yang belum diputuskan (pulihkan/buang), autosave dijeda agar draf
+  // lama tidak tertimpa.
+
+  restoreDraft() {
+    const draft = this.draft;
+    if (!draft) return;
+    this.draft = null;
+    this.setHTML(draft.html, { resetHistory: false });
+  }
+
+  discardDraft() {
+    this.draft = null;
+    this.clearDraft();
+    this._saveDraft();
+  }
+
+  // Hapus draf tersimpan, mis. setelah konten berhasil disimpan ke server.
+  clearDraft() {
+    clearTimeout(this._autosaveTimer);
+    if (this._autosaveKey) storage('remove', this._autosaveKey);
   }
 
   // ----- Undo / redo -----
@@ -388,6 +426,7 @@ export class Editor {
     const el = this.el;
     this._events.forEach(([target, type, handler]) => target.removeEventListener(type, handler));
     cancelAnimationFrame(this._selectionFrame);
+    clearTimeout(this._autosaveTimer);
     el.removeAttribute('contenteditable');
     this.listeners = {};
   }
@@ -406,6 +445,7 @@ export class Editor {
 
     this.setHTML(this.options.content || el.innerHTML, { silent: true });
     if (this.options.readonly) this.setReadOnly(true);
+    this._setupAutosave();
 
     this._events = [
       // Saat IME composition (keyboard mobile, input Jepang/Cina) DOM tidak boleh diubah.
@@ -454,6 +494,35 @@ export class Editor {
   _applyBrowserDefaults() {
     document.execCommand('defaultParagraphSeparator', false, 'p');
     document.execCommand('styleWithCSS', false, false);
+  }
+
+  _setupAutosave() {
+    const option = this.options.autosave;
+    if (!option) return;
+    const { key, delay = 1000 } = typeof option === 'string' ? { key: option } : option;
+    this._autosaveKey = `afw:draft:${key}`;
+    this._autosaveDelay = delay;
+    this.draft = null;
+
+    try {
+      const saved = JSON.parse(storage('get', this._autosaveKey) || 'null');
+      if (saved?.html && saved.html !== this.getHTML()) this.draft = saved;
+    } catch {
+      // draf rusak: abaikan
+    }
+  }
+
+  _scheduleDraftSave() {
+    if (!this._autosaveKey || this.draft) return;
+    clearTimeout(this._autosaveTimer);
+    this._autosaveTimer = setTimeout(() => this._saveDraft(), this._autosaveDelay);
+  }
+
+  _saveDraft() {
+    if (!this._autosaveKey || this.draft) return;
+    const html = this.getHTML();
+    if (html) storage('set', this._autosaveKey, JSON.stringify({ html, time: Date.now() }));
+    else storage('remove', this._autosaveKey);
   }
 
   _sanitizeOptions() {
@@ -643,6 +712,11 @@ export class Editor {
 
     if (this._handleKeyNearMedia(e)) return;
 
+    if (!this.slash.open && handleCodeKey(this, e)) {
+      this._handleChange();
+      return;
+    }
+
     // Navigasi slash menu.
     if (this.slash.open) {
       const keys = {
@@ -694,6 +768,14 @@ export class Editor {
   paste({ html = '', text = '', files = [] } = {}) {
     if (this.readOnly) return;
     if (!isSelectionInside(this.el)) this.focus();
+
+    // Blok kode: teks apa adanya.
+    const pre = inCodeBlock(this.el);
+    if (pre) {
+      replaceInCode(pre.querySelector('code'), text.replace(/\r\n?/g, '\n'));
+      this._handleChange();
+      return;
+    }
 
     // Keterangan gambar: hanya teks satu baris.
     if (this._inCaption()) {
@@ -768,11 +850,13 @@ export class Editor {
   _handleChange({ typing = false, record = true } = {}) {
     this._ensureParagraph();
     cleanLive(this.el);
+    normalizeCodeBlocks(this.el);
     this._prepareMedia();
     if (this._selectedMedia && !this._selectedMedia.isConnected) this._clearMediaSelection();
     this._updatePlaceholder();
     this._updateSlash();
     if (record) this._record({ typing });
+    this._scheduleDraftSave();
     this.emit('change', this.getHTML());
     this.emit('state', this.state());
     this._scheduleSelection();
@@ -852,6 +936,7 @@ export class Editor {
 
     return {
       inside: true,
+      inCode: !!inCodeBlock(this.el),
       collapsed: range.collapsed,
       dragging: !!this._pointerDown,
       rect: rangeRect(range),
@@ -879,6 +964,18 @@ export class Editor {
   _updatePlaceholder() {
     this.el.classList.toggle('afw-is-empty', this.isEmpty() && this.el.children.length <= 1);
   }
+}
+
+// localStorage bisa tidak tersedia (mode privat, kuota penuh, dll.): jangan sampai error.
+function storage(action, key, value) {
+  try {
+    if (action === 'get') return window.localStorage.getItem(key);
+    if (action === 'set') window.localStorage.setItem(key, value);
+    if (action === 'remove') window.localStorage.removeItem(key);
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 // DOMRect seleksi. Range yang collapsed di paragraf kosong sering memberi rect nol,

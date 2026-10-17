@@ -339,6 +339,39 @@
 
 
 
+/* ---------- Blok kode ---------- */
+
+.afw .afw-content pre,
+.afw-prose pre {
+  margin: 1.2em 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-family: var(--afw-font-mono);
+  font-size: 0.85em;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+  color: var(--afw-text);
+  background: var(--afw-surface);
+  border: 1px solid var(--afw-border);
+  border-radius: 10px;
+}
+
+.afw .afw-content pre code,
+.afw-prose pre code {
+  display: block;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  white-space: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+
 /* ---------- Media: gambar, video, pemisah ---------- */
 
 .afw .afw-content figure,
@@ -614,6 +647,46 @@
   .afw .afw-plus.afw-is-open {
     display: inline-flex;
   }
+}
+
+/* ---------- Banner draf autosave ---------- */
+
+.afw .afw-draft {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 14px;
+  font-size: 0.8125rem;
+  color: var(--afw-text);
+  background: var(--afw-accent-soft);
+  border-bottom: 1px solid var(--afw-border);
+}
+
+.afw .afw-draft > span {
+  flex: 1;
+  min-width: 180px;
+}
+
+.afw .afw-draft-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  padding: 4px 10px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--afw-text);
+  background: var(--afw-bg);
+  border: 1px solid var(--afw-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.afw .afw-draft-btn.afw-draft-primary {
+  color: #fff;
+  background: var(--afw-accent);
+  border-color: var(--afw-accent);
 }
 
 /* ---------- Footer (statistik) ---------- */

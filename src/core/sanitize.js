@@ -6,6 +6,7 @@
 //   <img src alt>                  src divalidasi; data:image hanya png/jpg/gif/webp/avif
 //   <figure data-size data-embed>  data-size: wide | full
 //   <iframe ...>                   hanya YouTube/Vimeo, src dibangun ulang dari ID video
+//   <pre><code>                    blok kode: teks polos, spasi & baris baru dipertahankan
 // Contoh:
 //
 //   sanitize('<div style="color:red">Hai <script>x()</script><span style="font-weight:700">kamu</span></div>')
@@ -18,7 +19,7 @@
 import { createEmbedIframe, normalizeImageSrc, parseEmbed } from './embed.js';
 import { normalizeUrl } from './url.js';
 
-export const BLOCK_TAGS = new Set(['P', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'FIGURE', 'HR']);
+export const BLOCK_TAGS = new Set(['P', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'FIGURE', 'HR', 'PRE']);
 const MEDIA_TAGS = new Set(['FIGURE', 'HR']);
 const FIGURE_SIZES = ['wide', 'full'];
 export const INLINE_TAGS = new Set(['B', 'I', 'A', 'CODE', 'BR']);
@@ -45,7 +46,7 @@ const TAG_MAP = {
 // Wadah blok: isinya dipertahankan, teks lepas dibungkus <p>.
 const CONTAINER_TAGS = new Set([
   'DIV', 'SECTION', 'ARTICLE', 'MAIN', 'HEADER', 'FOOTER', 'ASIDE', 'NAV',
-  'ADDRESS', 'CENTER', 'DL', 'DT', 'DD', 'PRE', 'DETAILS', 'SUMMARY', 'TABLE', 'CAPTION',
+  'ADDRESS', 'CENTER', 'DL', 'DT', 'DD', 'DETAILS', 'SUMMARY', 'TABLE', 'CAPTION',
   'THEAD', 'TBODY', 'TFOOT', 'TR', 'BODY', 'HTML',
 ]);
 
@@ -94,6 +95,7 @@ function convert(node) {
     return embed ? [embedFigure(embed)] : [];
   }
   if (tag === 'HR') return [el('HR')];
+  if (tag === 'PRE') return codeBlock(node);
 
   const children = [...node.childNodes].flatMap(convert);
 
@@ -129,6 +131,18 @@ function convert(node) {
 
 const isBlock = (node) => node.nodeType === Node.ELEMENT_NODE && BLOCK_TAGS.has(node.tagName);
 const isMedia = (node) => node.nodeType === Node.ELEMENT_NODE && MEDIA_TAGS.has(node.tagName);
+
+// Blok kode: hanya teks. <br> (dari beberapa sumber paste) menjadi baris baru.
+export function codeText(node) {
+  const clone = node.cloneNode(true);
+  clone.querySelectorAll('br').forEach((br) => br.replaceWith('\n'));
+  return clone.textContent.replace(/\u200b/g, '').replace(/\r\n?/g, '\n').replace(/\n+$/, '');
+}
+
+function codeBlock(node) {
+  const text = codeText(node);
+  return text.trim() ? [el('PRE', {}, [el('CODE', {}, [document.createTextNode(text)])])] : [];
+}
 
 function imageFigure(node) {
   const src = normalizeImageSrc(node.getAttribute('src') || node.getAttribute('data-src'), {
@@ -236,6 +250,12 @@ function flattenToInline(nodes, { keepLists = false } = {}) {
     // Gambar/video di dalam list atau kutipan tidak didukung; posisinya jadi pemisah baris.
     if (isMedia(node)) {
       if (out.length) needBreak = true;
+      return;
+    }
+    if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'PRE') {
+      if (out.length) out.push(document.createElement('br'));
+      out.push(el('CODE', {}, [node.textContent.replace(/\n/g, ' ')]));
+      needBreak = true;
       return;
     }
     if (keepLists && node.nodeType === Node.ELEMENT_NODE && LISTS.has(node.tagName)) {
@@ -429,6 +449,9 @@ function tidyMedia(root) {
   });
   root.querySelectorAll('img, iframe, figcaption').forEach((node) => {
     if (node.parentNode?.tagName !== 'FIGURE') node.remove();
+  });
+  root.querySelectorAll('pre').forEach((pre) => {
+    if (pre.parentNode !== root) pre.replaceWith(el('CODE', {}, [pre.textContent]));
   });
 }
 

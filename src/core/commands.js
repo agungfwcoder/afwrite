@@ -6,6 +6,7 @@
 // browser dan otomatis masuk riwayat undo). Implementasinya bisa diganti nanti
 // tanpa mengubah UI, karena UI hanya mengenal nama perintah.
 
+import { toggleCodeBlock } from './codeblock.js';
 import { createEmbedFigure, insertImageFiles, insertMediaBlock, pickImageFiles, topBlockAtCaret } from './media.js';
 import { normalizeUrl } from './url.js';
 import { escapeHtml } from './sanitize.js';
@@ -170,6 +171,10 @@ export const COMMANDS = {
   ol: {
     run: (ed) => toggleList(ed, 'insertOrderedList'),
     active: (ed) => closestInRoot(ed.el, 'ul, ol')?.tagName === 'OL',
+  },
+  codeblock: {
+    run: (ed) => toggleCodeBlock(ed),
+    active: (ed) => !!closestInRoot(ed.el, 'pre'),
   },
   paragraph: {
     // Kembalikan blok menjadi paragraf biasa (termasuk keluar dari list).

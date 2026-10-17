@@ -8,6 +8,7 @@ export const BLOCKS = [
   { command: 'quote', markdown: '>', keywords: ['quote', 'kutipan', 'blockquote'] },
   { command: 'ul', markdown: '-', keywords: ['ul', 'list', 'daftar', 'bullet', 'poin'] },
   { command: 'ol', markdown: '1.', keywords: ['ol', 'list', 'daftar', 'nomor', 'number', 'urut'] },
+  { command: 'codeblock', markdown: '```', keywords: ['code', 'kode', 'pre', 'snippet', 'program'] },
   { command: 'image', markdown: '', keywords: ['image', 'gambar', 'foto', 'img', 'picture', 'upload'] },
   { command: 'embed', markdown: '', keywords: ['video', 'youtube', 'vimeo', 'embed'] },
   { command: 'hr', markdown: '---', keywords: ['hr', 'pemisah', 'garis', 'divider', 'separator'] },

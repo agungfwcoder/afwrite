@@ -26,6 +26,12 @@ export const TEMPLATE = `
   ${buttonGroup('toolbar')}
 </div>
 
+<div class="afw-draft" role="status" x-show="draft" x-cloak>
+  <span x-text="draftMessage()"></span>
+  <button type="button" class="afw-draft-btn afw-draft-primary" @click="restoreDraft()" x-text="t('draftRestore')"></button>
+  <button type="button" class="afw-draft-btn" @click="discardDraft()" x-text="t('draftDiscard')"></button>
+</div>
+
 <div class="afw-body">
   <div data-afw-editor x-ignore></div>
 
@@ -137,6 +143,6 @@ export const TEMPLATE = `
 </div>
 
 <template x-if="name">
-  <input type="hidden" :name="name" :value="html">
+  <input type="hidden" :name="name" :value="inputValue()">
 </template>
 `;

@@ -116,3 +116,17 @@ describe('normalizeUrl', () => {
     expect(normalizeUrl(input)).toBe(expected);
   });
 });
+
+describe('blok kode', () => {
+  test.each([
+    ['<pre><code>const a = 1;\n  if (a) {\n    go();\n  }</code></pre>', '<pre><code>const a = 1;\n  if (a) {\n    go();\n  }</code></pre>'],
+    ['<pre class="x"><span style="color:red">let</span> x = <b>1</b>\n\n</pre>', '<pre><code>let x = 1</code></pre>'],
+    ['<pre>baris 1<br>baris 2</pre>', '<pre><code>baris 1\nbaris 2</code></pre>'],
+    ['<pre><code>&lt;script&gt;alert(1)&lt;/script&gt;</code></pre>', '<pre><code>&lt;script&gt;alert(1)&lt;/script&gt;</code></pre>'],
+    ['<pre>   </pre>', ''],
+    ['<p>a<pre>kode</pre>b</p>', '<p>a</p><pre><code>kode</code></pre><p>b</p>'],
+    ['<ul><li>a<pre>x\ny</pre></li></ul>', '<ul><li>a<br><code>x y</code></li></ul>'],
+  ])('%j', (input, expected) => {
+    expect(sanitize(input)).toBe(expected);
+  });
+});

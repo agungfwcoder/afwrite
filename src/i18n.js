@@ -13,6 +13,7 @@ const id = {
   h2: 'Judul',
   h3: 'Subjudul',
   quote: 'Kutipan',
+  codeblock: 'Blok kode',
   ul: 'Daftar berpoin',
   ol: 'Daftar bernomor',
   undo: 'Urungkan',
@@ -28,6 +29,7 @@ const id = {
     quote: ['Kutipan', 'Menyorot kutipan'],
     ul: ['Daftar berpoin', 'Daftar sederhana'],
     ol: ['Daftar bernomor', 'Daftar berurutan'],
+    codeblock: ['Kode', 'Blok kode program'],
     image: ['Gambar', 'Unggah dari perangkat'],
     embed: ['Video', 'YouTube atau Vimeo'],
     hr: ['Pemisah', 'Garis pemisah antarbagian'],
@@ -51,6 +53,10 @@ const id = {
   words: 'kata',
   minutesRead: 'menit baca',
 
+  draftFound: 'Ada draf yang belum tersimpan dari {time}.',
+  draftRestore: 'Pulihkan',
+  draftDiscard: 'Buang',
+
   promptUrl: 'Masukkan URL',
   promptEmbed: 'Tempel link YouTube atau Vimeo',
   errorUrl: 'URL tidak valid',
@@ -72,6 +78,7 @@ const en = {
   h2: 'Heading',
   h3: 'Subheading',
   quote: 'Quote',
+  codeblock: 'Code block',
   ul: 'Bulleted list',
   ol: 'Numbered list',
   undo: 'Undo',
@@ -87,6 +94,7 @@ const en = {
     quote: ['Quote', 'Highlight a quotation'],
     ul: ['Bulleted list', 'Simple list'],
     ol: ['Numbered list', 'Ordered list'],
+    codeblock: ['Code', 'Code block'],
     image: ['Image', 'Upload from your device'],
     embed: ['Video', 'YouTube or Vimeo'],
     hr: ['Divider', 'Separate sections'],
@@ -109,6 +117,10 @@ const en = {
 
   words: 'words',
   minutesRead: 'min read',
+
+  draftFound: 'You have an unsaved draft from {time}.',
+  draftRestore: 'Restore',
+  draftDiscard: 'Discard',
 
   promptUrl: 'Enter a URL',
   promptEmbed: 'Paste a YouTube or Vimeo link',

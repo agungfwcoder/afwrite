@@ -10,7 +10,9 @@
 //     <p>Konten awal (opsional)</p>
 //   </div>
 //
-// Opsi UI: toolbar (true), bubble (true), stats (true), name (nama input hidden).
+// Opsi UI: toolbar (true), bubble (true), stats (true), name (nama input hidden),
+// format ('html' | 'json': isi input hidden).
+// Autosave: opsi autosave: 'kunci-unik'. Draf dihapus otomatis saat form dikirim.
 // Opsi lain diteruskan ke Editor (lang, placeholder, upload, readonly, markdown, ...).
 //
 // x-model: tambahkan x-modelable="html", mis.
@@ -25,7 +27,7 @@
 import { Editor } from './core/editor.js';
 import { parseEmbed } from './core/embed.js';
 import { normalizeUrl } from './core/url.js';
-import { getStrings } from './i18n.js';
+import { format as formatText, getStrings } from './i18n.js';
 import { BUBBLE, ICONS, TOOLBAR } from './icons.js';
 import { TEMPLATE } from './template.js';
 
@@ -58,6 +60,8 @@ export function wysiwygComponent(options = {}) {
     canUndo: false,
     canRedo: false,
     name: options.name || '',
+    format: options.format === 'json' ? 'json' : 'html',
+    draft: null,
     toolbar: options.toolbarItems || TOOLBAR,
     bubbleItems: options.bubbleItems || BUBBLE,
     showToolbar: options.toolbar ?? true,
@@ -128,6 +132,13 @@ export function wysiwygComponent(options = {}) {
       this.html = editor.getHTML();
       this.stats = editor.stats();
       this.canUndo = editor.canUndo();
+      this.draft = editor.draft || null;
+
+      // Draf autosave tidak diperlukan lagi setelah form dikirim.
+      root.closest('form')?.addEventListener('submit', () => {
+        if (this.draft) editor.discardDraft();
+        editor.clearDraft();
+      });
       this.readOnly = editor.readOnly;
 
       // Nilai dari luar (x-model / x-modelable) -> isi editor.
@@ -162,6 +173,41 @@ export function wysiwygComponent(options = {}) {
 
     t(key) {
       return strings[key] ?? key;
+    },
+
+    // Nilai input hidden: HTML, atau JSON jika format: 'json'.
+    inputValue() {
+      const html = this.html; // dependensi reaktif
+      return this.format === 'json' ? JSON.stringify(editor ? editor.getJSON() : { blocks: [] }) : html;
+    },
+
+    getJSON() {
+      return editor?.getJSON();
+    },
+
+    setJSON(doc) {
+      editor?.setJSON(doc);
+    },
+
+    // ---------- Draf autosave ----------
+
+    draftMessage() {
+      if (!this.draft) return '';
+      const time = new Date(this.draft.time).toLocaleString(options.lang === 'en' ? 'en' : 'id', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      });
+      return formatText(this.t('draftFound'), { time });
+    },
+
+    restoreDraft() {
+      editor.restoreDraft();
+      this.draft = null;
+    },
+
+    discardDraft() {
+      editor.discardDraft();
+      this.draft = null;
     },
 
     isDisabled(name) {
@@ -252,7 +298,8 @@ export function wysiwygComponent(options = {}) {
       }
       this.hideMediaBar();
 
-      if (!info.inside || info.dragging || this.slash.open || !this.showBubble) return this.closeBubble();
+      // Bubble format tidak berlaku di blok kode (isinya teks polos).
+      if (!info.inside || info.dragging || info.inCode || this.slash.open || !this.showBubble) return this.closeBubble();
       if (!info.collapsed) return this.showBubbleAt('format', info.rect);
       if (info.link) {
         this.bubble.href = info.link.href;

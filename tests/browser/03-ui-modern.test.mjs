@@ -5,7 +5,11 @@ const { engine, browser } = await launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
-page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+// Hanya error dari halaman sendiri; pesan dari iframe pihak ketiga (YouTube/Vimeo) diabaikan.
+page.on('console', (m) => {
+  const url = m.location()?.url || '';
+  if (m.type() === 'error' && !/youtube|ytimg|vimeo|googlevideo/.test(url)) errors.push(`${m.text()} @ ${url}`);
+});
 
 const results = [];
 const bail = (e) => { console.log(results.join('\n')); console.log('ERROR', e.message.split('\n')[0]); process.exit(1); };
@@ -135,7 +139,7 @@ await fresh('<p>Paragraf</p><p><br></p>');
 await page.keyboard.type('/');
 await wait();
 check('slash menu terbuka', await visible('.afw-menu'));
-check('slash menu berisi 9 blok', (await page.$$eval('.afw-menu-item', (els) => els.length)) === 9);
+check('slash menu berisi 10 blok', (await page.$$eval('.afw-menu-item', (els) => els.length)) === 10);
 await page.screenshot({ path: `${SHOTS}/9-slash.png`, clip: { x: 0, y: 100, width: 660, height: 560 } });
 await page.keyboard.type('ju');
 await wait();

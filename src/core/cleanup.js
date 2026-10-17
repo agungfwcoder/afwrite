@@ -14,11 +14,11 @@ import { rememberSelection, restoreRemembered } from './selection.js';
 
 const ALLOWED = new Set([
   'P', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'B', 'I', 'A', 'CODE', 'BR',
-  'FIGURE', 'FIGCAPTION', 'IMG', 'IFRAME', 'HR',
+  'FIGURE', 'FIGCAPTION', 'IMG', 'IFRAME', 'HR', 'PRE',
 ]);
 const RENAME = { STRONG: 'B', EM: 'I', H1: 'H2', H4: 'H3', H5: 'H3', H6: 'H3' };
 const DROP = new Set(['SCRIPT', 'STYLE', 'META', 'LINK', 'TITLE', 'OBJECT', 'EMBED', 'TEMPLATE']);
-const BLOCKS = 'p, h1, h2, h3, h4, h5, h6, blockquote, ul, ol, li, div, figure, hr';
+const BLOCKS = 'p, h1, h2, h3, h4, h5, h6, blockquote, ul, ol, li, div, figure, hr, pre';
 
 // Atribut yang boleh ada di DOM editor (sebagian hanya untuk keperluan editor,
 // mis. contenteditable/class; output tetap dibersihkan oleh sanitize()).
@@ -33,9 +33,13 @@ const ATTRS = {
 
 const allowedAttr = (el, name) => (ATTRS[el.tagName] || []).includes(name);
 
+// Di dalam <pre> hanya boleh satu <code> berisi teks.
+const insideCode = (el) => !!el.parentElement?.closest('pre') && !(el.tagName === 'CODE' && el.parentElement.tagName === 'PRE');
+
 function isDirty(el) {
   if (!ALLOWED.has(el.tagName)) return true;
   if (el.parentElement?.closest('figcaption')) return true; // keterangan: teks polos
+  if (insideCode(el)) return true;
   for (const attr of el.attributes) {
     if (!allowedAttr(el, attr.name)) return true;
   }
@@ -69,6 +73,11 @@ export function cleanLive(root) {
     const tag = el.tagName;
 
     if (DROP.has(tag)) return el.remove();
+
+    // Di dalam blok kode hanya teks; <br> menjadi baris baru.
+    if (insideCode(el)) {
+      return tag === 'BR' ? el.replaceWith('\n') : unwrap(el);
+    }
 
     // Di dalam keterangan gambar hanya teks.
     if (el.parentElement?.closest('figcaption')) {

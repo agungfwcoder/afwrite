@@ -6,7 +6,11 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 1100 } });
 const errors = [];
 const dialogs = [];
 page.on('pageerror', (e) => errors.push(e.message));
-page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+// Hanya error dari halaman sendiri; pesan dari iframe pihak ketiga (YouTube/Vimeo) diabaikan.
+page.on('console', (m) => {
+  const url = m.location()?.url || '';
+  if (m.type() === 'error' && !/youtube|ytimg|vimeo|googlevideo/.test(url)) errors.push(`${m.text()} @ ${url}`);
+});
 page.on('dialog', (d) => { dialogs.push(d.message()); d.dismiss(); });
 
 const results = [];

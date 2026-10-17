@@ -5,6 +5,7 @@ const svg = (body) =>
 export const ICONS = {
   undo: svg('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'),
   redo: svg('<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
+  codeblock: svg('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>'),
   image: svg('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
   embed: svg('<path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/>'),
   hr: svg('<path d="M3 12h18"/><path d="M8 6h8" opacity=".35"/><path d="M8 18h8" opacity=".35"/>'),
@@ -60,6 +61,7 @@ export const TOOLBAR = [
     { command: 'h2', shortcut: `${mod}${alt}2` },
     { command: 'h3', shortcut: `${mod}${alt}3` },
     { command: 'quote', shortcut: `${mod}${shift}9` },
+    { command: 'codeblock', shortcut: `${mod}${alt}C` },
   ],
   [
     { command: 'ul', shortcut: `${mod}${shift}8` },

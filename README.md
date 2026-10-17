@@ -1,14 +1,15 @@
 # wyswyg
 
-Editor WYSIWYG modern berbasis **vanilla JS + Alpine.js**, ringan (~21 KB gzip) tanpa dependency lain.
+Editor WYSIWYG modern berbasis **vanilla JS + Alpine.js**, ringan (~25 KB gzip) tanpa dependency lain.
 
 - Bubble toolbar saat teks diblok, slash command `/`, tombol `+` di baris kosong
 - Shortcut markdown: `##`, `>`, `-`, `1.`, `---`, `**tebal**`, `*miring*`, `` `kode` ``
-- Gambar (upload, caption, alt text, 3 ukuran), video YouTube/Vimeo, pemisah
+- Gambar (upload, caption, alt text, 3 ukuran), video YouTube/Vimeo, pemisah, blok kode
+- Output HTML atau JSON (model blok + mark), autosave draf ke localStorage
 - Paste dari Word, Google Docs, dan web selalu bersih; output HTML ter-sanitasi
 - Undo/redo andal, mode baca saja, `x-model`, bahasa Indonesia & Inggris
 - CSS terisolasi dengan prefix `afw` — aman bersama Bootstrap, Tailwind, dll.
-- Teruji di Chrome, Firefox, dan Safari (WebKit)
+- Teruji di Chrome, Firefox, dan Safari (WebKit); integrasi Laravel siap pakai
 
 ## Instalasi
 
@@ -75,6 +76,8 @@ Dengan `x-model`:
 | `pasteAsPlainText` | `false` | Buang semua format saat paste |
 | `toolbarItems`, `bubbleItems` | bawaan | Susunan tombol (lihat `src/icons.js`) |
 | `historyLimit` | `100` | Jumlah langkah undo |
+| `format` | `'html'` | Isi input hidden: `'html'` atau `'json'` |
+| `autosave` | `null` | `'kunci-unik'` atau `{ key, delay }`: simpan draf ke localStorage |
 
 Contoh `upload`:
 
@@ -94,6 +97,7 @@ Dipanggil dari markup di dalam komponen atau lewat `Alpine.$data(el)`:
 | Method | Keterangan |
 |---|---|
 | `getHTML()` / `setHTML(html)` | Ambil / ganti isi (selalu disanitasi) |
+| `getJSON()` / `setJSON(doc)` | Isi sebagai model JSON |
 | `exec(perintah, ...arg)` | Jalankan perintah, lihat tabel perintah |
 | `isActive(perintah)` | Format aktif di posisi kursor |
 | `setReadOnly(bool)` | Ubah mode baca saja |
@@ -125,8 +129,12 @@ Dikirim dari elemen editor dan *bubbling*, jadi bisa ditangkap di parent:
 | `image` | | `/gambar`, seret file, tempel screenshot |
 | `embed` | | `/video`, tempel link YouTube di baris kosong |
 | `hr` | | `--- ` |
+| `codeblock` | Ctrl/⌘ + Alt + C | ```` ``` ```` + spasi, `/kode` |
 | `undo` / `redo` | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (atau Ctrl + Y) | |
 | `unlink` | | |
+
+Di dalam blok kode: **Enter** = baris baru, **Tab / Shift+Tab** = indentasi, **Enter** di baris
+kosong terakhir = keluar dari blok, paste selalu sebagai teks.
 
 Saat gambar/video/pemisah dipilih: **Backspace/Delete** menghapus, **Enter** membuat paragraf
 baru di bawahnya, **panah** keluar dari media.
@@ -149,14 +157,46 @@ Elemen `#editor` perlu dibungkus elemen berclass `afw` agar style berlaku.
 | API `Editor` | Keterangan |
 |---|---|
 | `exec(nama, ...arg)`, `isActive(nama)`, `state()` | Perintah & status format |
-| `getHTML()`, `setHTML(html, { resetHistory })`, `getText()`, `clear()`, `isEmpty()` | Isi |
+| `getHTML()`, `setHTML(html, { resetHistory })`, `getJSON()`, `setJSON(doc)`, `getText()`, `clear()`, `isEmpty()` | Isi |
 | `insertHTML(html)`, `insertText(teks)`, `paste({ html, text, files })`, `insertImages(files)` | Sisipkan |
 | `undo()`, `redo()`, `canUndo()`, `canRedo()` | Riwayat |
+| `restoreDraft()`, `discardDraft()`, `clearDraft()`, `draft` | Autosave |
 | `setReadOnly(bool)`, `focus()`, `stats()` | Lainnya |
 | `on(event, fn)` → fungsi untuk berhenti, `off()`, `destroy()` | Event |
 
 Event `Editor`: `change`, `state`, `selection`, `slash`, `history`, `readonly`, `linkrequest`,
 `embedrequest`, `error`, `focus`, `blur`.
+
+## Format JSON
+
+```js
+editor.getJSON();
+// { type: 'doc', version: 1, blocks: [
+//   { type: 'heading', level: 2, text: 'Judul', marks: [] },
+//   { type: 'paragraph', text: 'Halo dunia', marks: [{ type: 'bold', start: 5, end: 10 }] },
+//   { type: 'list', style: 'bullet', items: [{ text: 'satu', marks: [] }] },
+//   { type: 'image', src: '/x.png', alt: '', size: 'wide', caption: { text: '...', marks: [] } },
+//   { type: 'embed', provider: 'youtube', id: '...' }, { type: 'code', text: '...' }, { type: 'divider' } ] }
+```
+
+Format inline disimpan sebagai rentang karakter (`bold`, `italic`, `code`, `link` + `href`),
+cocok untuk dirender di platform lain. `toJSON(html)` dan `fromJSON(doc)` juga diekspor;
+`fromJSON` selalu menyanitasi, jadi JSON dari sumber tak dipercaya tetap aman.
+
+## Autosave
+
+```html
+<div x-data="wysiwyg({ name: 'body', autosave: 'post-42' })"></div>
+```
+
+Draf disimpan ke localStorage setiap ada perubahan (jeda 1 detik). Saat halaman dibuka lagi dan
+ada draf yang berbeda, muncul banner **Pulihkan / Buang**; selama belum dipilih, draf lama tidak
+ditimpa. Draf dihapus otomatis saat form induknya dikirim.
+
+## Laravel
+
+Komponen `<x-wysiwyg>`, controller upload, dan sanitasi server (HTMLPurifier) yang sudah diuji ada
+di [`integrations/laravel`](integrations/laravel/README.md).
 
 ## Menampilkan hasil
 
@@ -185,7 +225,7 @@ Semua warna, font, dan ukuran memakai variabel CSS `--afw-*`:
 
 Semua HTML yang masuk (paste, drop, `setHTML`) dan keluar (`getHTML`) melewati whitelist:
 
-- Tag: `p h2 h3 blockquote ul ol li b i a code br figure img figcaption iframe hr`
+- Tag: `p h2 h3 blockquote ul ol li b i a code br pre figure img figcaption iframe hr`
 - Atribut: `a[href]` (http/https/mailto/tel/relatif), `img[src alt]` (src divalidasi; data URL
   hanya PNG/JPG/GIF/WebP/AVIF), `figure[data-size data-embed]`, iframe hanya YouTube/Vimeo
   dengan `src` yang dibangun ulang dari ID video.
@@ -214,6 +254,9 @@ npm run test:browser                             # test browser di Chromium
 npm run test:browser -- all                      # Chromium, Firefox, WebKit
 ```
 
+Integrasi Laravel: `php artisan test --filter=WyswygTest` di proyek Laravel yang sudah memuat
+file dari `integrations/laravel`.
+
 Struktur:
 
 ```
@@ -224,6 +267,7 @@ src/
   i18n.js      teks bahasa Indonesia & Inggris
   style.css    seluruh CSS (prefix afw)
 demo/          halaman demo
+integrations/  integrasi Laravel (Blade, upload, sanitasi server)
 tests/         unit test (Vitest) & test browser (Playwright)
 ```
 

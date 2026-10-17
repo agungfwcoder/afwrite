@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0 — 2026-10-17
+
+### Termin 6: lanjutan
+- Blok kode `<pre><code>`: ```` ``` ````, `/kode`, tombol toolbar, Ctrl/⌘+Alt+C; Enter, Tab,
+  Shift+Tab, dan paste sebagai teks di dalam blok
+- Model JSON: `getJSON()` / `setJSON()`, `toJSON()` / `fromJSON()`, opsi `format: 'json'`
+- Autosave draf ke localStorage dengan banner Pulihkan / Buang
+- Integrasi Laravel: komponen `<x-wysiwyg>`, controller upload, `WyswygHtml::clean()`
+  (HTMLPurifier) beserta feature test
+- Test: 115 unit test, 207 pemeriksaan browser per engine (Chromium, Firefox, WebKit)
+
 ## 1.0.0 — 2026-10-17
 
 Rilis pertama.
