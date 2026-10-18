@@ -35,7 +35,8 @@ class WyswygHtml
         }
 
         $config->set('HTML.Allowed', implode(',', [
-            'p', 'h2', 'h3', 'blockquote', 'ul', 'ol', 'li', 'b', 'i', 'code', 'br', 'pre', 'hr',
+            // Semua level judul yang bisa diaktifkan editor (opsi `headings`).
+            'p', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'ul', 'ol', 'li', 'b', 'i', 'code', 'br', 'pre', 'hr',
             'a[href]',
             'figure[data-size|data-embed]', 'figcaption',
             'img[src|alt]',

@@ -47,6 +47,14 @@ describe('toJSON', () => {
     ]);
   });
 
+  test('level judul mengikuti opsi headings', () => {
+    expect(toJSON('<h4>a</h4>').content[0].attrs.level).toBe(3);
+    expect(toJSON('<h4>a</h4>', { headings: [2, 3, 4] }).content[0].attrs.level).toBe(4);
+    const doc = { type: 'doc', content: [{ type: 'heading', attrs: { level: 6 }, content: [text('x')] }] };
+    expect(fromJSON(doc)).toBe('<h3>x</h3>');
+    expect(fromJSON(doc, { headings: [2, 6] })).toBe('<h6>x</h6>');
+  });
+
   test('kosong', () => {
     expect(toJSON('')).toEqual({ type: 'doc', content: [] });
     expect(toJSON('<p></p>')).toEqual({ type: 'doc', content: [] });

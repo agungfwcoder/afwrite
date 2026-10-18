@@ -10,24 +10,26 @@
 
 import { createDocument, getHTMLFromFragment, getSchema } from '@tiptap/core';
 import { Node as PMNode } from '@tiptap/pm/model';
-import { sanitize } from './sanitize.js';
+import { normalizeHeadings, sanitize } from './sanitize.js';
 import { createExtensions } from './schema.js';
 
+// Schema JSON mengenal semua level judul; level yang dipakai dibatasi lewat sanitize().
 let schema = null;
-const getDocSchema = () => (schema ||= getSchema(createExtensions()));
+const getDocSchema = () => (schema ||= getSchema(createExtensions({ headings: [2, 3, 4, 5, 6] })));
 
-export function toJSON(html) {
-  const clean = sanitize(html);
+// Opsi: headings (level judul yang dipakai, bawaan [2, 3]), allowDataImages.
+export function toJSON(html, options = {}) {
+  const clean = sanitize(html, { ...options, headings: normalizeHeadings(options.headings) });
   if (!clean) return { type: 'doc', content: [] };
   return createDocument(clean, getDocSchema()).toJSON();
 }
 
-export function fromJSON(doc) {
+export function fromJSON(doc, options = {}) {
   const s = getDocSchema();
   const cleaned = cleanNode(doc, s);
   if (!cleaned || cleaned.type !== 'doc' || !cleaned.content?.length) return '';
   try {
-    return sanitize(getHTMLFromFragment(PMNode.fromJSON(s, cleaned).content, s));
+    return sanitize(getHTMLFromFragment(PMNode.fromJSON(s, cleaned).content, s), options);
   } catch {
     return '';
   }

@@ -1,6 +1,6 @@
 // Schema dokumen (Tiptap/ProseMirror). Isinya sama dengan whitelist sanitize.js:
 //
-//   blok   : paragraph <p>, heading <h2>/<h3>, blockquote <blockquote>, bulletList <ul>,
+//   blok   : paragraph <p>, heading <h2>-<h6> (sesuai opsi headings), blockquote <blockquote>, bulletList <ul>,
 //            orderedList <ol>, listItem <li>, codeBlock <pre><code>, horizontalRule <hr>,
 //            image <figure><img><figcaption>, embed <figure data-embed><iframe><figcaption>
 //   inline : bold <b>, italic <i>, code <code>, link <a href>, hardBreak <br>
@@ -169,13 +169,13 @@ export const embedOf = (node) =>
   parseEmbed(node.attrs.provider === 'vimeo' ? `https://vimeo.com/${node.attrs.id}` : `https://youtu.be/${node.attrs.id}`);
 
 // Daftar extension. Opsi: allowDataImages (ikut opsi Editor), captionPlaceholder.
-export function createExtensions({ allowDataImages = true, captionPlaceholder = '' } = {}) {
+export function createExtensions({ allowDataImages = true, captionPlaceholder = '', headings = [2, 3] } = {}) {
   return [
     Document,
     Paragraph,
     Text,
     HardBreak.configure({ keepMarks: true }),
-    Heading.configure({ levels: [2, 3] }),
+    Heading.configure({ levels: headings }),
     Blockquote,
     BulletList,
     OrderedList,

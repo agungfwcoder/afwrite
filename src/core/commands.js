@@ -27,6 +27,12 @@ const blockType = (ed) => $from(ed).parent.type.name;
 
 const toggleBlock = (name, attrs) => (ed) => tt(ed).commands.toggleNode(name, 'paragraph', attrs);
 
+// Judul hanya untuk level yang diaktifkan lewat opsi `headings`.
+const heading = (level) => ({
+  run: (ed) => ed.options.headings.includes(level) && toggleBlock('heading', { level })(ed),
+  active: (ed) => tt(ed).isActive('heading', { level }),
+});
+
 export const COMMANDS = {
   bold: {
     run: (ed) => tt(ed).commands.toggleMark('bold'),
@@ -36,14 +42,11 @@ export const COMMANDS = {
     run: (ed) => tt(ed).commands.toggleMark('italic'),
     active: (ed) => tt(ed).isActive('italic'),
   },
-  h2: {
-    run: toggleBlock('heading', { level: 2 }),
-    active: (ed) => tt(ed).isActive('heading', { level: 2 }),
-  },
-  h3: {
-    run: toggleBlock('heading', { level: 3 }),
-    active: (ed) => tt(ed).isActive('heading', { level: 3 }),
-  },
+  h2: heading(2),
+  h3: heading(3),
+  h4: heading(4),
+  h5: heading(5),
+  h6: heading(6),
   quote: {
     run: toggleBlock('blockquote'),
     active: (ed) => blockType(ed) === 'blockquote',

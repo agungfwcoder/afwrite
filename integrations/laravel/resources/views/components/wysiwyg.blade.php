@@ -2,6 +2,7 @@
     Editor wyswyg sebagai komponen Blade.
 
     <x-wysiwyg name="body" :value="$post->body" upload-url="{{ route('wyswyg.upload') }}" autosave="post-{{ $post->id }}" />
+    <x-wysiwyg name="body" :headings="[2, 3, 4, 5, 6]" />   level judul yang dipakai (bawaan [2, 3])
 
     Konten awal disanitasi di server (WyswygHtml::clean) sebelum dicetak: HTML mentah di halaman
     akan dijalankan browser (mis. <img onerror>) sebelum editor sempat menyaringnya.
@@ -16,6 +17,7 @@
     'toolbar' => true,
     'readonly' => false,
     'format' => 'html',
+    'headings' => null,
 ])
 
 @php
@@ -27,6 +29,7 @@
         'toolbar' => (bool) $toolbar,
         'readonly' => (bool) $readonly,
         'format' => $format,
+        'headings' => $headings,
     ], fn ($option) => $option !== null);
 
     $upload = $uploadUrl ? 'window.wyswygUpload('.\Illuminate\Support\Js::from($uploadUrl).')' : 'null';

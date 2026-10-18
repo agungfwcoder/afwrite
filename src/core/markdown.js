@@ -1,7 +1,8 @@
 // Shortcut markdown saat mengetik (input rule ProseMirror).
 //
 // Di awal paragraf tingkat teratas (diikuti spasi):
-//   # atau ##  -> Judul      ###  -> Subjudul    >  -> Kutipan
+//   # atau ##  -> Judul      ### s.d. ######  -> judul level 3-6 (level yang tidak aktif
+//                            turun ke level aktif terdekat)      >  -> Kutipan
 //   - * +      -> Daftar berpoin                1. -> Daftar bernomor
 //   ---        -> Pemisah                     ```  -> Blok kode
 //
@@ -12,8 +13,14 @@ import { InputRule, markInputRule } from '@tiptap/core';
 
 // Blok: hanya di paragraf tingkat teratas (bukan di dalam list).
 const BLOCK_RULES = [
-  { find: /^#{1,2}\s$/, run: (chain) => chain.setNode('heading', { level: 2 }) },
-  { find: /^###\s$/, run: (chain) => chain.setNode('heading', { level: 3 }) },
+  {
+    find: /^(#{1,6})\s$/,
+    run: (chain, match, headings) => {
+      const wanted = Math.max(match[1].length, 2);
+      const lower = headings.filter((n) => n <= wanted);
+      return chain.setNode('heading', { level: lower.length ? lower[lower.length - 1] : headings[0] });
+    },
+  },
   { find: /^>\s$/, run: (chain) => chain.setNode('blockquote') },
   { find: /^[-*+]\s$/, run: (chain) => chain.toggleBulletList() },
   { find: /^\d+[.)]\s$/, run: (chain) => chain.toggleOrderedList() },
@@ -28,13 +35,13 @@ const INLINE_RULES = [
   { find: /`([^`]+)`$/, mark: 'code' },
 ];
 
-export function markdownRules(schema) {
+export function markdownRules(schema, headings = [2, 3]) {
   const blocks = BLOCK_RULES.map(({ find, run }) => new InputRule({
     find,
-    handler: ({ state, range, chain }) => {
+    handler: ({ state, range, match, chain }) => {
       const $from = state.doc.resolve(range.from);
       if ($from.depth !== 1 || $from.parent.type.name !== 'paragraph') return null;
-      run(chain().deleteRange(range)).run();
+      run(chain().deleteRange(range), match, headings).run();
     },
   }));
 

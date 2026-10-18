@@ -28,7 +28,8 @@ import { Editor } from './core/editor.js';
 import { parseEmbed } from './core/embed.js';
 import { normalizeUrl } from './core/url.js';
 import { format as formatText, getStrings } from './i18n.js';
-import { BUBBLE, ICONS, TOOLBAR } from './icons.js';
+import { normalizeHeadings } from './core/sanitize.js';
+import { BUBBLE, ICONS, TOOLBAR, withHeadings } from './icons.js';
 import { TEMPLATE } from './template.js';
 
 const GAP = 10;
@@ -51,6 +52,8 @@ export function wysiwygComponent(options = {}) {
   let inputBusy = false;
   let toastTimer = null;
   const strings = getStrings(options.lang, options.strings);
+  // Susunan tombol bawaan mengikuti level judul aktif (bubble: paling banyak 2 level).
+  const headings = normalizeHeadings(options.headings);
 
   return {
     html: '',
@@ -62,8 +65,8 @@ export function wysiwygComponent(options = {}) {
     name: options.name || '',
     format: options.format === 'json' ? 'json' : 'html',
     draft: null,
-    toolbar: options.toolbarItems || TOOLBAR,
-    bubbleItems: options.bubbleItems || BUBBLE,
+    toolbar: options.toolbarItems || withHeadings(TOOLBAR, headings),
+    bubbleItems: options.bubbleItems || withHeadings(BUBBLE, headings, 2),
     showToolbar: options.toolbar ?? true,
     showBubble: options.bubble ?? true,
     showStats: options.stats ?? true,

@@ -130,3 +130,20 @@ describe('blok kode', () => {
     expect(sanitize(input)).toBe(expected);
   });
 });
+
+describe('opsi headings', () => {
+  const all = '<h1>1</h1><h2>2</h2><h3>3</h3><h4>4</h4><h5>5</h5><h6>6</h6>';
+  test.each([
+    [undefined, '<h2>1</h2><h2>2</h2><h3>3</h3><h3>4</h3><h3>5</h3><h3>6</h3>'],
+    [[2, 3, 4, 5, 6], '<h2>1</h2><h2>2</h2><h3>3</h3><h4>4</h4><h5>5</h5><h6>6</h6>'],
+    [[2, 4], '<h2>1</h2><h2>2</h2><h2>3</h2><h4>4</h4><h4>5</h4><h4>6</h4>'],
+    [[3, 5], '<h3>1</h3><h3>2</h3><h3>3</h3><h3>4</h3><h5>5</h5><h5>6</h5>'],
+    [[9, 'x', 1], '<h2>1</h2><h2>2</h2><h3>3</h3><h3>4</h3><h3>5</h3><h3>6</h3>'],
+  ])('%j', (headings, expected) => {
+    expect(sanitize(all, { headings })).toBe(expected);
+  });
+
+  test('<b> di dalam judul level berapa pun dibuang', () => {
+    expect(sanitize('<h5><b>x</b></h5>', { headings: [5] })).toBe('<h5>x</h5>');
+  });
+});

@@ -70,6 +70,7 @@ Dengan `x-model`:
 | `upload` | `null` | `async (file) => url`. Tanpa ini gambar disimpan sebagai base64 |
 | `maxImageSize` | `5 MB` | Batas ukuran gambar (byte); `0` = tanpa batas |
 | `allowDataImages` | `true` | Izinkan `<img src="data:image/…">` di output |
+| `headings` | `[2, 3]` | Level judul yang dipakai (2–6), mis. `[2, 3, 4, 5, 6]`. Tombol toolbar, slash menu, shortcut, dan markdown mengikuti; level lain diturunkan ke level aktif terdekat |
 | `markdown` | `true` | Shortcut markdown |
 | `slash` | `true` | Slash menu |
 | `pasteAsPlainText` | `false` | Buang semua format saat paste |
@@ -120,7 +121,7 @@ Dikirim dari elemen editor dan *bubbling*, jadi bisa ditangkap di parent:
 |---|---|---|
 | `bold` / `italic` | Ctrl/⌘ + B / I | `**teks**` / `*teks*` |
 | `link` | Ctrl/⌘ + K | tempel URL di atas teks terseleksi |
-| `h2` / `h3` | Ctrl/⌘ + Alt + 2 / 3 | `## ` / `### ` |
+| `h2` … `h6` | Ctrl/⌘ + Alt + 2 … 6 | `## ` … `###### ` (level harus aktif di `headings`) |
 | `paragraph` | Ctrl/⌘ + Alt + 0 | |
 | `quote` | Ctrl/⌘ + Shift + 9 | `> ` |
 | `ul` / `ol` | Ctrl/⌘ + Shift + 8 / 7 | `- ` / `1. ` |
@@ -237,7 +238,7 @@ Semua warna, font, dan ukuran memakai variabel CSS `--afw-*`:
 
 Semua HTML yang masuk (paste, drop, `setHTML`) dan keluar (`getHTML`) melewati whitelist:
 
-- Tag: `p h2 h3 blockquote ul ol li b i a code br pre figure img figcaption iframe hr`
+- Tag: `p h2–h6 (sesuai headings) blockquote ul ol li b i a code br pre figure img figcaption iframe hr`
 - Atribut: `a[href]` (http/https/mailto/tel/relatif), `img[src alt]` (src divalidasi; data URL
   hanya PNG/JPG/GIF/WebP/AVIF), `figure[data-size data-embed]`, iframe hanya YouTube/Vimeo
   dengan `src` yang dibangun ulang dari ID video.

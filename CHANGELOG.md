@@ -1,5 +1,15 @@
 # Changelog
 
+## Belum dirilis
+
+### Baru
+- Opsi `headings` (bawaan `[2, 3]`): level judul H2–H6. Tombol toolbar & bubble (bubble paling
+  banyak 2 level), slash menu, shortcut Ctrl/⌘+Alt+2…6, dan markdown `##`…`######` mengikuti
+  level aktif; level lain diturunkan ke level aktif terdekat. Prop Blade `:headings`, dan
+  `WyswygHtml::clean()` kini mengizinkan h2–h6
+- `toJSON(html, options)` / `fromJSON(doc, options)` menerima `headings`
+- Ikon H4, H5, H6 dan helper `withHeadings()` untuk menyusun toolbar sendiri
+
 ## 2.0.0 — 2026-10-18
 
 Engine baru: [Tiptap](https://tiptap.dev) 3 / [ProseMirror](https://prosemirror.net), menggantikan

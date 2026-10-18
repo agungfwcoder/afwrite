@@ -250,8 +250,14 @@
 
 .afw .afw-content h2,
 .afw .afw-content h3,
+.afw .afw-content h4,
+.afw .afw-content h5,
+.afw .afw-content h6,
 .afw-prose h2,
-.afw-prose h3 {
+.afw-prose h3,
+.afw-prose h4,
+.afw-prose h5,
+.afw-prose h6 {
   margin: 1.6em 0 0.5em;
   font-family: var(--afw-font-content);
   font-weight: 700;
@@ -269,6 +275,27 @@
 .afw-prose h3 {
   font-size: 1.3em;
   line-height: 1.35;
+}
+
+.afw .afw-content h4,
+.afw-prose h4 {
+  font-size: 1.12em;
+  line-height: 1.4;
+}
+
+.afw .afw-content h5,
+.afw-prose h5 {
+  font-size: 1em;
+  line-height: 1.45;
+}
+
+.afw .afw-content h6,
+.afw-prose h6 {
+  font-size: 0.8em;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--afw-muted);
 }
 
 .afw .afw-content b,

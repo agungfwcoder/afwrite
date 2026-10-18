@@ -31,7 +31,7 @@ import { parseEmbed } from './embed.js';
 import { markdownRules } from './markdown.js';
 import { insertImageFiles, insertMediaBlock, isMediaNode, mediaKind, SIZES } from './media.js';
 import { fromJSON, toJSON } from './model.js';
-import { sanitize, sanitizeToElement, textToHtml } from './sanitize.js';
+import { normalizeHeadings, sanitize, sanitizeToElement, textToHtml } from './sanitize.js';
 import { createExtensions } from './schema.js';
 
 const DEFAULTS = {
@@ -46,7 +46,8 @@ const DEFAULTS = {
   pasteAsPlainText: false, // true: semua format dari clipboard dibuang
   markdown: true, // shortcut markdown saat mengetik
   slash: true, // slash menu
-  blocks: BLOCKS, // isi slash menu
+  blocks: BLOCKS, // isi slash menu (judul hanya untuk level di `headings`)
+  headings: [2, 3], // level judul yang dipakai (2-6)
   upload: null, // async (file) => url gambar; tanpa ini gambar disimpan sebagai data URL (base64)
   maxImageSize: 5 * 1024 * 1024, // byte; 0 = tanpa batas
   allowDataImages: true, // izinkan <img src="data:image/..."> di output
@@ -63,6 +64,9 @@ const SHORTCUTS = [
   { code: 'Digit0', alt: true, command: 'paragraph' },
   { code: 'Digit2', alt: true, command: 'h2' },
   { code: 'Digit3', alt: true, command: 'h3' },
+  { code: 'Digit4', alt: true, command: 'h4' },
+  { code: 'Digit5', alt: true, command: 'h5' },
+  { code: 'Digit6', alt: true, command: 'h6' },
   { code: 'Digit7', shift: true, command: 'ol' },
   { code: 'Digit8', shift: true, command: 'ul' },
   { code: 'Digit9', shift: true, command: 'quote' },
@@ -79,6 +83,7 @@ export class Editor {
 
     this.el = el;
     this.options = { ...DEFAULTS, ...options };
+    this.options.headings = normalizeHeadings(this.options.headings);
     this.strings = getStrings(this.options.lang, this.options.strings);
     this.readOnly = false;
     this.listeners = {};
@@ -256,11 +261,11 @@ export class Editor {
   // ----- JSON (format dokumen ProseMirror/Tiptap) -----
 
   getJSON() {
-    return toJSON(this.getHTML());
+    return toJSON(this.getHTML(), this._sanitizeOptions());
   }
 
   setJSON(doc, options) {
-    this.setHTML(fromJSON(doc), options);
+    this.setHTML(fromJSON(doc, this._sanitizeOptions()), options);
   }
 
   // ----- Autosave draf -----
@@ -481,7 +486,7 @@ export class Editor {
       name: 'afwBehavior',
       addCommands: () => ({ insertMediaBlock }),
       addInputRules() {
-        return options.markdown ? markdownRules(this.editor.schema) : [];
+        return options.markdown ? markdownRules(this.editor.schema, options.headings) : [];
       },
       addProseMirrorPlugins: () => [decorationsPlugin(), trailingParagraphPlugin()],
     });
@@ -489,7 +494,11 @@ export class Editor {
     this.tiptap = new TiptapEditor({
       element: { mount: el },
       extensions: [
-        ...createExtensions({ allowDataImages: options.allowDataImages, captionPlaceholder: this.strings.captionPlaceholder }),
+        ...createExtensions({
+          allowDataImages: options.allowDataImages,
+          captionPlaceholder: this.strings.captionPlaceholder,
+          headings: options.headings,
+        }),
         behavior,
         UndoRedo.configure({ depth: options.historyLimit, newGroupDelay: 1000 }),
         Gapcursor,
@@ -609,7 +618,12 @@ export class Editor {
   }
 
   _sanitizeOptions() {
-    return { allowDataImages: this.options.allowDataImages };
+    return { allowDataImages: this.options.allowDataImages, headings: this.options.headings };
+  }
+
+  // Item slash menu: judul hanya untuk level yang aktif.
+  _blocks() {
+    return this.options.blocks.filter((b) => !/^h[2-6]$/.test(b.command) || this.options.headings.includes(Number(b.command[1])));
   }
 
   // Baca seleksi DOM sekarang juga. ProseMirror biasanya membacanya dari event
@@ -947,7 +961,7 @@ export class Editor {
     if (this._slashDismissed === context.from) return;
 
     const query = match[1];
-    const items = filterBlocks(query, this.options.blocks, this.strings);
+    const items = filterBlocks(query, this._blocks(), this.strings);
     const sameQuery = this.slash.open && this.slash.query === query;
 
     this.slash = {

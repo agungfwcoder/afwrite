@@ -19,11 +19,11 @@
 import { createEmbedIframe, normalizeImageSrc, parseEmbed } from './embed.js';
 import { normalizeUrl } from './url.js';
 
-export const BLOCK_TAGS = new Set(['P', 'H2', 'H3', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'FIGURE', 'HR', 'PRE']);
+export const BLOCK_TAGS = new Set(['P', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'FIGURE', 'HR', 'PRE']);
 const MEDIA_TAGS = new Set(['FIGURE', 'HR']);
 const FIGURE_SIZES = ['wide', 'full'];
 export const INLINE_TAGS = new Set(['B', 'I', 'A', 'CODE', 'BR']);
-const TEXT_BLOCKS = new Set(['P', 'H2', 'H3', 'BLOCKQUOTE', 'LI']);
+const TEXT_BLOCKS = new Set(['P', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'LI']);
 const LISTS = new Set(['UL', 'OL']);
 
 // Dibuang beserta seluruh isinya.
@@ -35,9 +35,8 @@ const DROP_TAGS = new Set([
   'O:P', // paragraf kosong dari Microsoft Word
 ]);
 
-// Tag sumber -> tag hasil.
+// Tag sumber -> tag hasil. Judul (H1-H6) dipetakan lewat headingTag() sesuai opsi `headings`.
 const TAG_MAP = {
-  H1: 'H2', H2: 'H2', H3: 'H3', H4: 'H3', H5: 'H3', H6: 'H3',
   P: 'P', BLOCKQUOTE: 'BLOCKQUOTE', UL: 'UL', OL: 'OL', LI: 'LI',
   B: 'B', STRONG: 'B', I: 'I', EM: 'I', CITE: 'I', DFN: 'I',
   A: 'A', CODE: 'CODE', TT: 'CODE', KBD: 'CODE', SAMP: 'CODE', BR: 'BR',
@@ -52,7 +51,24 @@ const CONTAINER_TAGS = new Set([
 
 // Opsi:
 //   allowDataImages (true)  izinkan <img src="data:image/...">
+//   headings ([2, 3])       level judul yang dipakai; level lain diturunkan ke level aktif
+//                           terdekat (H1 menjadi level terkecil yang aktif)
 let options = {};
+
+// [4, 2, 2, 9] -> [2, 4]. Hanya level 2-6; kosong/tidak valid -> [2, 3].
+export function normalizeHeadings(levels) {
+  const valid = [...new Set((Array.isArray(levels) ? levels : []).map(Number))]
+    .filter((n) => Number.isInteger(n) && n >= 2 && n <= 6)
+    .sort((a, b) => a - b);
+  return valid.length ? valid : [2, 3];
+}
+
+function headingTag(tag) {
+  const levels = options.headings;
+  const level = Number(tag[1]);
+  const lower = levels.filter((n) => n <= level);
+  return `H${lower.length ? lower[lower.length - 1] : levels[0]}`;
+}
 
 export function sanitize(html, opts = {}) {
   if (!html || !String(html).trim()) return '';
@@ -62,6 +78,7 @@ export function sanitize(html, opts = {}) {
 
 export function sanitizeToElement(html, opts = {}) {
   options = { allowDataImages: true, ...opts };
+  options.headings = normalizeHeadings(opts.headings);
 
   // DOMParser menghasilkan dokumen "mati": script tidak jalan, gambar tidak dimuat.
   const source = new DOMParser().parseFromString(String(html), 'text/html');
@@ -108,7 +125,7 @@ function convert(node) {
   // Sel tabel: isi dipertahankan, dipisah spasi.
   if (tag === 'TD' || tag === 'TH') return [...children, document.createTextNode(' ')];
 
-  const target = TAG_MAP[tag] || (CONTAINER_TAGS.has(tag) ? 'P' : null);
+  const target = /^H[1-6]$/.test(tag) ? headingTag(tag) : TAG_MAP[tag] || (CONTAINER_TAGS.has(tag) ? 'P' : null);
 
   // Tag tak dikenal (span, font, u, ...): ambil isinya, tapi format dari style tetap dibaca.
   if (!target) {
@@ -290,6 +307,9 @@ function makeBlock(tag, children) {
     case 'P':
     case 'H2':
     case 'H3':
+    case 'H4':
+    case 'H5':
+    case 'H6':
       // Blok di dalam paragraf/heading diangkat keluar.
       return wrapInlineRuns(children, tag);
 
@@ -335,11 +355,14 @@ function makeBlock(tag, children) {
 // Tahap 2: perapian (spasi, <br>, tag kosong, tag ganda)
 // ---------------------------------------------------------------------------
 
+const HEADINGS = 'h2, h3, h4, h5, h6';
+const TEXT_SELECTOR = `p, ${HEADINGS}, blockquote, li, figcaption`;
+
 export function tidy(root) {
   unwrapRedundant(root);
-  root.querySelectorAll('p, h2, h3, blockquote, li, figcaption').forEach(normalizeWhitespace);
+  root.querySelectorAll(TEXT_SELECTOR).forEach(normalizeWhitespace);
   removeEmptyInline(root);
-  root.querySelectorAll('p, h2, h3, blockquote, li, figcaption').forEach(trimBreaks);
+  root.querySelectorAll(TEXT_SELECTOR).forEach(trimBreaks);
   removeEmptyBlocks(root);
   tidyMedia(root);
   mergeAdjacent(root);
@@ -356,7 +379,7 @@ function unwrapRedundant(root) {
     root.querySelectorAll(`${tag} ${tag}`).forEach(unwrap);
   });
   // Heading sudah tebal; <b> di dalamnya tidak bermakna (umum dari Google Docs).
-  root.querySelectorAll('h2 b, h3 b').forEach(unwrap);
+  root.querySelectorAll(HEADINGS.split(', ').map((h) => `${h} b`).join(', ')).forEach(unwrap);
 }
 
 // Node teks & <br> milik blok ini saja (list bertingkat diproses sebagai blok sendiri).
@@ -432,7 +455,7 @@ function trimBreaks(block) {
 
 function removeEmptyBlocks(root) {
   // Dari dalam ke luar, agar li kosong terhapus sebelum list induknya diperiksa.
-  [...root.querySelectorAll('p, h2, h3, blockquote, li, ul, ol, figcaption')].reverse().forEach((block) => {
+  [...root.querySelectorAll(`${TEXT_SELECTOR}, ul, ol`)].reverse().forEach((block) => {
     const hasText = inlineLeaves(block).some((n) => n.nodeType === Node.TEXT_NODE && n.data.trim());
     const hasList = LISTS.has(block.tagName)
       ? !!block.querySelector('li')
