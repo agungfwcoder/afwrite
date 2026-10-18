@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:,">
-  <title>wyswyg — Demo</title>
+  <title>Demo</title>
   <!-- CSS lewat <link> agar aktif sebelum halaman pertama kali digambar (tanpa kedipan). -->
   <link rel="stylesheet" href="/src/style.css">
   <link rel="stylesheet" href="/demo/demo.css">
@@ -14,7 +14,7 @@
   <div class="demo" x-data="demo()">
     <header class="demo-header">
       <div>
-        <h1 class="demo-title">wyswyg <span class="demo-badge">v2.0</span></h1>
+        <h1 class="demo-title"><span data-brand></span> <span class="demo-badge">v2.0</span></h1>
         <p class="demo-sub">Bubble toolbar, slash command, markdown, gambar &amp; video — plus sanitasi paste dari Word &amp; Google Docs.</p>
       </div>
 
@@ -66,7 +66,7 @@
              x-effect="showToolbar = mode === 'full'; setReadOnly(readonly)"
              @wysiwyg-change="output = $event.detail.html">
           <h2>Selamat datang 👋</h2>
-          <p>Ini editor <b>wyswyg</b>. Coba <b>blok teks ini</b> untuk memunculkan bubble toolbar, atau taruh kursor di <a href="https://example.com">link ini</a>.</p>
+          <p>Ini editor <b data-brand></b>. Coba <b>blok teks ini</b> untuk memunculkan bubble toolbar, atau taruh kursor di <a href="https://example.com">link ini</a>.</p>
           <blockquote>Tulisan yang baik dimulai dari editor yang tidak mengganggu.</blockquote>
           <p>Shortcut markdown yang bisa dicoba:</p>
           <ul><li>ketik ## lalu spasi untuk judul</li><li>ketik &gt; lalu spasi untuk kutipan</li><li>ketik **tebal** atau `kode`</li><li>ketik ``` lalu spasi untuk blok kode</li><li>ketik / di baris kosong untuk memilih blok</li></ul>

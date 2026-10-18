@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Editor wyswyg sungguhan di dalam halaman dokumentasi.
 //
-//   ::wyswyg-demo{:options='{"headings":[2,3,4]}'}
+//   ::editor-demo{:options='{"headings":[2,3,4]}'}
 //   ::
 //
 // Elemen editor dibuat lewat DOM biasa (bukan template Vue) karena isinya dikelola Alpine

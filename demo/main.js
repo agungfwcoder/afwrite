@@ -2,6 +2,12 @@ import Alpine from 'alpinejs';
 import wyswyg from '../src/index.js';
 import { PASTE_SAMPLES } from './paste-samples.js';
 
+// Nama yang tampil di halaman demo (judul tab, judul halaman, teks contoh).
+const BRAND = 'afwrite';
+document.title = `${BRAND} — Demo`;
+// Diisi sebelum Alpine mulai, agar teks contoh di dalam editor ikut terisi.
+document.querySelectorAll('[data-brand]').forEach((el) => (el.textContent = BRAND));
+
 const params = new URLSearchParams(location.search);
 window.demoLang = params.get('lang') || 'id';
 

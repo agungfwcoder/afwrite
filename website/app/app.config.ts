@@ -1,3 +1,5 @@
+import { BRAND } from '../brand'
+
 export default defineAppConfig({
   ui: {
     colors: {
@@ -12,10 +14,10 @@ export default defineAppConfig({
     }
   },
   seo: {
-    siteName: 'wyswyg'
+    siteName: BRAND
   },
   header: {
-    title: 'wyswyg',
+    title: BRAND,
     to: '/',
     logo: {
       alt: '',
@@ -27,7 +29,7 @@ export default defineAppConfig({
     links: []
   },
   footer: {
-    credits: `wyswyg • MIT • Dibangun dengan Tiptap, ProseMirror & Nuxt UI • © ${new Date().getFullYear()}`,
+    credits: `${BRAND} • MIT • Dibangun dengan Tiptap, ProseMirror & Nuxt UI • © ${new Date().getFullYear()}`,
     colorMode: false,
     links: []
   },

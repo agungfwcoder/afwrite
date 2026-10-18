@@ -11,6 +11,6 @@ npm run preview
 ```
 
 - Halaman: `content/` (Markdown + komponen MDC). Urutan mengikuti awalan angka nama file/folder.
-- Editor yang bisa dicoba: komponen `::wyswyg-demo` (`app/components/content/WyswygDemo.vue`),
+- Editor yang bisa dicoba: komponen `::editor-demo` (`app/components/content/WyswygDemo.vue`),
   dengan prop `options`, `content`, dan `output`.
 - Identitas situs (judul, warna, tautan): `app/app.config.ts`.

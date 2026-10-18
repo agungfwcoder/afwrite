@@ -1,6 +1,7 @@
-// Situs dokumentasi wyswyg (berbasis template Nuxt UI Docs).
+// Situs dokumentasi (berbasis template Nuxt UI Docs). Nama yang tampil diatur di brand.ts.
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { fileURLToPath } from 'node:url'
+import { BRAND } from './brand'
 
 // Demo di dokumentasi memakai source library langsung dari repo ini (../src),
 // beserta Alpine dari node_modules repo induk.
@@ -78,11 +79,11 @@ export default defineNuxtConfig({
 
   llms: {
     domain: 'http://localhost:3000/',
-    title: 'wyswyg',
-    description: 'Dokumentasi wyswyg: editor WYSIWYG modern untuk Alpine.js berbasis Tiptap/ProseMirror.',
+    title: BRAND,
+    description: `Dokumentasi ${BRAND}: editor WYSIWYG modern untuk Alpine.js berbasis Tiptap/ProseMirror.`,
     full: {
-      title: 'wyswyg - Dokumentasi lengkap',
-      description: 'Seluruh dokumentasi wyswyg dalam satu berkas.'
+      title: `${BRAND} - Dokumentasi lengkap`,
+      description: `Seluruh dokumentasi ${BRAND} dalam satu berkas.`
     },
     sections: [
       {
@@ -110,7 +111,7 @@ export default defineNuxtConfig({
   },
 
   mcp: {
-    name: 'wyswyg docs'
+    name: `${BRAND} docs`
   },
 
   ogImage: {

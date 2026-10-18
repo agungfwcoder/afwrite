@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { BRAND } from '~~/brand'
+
 const { data: page } = await useAsyncData('index', () => queryCollection('landing').path('/').first())
 if (!page.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
+  throw createError({ statusCode: 404, statusMessage: 'Halaman tidak ditemukan', fatal: true })
 }
 
-const title = page.value.seo?.title || page.value.title
+const title = `${BRAND} — ${page.value.seo?.title || page.value.title}`
 const description = page.value.seo?.description || page.value.description
 
 useSeoMeta({
@@ -12,8 +14,7 @@ useSeoMeta({
   title,
   ogTitle: title,
   description,
-  ogDescription: description,
-  ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/docs-light.png'
+  ogDescription: description
 })
 </script>
 
