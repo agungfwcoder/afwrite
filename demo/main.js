@@ -1,6 +1,5 @@
 import Alpine from 'alpinejs';
 import wyswyg from '../src/index.js';
-import './demo.css';
 import { PASTE_SAMPLES } from './paste-samples.js';
 
 const params = new URLSearchParams(location.search);

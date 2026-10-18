@@ -203,8 +203,12 @@ export class Editor {
     this.insertHTML(textToHtml(value));
   }
 
+  // Fokus langsung (sinkron). Perintah focus() milik Tiptap menunda fokus ke frame berikutnya,
+  // yang bisa menimpa seleksi yang dipasang sesudahnya.
   focus() {
-    this.tiptap.commands.focus('end');
+    const { view } = this.tiptap;
+    view.focus();
+    view.dispatch(view.state.tr.setSelection(Selection.atEnd(view.state.doc)).scrollIntoView());
   }
 
   // Simpan & pulihkan seleksi, mis. saat fokus pindah ke input link.
@@ -285,11 +289,15 @@ export class Editor {
   // ----- Undo / redo -----
 
   undo() {
-    if (!this.readOnly) this.tiptap.chain().focus().undo().run();
+    if (this.readOnly) return;
+    this.tiptap.view.focus();
+    this.tiptap.commands.undo();
   }
 
   redo() {
-    if (!this.readOnly) this.tiptap.chain().focus().redo().run();
+    if (this.readOnly) return;
+    this.tiptap.view.focus();
+    this.tiptap.commands.redo();
   }
 
   canUndo() {

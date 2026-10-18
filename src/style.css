@@ -132,6 +132,12 @@
   display: none !important;
 }
 
+/* Sebelum Alpine menyiapkan komponen (class .afw belum ada), isi mentahnya tidak ditampilkan
+   agar tidak berkedip; ruangnya tetap terpakai sehingga layout tidak melompat jauh. */
+[x-data*='wysiwyg(']:not(.afw) {
+  visibility: hidden;
+}
+
 .afw .afw-group {
   display: flex;
   align-items: center;
