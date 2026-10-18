@@ -1,13 +1,15 @@
 # wyswyg
 
-Editor WYSIWYG modern berbasis **vanilla JS + Alpine.js**, ringan (~25 KB gzip) tanpa dependency lain.
+Editor WYSIWYG modern berbasis **vanilla JS + Alpine.js**, dengan engine
+[Tiptap](https://tiptap.dev) / [ProseMirror](https://prosemirror.net).
 
 - Bubble toolbar saat teks diblok, slash command `/`, tombol `+` di baris kosong
 - Shortcut markdown: `##`, `>`, `-`, `1.`, `---`, `**tebal**`, `*miring*`, `` `kode` ``
 - Gambar (upload, caption, alt text, 3 ukuran), video YouTube/Vimeo, pemisah, blok kode
-- Output HTML atau JSON (model blok + mark), autosave draf ke localStorage
+- Output HTML atau JSON (format dokumen ProseMirror), autosave draf ke localStorage
 - Paste dari Word, Google Docs, dan web selalu bersih; output HTML ter-sanitasi
-- Undo/redo andal, mode baca saja, `x-model`, bahasa Indonesia & Inggris
+- Perilaku mengetik konsisten di semua browser (engine ProseMirror), undo/redo, mode baca saja,
+  `x-model`, bahasa Indonesia & Inggris
 - CSS terisolasi dengan prefix `afw` — aman bersama Bootstrap, Tailwind, dll.
 - Teruji di Chrome, Firefox, dan Safari (WebKit); integrasi Laravel siap pakai
 
@@ -17,6 +19,11 @@ Editor WYSIWYG modern berbasis **vanilla JS + Alpine.js**, ringan (~25 KB gzip) 
 npm install wyswyg alpinejs
 ```
 
+Tiptap/ProseMirror ikut terpasang sebagai dependency. Paket ini hanya tersedia sebagai modul ES,
+jadi dipakai lewat bundler (Vite, termasuk Vite di Laravel). Ukuran total di aplikasi sekitar
+135 KB gzip (ProseMirror sekitar 77 KB di antaranya); muat hanya di halaman yang memakai editor
+bila perlu (`import()` dinamis).
+
 ```js
 import Alpine from 'alpinejs';
 import wyswyg from 'wyswyg';
@@ -24,14 +31,6 @@ import 'wyswyg/style.css';
 
 Alpine.plugin(wyswyg);
 Alpine.start();
-```
-
-Lewat `<script>` (tanpa bundler) — plugin terdaftar otomatis:
-
-```html
-<link rel="stylesheet" href="dist/wyswyg.css">
-<script src="dist/wyswyg.umd.cjs"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 ```
 
 ## Pemakaian
@@ -97,7 +96,7 @@ Dipanggil dari markup di dalam komponen atau lewat `Alpine.$data(el)`:
 | Method | Keterangan |
 |---|---|
 | `getHTML()` / `setHTML(html)` | Ambil / ganti isi (selalu disanitasi) |
-| `getJSON()` / `setJSON(doc)` | Isi sebagai model JSON |
+| `getJSON()` / `setJSON(doc)` | Isi sebagai JSON dokumen ProseMirror |
 | `exec(perintah, ...arg)` | Jalankan perintah, lihat tabel perintah |
 | `isActive(perintah)` | Format aktif di posisi kursor |
 | `setReadOnly(bool)` | Ubah mode baca saja |
@@ -167,21 +166,33 @@ Elemen `#editor` perlu dibungkus elemen berclass `afw` agar style berlaku.
 Event `Editor`: `change`, `state`, `selection`, `slash`, `history`, `readonly`, `linkrequest`,
 `embedrequest`, `error`, `focus`, `blur`.
 
+Instance Tiptap tersedia di `editor.tiptap` untuk kebutuhan lanjutan (mis.
+`editor.tiptap.commands`, `editor.tiptap.state`). Perubahan lewat jalur ini tetap memicu event
+`change`, tetapi output tetap dibatasi whitelist sanitasi.
+
 ## Format JSON
+
+Format dokumen ProseMirror/Tiptap, sehingga bisa dibaca alat-alat dari ekosistem yang sama:
 
 ```js
 editor.getJSON();
-// { type: 'doc', version: 1, blocks: [
-//   { type: 'heading', level: 2, text: 'Judul', marks: [] },
-//   { type: 'paragraph', text: 'Halo dunia', marks: [{ type: 'bold', start: 5, end: 10 }] },
-//   { type: 'list', style: 'bullet', items: [{ text: 'satu', marks: [] }] },
-//   { type: 'image', src: '/x.png', alt: '', size: 'wide', caption: { text: '...', marks: [] } },
-//   { type: 'embed', provider: 'youtube', id: '...' }, { type: 'code', text: '...' }, { type: 'divider' } ] }
+// { type: 'doc', content: [
+//   { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Judul' }] },
+//   { type: 'paragraph', content: [
+//     { type: 'text', text: 'Halo ' },
+//     { type: 'text', marks: [{ type: 'bold' }], text: 'dunia' } ] },
+//   { type: 'bulletList', content: [{ type: 'listItem', content: [{ type: 'paragraph', ... }] }] },
+//   { type: 'image', attrs: { src: '/x.png', alt: '', size: 'wide' }, content: [/* keterangan */] },
+//   { type: 'embed', attrs: { provider: 'youtube', id: '...' } },
+//   { type: 'codeBlock', content: [...] }, { type: 'horizontalRule' } ] }
 ```
 
-Format inline disimpan sebagai rentang karakter (`bold`, `italic`, `code`, `link` + `href`),
-cocok untuk dirender di platform lain. `toJSON(html)` dan `fromJSON(doc)` juga diekspor;
-`fromJSON` selalu menyanitasi, jadi JSON dari sumber tak dipercaya tetap aman.
+Node: `paragraph`, `heading` (level 2/3), `blockquote`, `bulletList`, `orderedList`, `listItem`,
+`codeBlock`, `horizontalRule`, `image`, `embed`, `hardBreak`, `text`. Mark: `bold`, `italic`,
+`code`, `link` (`href`). `toJSON(html)` dan `fromJSON(doc)` juga diekspor; `fromJSON` membuang
+node/mark yang tidak dikenal dan selalu menyanitasi, jadi JSON dari sumber tak dipercaya tetap aman.
+
+> Berubah di v2: format JSON v1 (`blocks` + `marks` rentang) tidak lagi didukung. HTML tidak berubah.
 
 ## Autosave
 
@@ -262,7 +273,7 @@ Struktur:
 
 ```
 src/
-  core/        inti editor tanpa Alpine (editor, perintah, sanitasi, media, riwayat, markdown)
+  core/        inti editor tanpa Alpine (engine Tiptap: schema, perintah, sanitasi, media, markdown)
   alpine.js    komponen Alpine: bubble, slash menu, toolbar media, input link
   template.js  markup UI default
   i18n.js      teks bahasa Indonesia & Inggris
@@ -271,6 +282,11 @@ demo/          halaman demo
 integrations/  integrasi Laravel (Blade, upload, sanitasi server)
 tests/         unit test (Vitest) & test browser (Playwright)
 ```
+
+## Credit
+
+Dibangun di atas [Tiptap](https://tiptap.dev) dan [ProseMirror](https://prosemirror.net)
+(keduanya berlisensi MIT). Ikon berbasis [Lucide](https://lucide.dev) (ISC).
 
 ## Lisensi
 

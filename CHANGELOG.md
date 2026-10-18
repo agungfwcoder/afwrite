@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.0.0 — 2026-10-18
+
+Engine baru: [Tiptap](https://tiptap.dev) 3 / [ProseMirror](https://prosemirror.net), menggantikan
+`contenteditable` + `document.execCommand`. Tampilan, komponen Alpine, API `Editor`, event, dan
+format HTML output tidak berubah, sehingga konten lama tetap terbaca.
+
+### Berubah
+- Perilaku mengetik, list, format, dan kursor ditangani ProseMirror: sama di semua browser,
+  tanpa tambalan khusus Chrome/Safari
+- JSON memakai format dokumen ProseMirror (`{ type: 'doc', content: [...] }`); format v1
+  (`blocks` + `marks` rentang) tidak lagi didukung
+- Build hanya modul ES; Tiptap/ProseMirror menjadi dependency (total sekitar 135 KB gzip di aplikasi)
+- Build UMD (`<script>` tanpa bundler) dihapus
+
+### Baru
+- `editor.tiptap`: akses ke instance Tiptap untuk kebutuhan lanjutan
+- Gap cursor (kursor di antara dua media) dan penanda posisi saat menyeret gambar
+
+### Perbaikan
+- Seleksi yang dipasang lewat script, atau tombol yang ditekan sangat cepat setelah
+  Shift+Panah, kini selalu terbaca sebelum perintah dijalankan
+- Drop HTML/teks dari luar memakai aturan yang sama dengan paste di semua browser
+
 ## 1.1.0 — 2026-10-17
 
 ### Termin 6: lanjutan

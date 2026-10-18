@@ -13,7 +13,7 @@ import plugin from './alpine.js';
 export { plugin };
 export default plugin;
 
-// Pemakaian lewat <script> (UMD/CDN): daftar otomatis saat Alpine mulai.
+// Alpine yang dimuat lewat <script> (window.Alpine): plugin didaftarkan otomatis saat Alpine mulai.
 if (typeof document !== 'undefined') {
   document.addEventListener('alpine:init', () => window.Alpine?.plugin(plugin));
 }
