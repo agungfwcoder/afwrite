@@ -2,6 +2,7 @@ import './style.css';
 
 export { Editor } from './core/editor.js';
 export { COMMANDS } from './core/commands.js';
+export { BLOCKS } from './core/blocks.js';
 export { normalizeUrl } from './core/url.js';
 export { sanitize, textToHtml } from './core/sanitize.js';
 export { toJSON, fromJSON } from './core/model.js';

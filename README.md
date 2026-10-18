@@ -254,6 +254,14 @@ import { sanitize } from 'wyswyg';
 sanitize('<div style="x">Hai <script>x()</script><b>kamu</b></div>'); // '<p>Hai <b>kamu</b></p>'
 ```
 
+## Dokumentasi
+
+Situs dokumentasi lengkap (dengan editor yang bisa dicoba) ada di folder [`website/`](website/README.md):
+
+```bash
+cd website && npm install && npm run dev
+```
+
 ## Pengembangan
 
 ```bash
@@ -282,6 +290,7 @@ src/
 demo/          halaman demo
 integrations/  integrasi Laravel (Blade, upload, sanitasi server)
 tests/         unit test (Vitest) & test browser (Playwright)
+website/       situs dokumentasi (Nuxt UI Docs)
 ```
 
 ## Credit
