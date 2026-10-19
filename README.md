@@ -299,9 +299,11 @@ website/       situs dokumentasi (Nuxt UI Docs)
 
 ## Credit
 
-Dibangun di atas [Tiptap](https://tiptap.dev) dan [ProseMirror](https://prosemirror.net)
-(keduanya berlisensi MIT). Ikon berbasis [Lucide](https://lucide.dev) (ISC).
+Dibangun di atas [Tiptap](https://tiptap.dev), [ProseMirror](https://prosemirror.net), dan
+[Alpine.js](https://alpinejs.dev) (semuanya berlisensi MIT). Ikon berbasis [Lucide](https://lucide.dev)
+(ISC). Situs dokumentasi memakai template [Nuxt UI Docs](https://github.com/nuxt-ui-templates/docs)
+(MIT, lisensinya di `website/LICENSE`).
 
 ## Lisensi
 
-MIT
+[MIT](LICENSE) © 2026 agungfitrahwibowo
