@@ -1,0 +1,65 @@
+# Build situs dokumentasi (folder website/) dan publish ke GitHub Pages setiap push ke main.
+# Sekali saja di GitHub: Settings → Pages → Build and deployment → Source: "GitHub Actions".
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths: ['website/**', 'src/**', 'CHANGELOG.md', 'package-lock.json', '.github/workflows/docs.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            website/package-lock.json
+
+      # Demo di docs memakai source library (../src) dan Alpine dari node_modules root.
+      - name: Install (library)
+        run: npm ci
+
+      - name: Install (website)
+        run: npm ci
+        working-directory: website
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      # Situs proyek GitHub Pages berada di sub-folder /<nama-repo>/.
+      - name: Generate
+        run: npx nuxt generate
+        working-directory: website
+        env:
+          NUXT_APP_BASE_URL: ${{ steps.pages.outputs.base_path }}/
+          NUXT_SITE_URL: ${{ steps.pages.outputs.base_url }}/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/.output/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

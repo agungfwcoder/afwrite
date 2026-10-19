@@ -78,7 +78,8 @@ export default defineNuxtConfig({
   },
 
   llms: {
-    domain: 'http://localhost:3000/',
+    // Saat build di GitHub Actions diisi alamat GitHub Pages (lihat .github/workflows/docs.yml).
+    domain: process.env.NUXT_SITE_URL || 'http://localhost:3000/',
     title: BRAND,
     description: `Dokumentasi ${BRAND}: editor WYSIWYG modern untuk Alpine.js berbasis Tiptap/ProseMirror.`,
     full: {

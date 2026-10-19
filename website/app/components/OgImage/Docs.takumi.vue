@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { BRAND } from '~~/brand'
+
 defineOptions({
   inheritAttrs: false
 })
@@ -57,7 +59,7 @@ defineProps<{
           />
         </svg>
         <div class="h-px flex-1 bg-border" />
-        <span class="text-xl text-dimmed">ui.nuxt.com</span>
+        <span class="text-xl text-dimmed">{{ BRAND }}</span>
       </div>
     </div>
   </div>

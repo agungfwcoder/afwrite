@@ -7,7 +7,10 @@ const { copy, copied } = useClipboard()
 // Alamat yang sedang dibuka (bukan site.url, yang bawaannya http://localhost:3000/).
 const origin = useRequestURL().origin
 
-const mdPath = computed(() => `${origin}/raw${route.path.replace(/\/$/, '')}.md`)
+// Situs bisa berada di sub-folder (GitHub Pages: /afwrite/), jadi path raw diberi baseURL.
+const base = useRuntimeConfig().app.baseURL.replace(/\/$/, '')
+const rawPath = computed(() => `${base}/raw${route.path.replace(/\/$/, '')}.md`)
+const mdPath = computed(() => `${origin}${rawPath.value}`)
 
 const items = [
   {
@@ -25,7 +28,8 @@ const items = [
     label: 'Lihat sebagai Markdown',
     icon: 'i-simple-icons:markdown',
     target: '_blank',
-    to: `/raw${route.path}.md`
+    to: rawPath.value,
+    external: true
   },
   {
     label: 'Unduh Markdown',
@@ -36,7 +40,7 @@ const items = [
 
 // Simpan isi halaman sebagai file .md (nama file dari bagian terakhir alamat halaman).
 async function downloadPage() {
-  const text = await $fetch<string>(`/raw${route.path.replace(/\/$/, '')}.md`)
+  const text = await $fetch<string>(rawPath.value)
   const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown;charset=utf-8' }))
   const link = document.createElement('a')
   link.href = url
@@ -46,7 +50,7 @@ async function downloadPage() {
 }
 
 async function copyPage() {
-  copy(await $fetch<string>(`/raw${route.path}.md`))
+  copy(await $fetch<string>(rawPath.value))
 }
 </script>
 
