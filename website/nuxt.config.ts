@@ -25,7 +25,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   alias: {
-    'wyswyg': `${root}src/index.js`,
+    'afwrite': `${root}src/index.js`,
     'alpinejs': `${root}node_modules/alpinejs/dist/module.esm.js`
   },
 

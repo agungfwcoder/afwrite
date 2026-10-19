@@ -1,13 +1,17 @@
 {
-  "name": "wyswyg",
-  "version": "2.0.0",
-  "description": "Editor WYSIWYG modern berbasis vanilla JS + Alpine.js dengan engine Tiptap/ProseMirror: bubble toolbar, slash command, markdown, gambar & video, sanitasi HTML.",
+  "name": "afwrite",
+  "version": "2.1.0",
+  "description": "Editor WYSIWYG ala Medium untuk Alpine.js, berbasis Tiptap/ProseMirror: bubble toolbar, slash command, markdown, mode artikel, gambar & video, drag & drop blok, sanitasi HTML.",
   "type": "module",
-  "main": "./dist/wyswyg.js",
-  "module": "./dist/wyswyg.js",
+  "main": "./dist/afwrite.js",
+  "module": "./dist/afwrite.js",
+  "unpkg": "./dist/afwrite.min.js",
+  "jsdelivr": "./dist/afwrite.min.js",
   "exports": {
-    ".": "./dist/wyswyg.js",
-    "./style.css": "./dist/wyswyg.css"
+    ".": "./dist/afwrite.js",
+    "./style.css": "./dist/afwrite.css",
+    "./standalone": "./dist/afwrite.min.js",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
@@ -15,12 +19,18 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && vite build -c vite.standalone.config.js",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:browser": "node tests/browser/run.mjs"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agungfwibowo/afwrite.git"
+  },
+  "homepage": "https://agungfwibowo.github.io/afwrite/",
+  "bugs": "https://github.com/agungfwibowo/afwrite/issues",
   "peerDependencies": {
     "alpinejs": "^3.0.0"
   },
@@ -39,7 +49,11 @@
     "rich-text",
     "contenteditable",
     "alpinejs",
-    "markdown"
+    "markdown",
+    "tiptap",
+    "prosemirror",
+    "medium",
+    "laravel"
   ],
   "dependencies": {
     "@tiptap/core": "^3.32.0",

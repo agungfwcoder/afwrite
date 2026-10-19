@@ -1,7 +1,7 @@
 // resources/js/app.js (atau impor file ini dari sana)
 import Alpine from 'alpinejs';
-import wyswyg from 'wyswyg';
-import 'wyswyg/style.css';
+import afwrite from 'afwrite';
+import 'afwrite/style.css';
 
 // Fungsi upload untuk <x-wysiwyg upload-url="...">: kirim file ke controller Laravel
 // beserta token CSRF, lalu kembalikan URL gambar.
@@ -21,6 +21,6 @@ window.wyswygUpload = (url) => async (file) => {
   return (await response.json()).url;
 };
 
-Alpine.plugin(wyswyg);
+Alpine.plugin(afwrite);
 window.Alpine = Alpine;
 Alpine.start();

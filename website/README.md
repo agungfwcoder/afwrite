@@ -1,4 +1,4 @@
-# Situs dokumentasi wyswyg
+# Situs dokumentasi afwrite
 
 Dibangun dengan template [Nuxt UI Docs](https://ui.nuxt.com) (Nuxt 4 + Nuxt Content, lisensi MIT,
 lihat `LICENSE`). Demo editor di dalam halaman memakai source library langsung dari `../src`.

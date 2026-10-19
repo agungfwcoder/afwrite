@@ -1,5 +1,5 @@
 /*
- * wyswyg — style editor
+ * afwrite — style editor
  *
  * Aturan isolasi agar tidak bentrok dengan Bootstrap, Tailwind, dll:
  *  1. Semua class berawalan `afw-`, termasuk state (`afw-is-active`, bukan `active`).

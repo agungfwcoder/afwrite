@@ -1,8 +1,8 @@
 // Integrasi Alpine.js.
 //
 //   import Alpine from 'alpinejs';
-//   import wyswyg from 'wyswyg';
-//   Alpine.plugin(wyswyg);
+//   import afwrite from 'afwrite';
+//   Alpine.plugin(afwrite);
 //
 // Pemakaian paling sederhana (UI dibuat otomatis):
 //
@@ -577,6 +577,6 @@ function gutterX(blockRect, rootRect) {
   return Math.max(2, Math.round(blockRect.left - rootRect.left - 30));
 }
 
-export default function wyswygPlugin(Alpine) {
+export default function afwritePlugin(Alpine) {
   Alpine.data('wysiwyg', wysiwygComponent);
 }

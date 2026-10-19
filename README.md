@@ -1,4 +1,4 @@
-# wyswyg
+# afwrite
 
 Editor WYSIWYG modern berbasis **vanilla JS + Alpine.js**, dengan engine
 [Tiptap](https://tiptap.dev) / [ProseMirror](https://prosemirror.net).
@@ -13,23 +13,38 @@ Editor WYSIWYG modern berbasis **vanilla JS + Alpine.js**, dengan engine
 - CSS terisolasi dengan prefix `afw` — aman bersama Bootstrap, Tailwind, dll.
 - Teruji di Chrome, Firefox, dan Safari (WebKit); integrasi Laravel siap pakai
 
+Dokumentasi lengkap: https://agungfwibowo.github.io/afwrite/
+
 ## Instalasi
 
-```bash
-npm install wyswyg alpinejs
+### Lewat CDN (tanpa build)
+
+Script afwrite dimuat **sebelum** Alpine; plugin terdaftar otomatis dan API lain ada di `window.Afwrite`:
+
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/agungfwibowo/afwrite@v2.1.0/dist/afwrite.css">
+<script defer src="https://cdn.jsdelivr.net/gh/agungfwibowo/afwrite@v2.1.0/dist/afwrite.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 ```
 
-Tiptap/ProseMirror ikut terpasang sebagai dependency. Paket ini hanya tersedia sebagai modul ES,
-jadi dipakai lewat bundler (Vite, termasuk Vite di Laravel). Ukuran total di aplikasi sekitar
+### Lewat bundler
+
+```bash
+npm install github:agungfwibowo/afwrite#v2.1.0 alpinejs
+# setelah dipublish ke npm: npm install afwrite alpinejs
+```
+
+Tiptap/ProseMirror ikut terpasang sebagai dependency. Dipakai lewat bundler (Vite, termasuk Vite di
+Laravel). Ukuran total di aplikasi sekitar
 135 KB gzip (ProseMirror sekitar 77 KB di antaranya); muat hanya di halaman yang memakai editor
 bila perlu (`import()` dinamis).
 
 ```js
 import Alpine from 'alpinejs';
-import wyswyg from 'wyswyg';
-import 'wyswyg/style.css';
+import afwrite from 'afwrite';
+import 'afwrite/style.css';
 
-Alpine.plugin(wyswyg);
+Alpine.plugin(afwrite);
 Alpine.start();
 ```
 
@@ -148,8 +163,8 @@ baru di bawahnya, **panah** keluar dari media.
 Inti editor tidak bergantung pada Alpine (tanpa UI melayang; link & video memakai `prompt()`):
 
 ```js
-import { Editor } from 'wyswyg';
-import 'wyswyg/style.css';
+import { Editor } from 'afwrite';
+import 'afwrite/style.css';
 
 const editor = new Editor(document.querySelector('#editor'), { lang: 'en' });
 editor.on('change', (html) => (input.value = html));
@@ -254,7 +269,7 @@ Semua HTML yang masuk (paste, drop, `setHTML`) dan keluar (`getHTML`) melewati w
 `sanitize()` juga bisa dipakai langsung:
 
 ```js
-import { sanitize } from 'wyswyg';
+import { sanitize } from 'afwrite';
 sanitize('<div style="x">Hai <script>x()</script><b>kamu</b></div>'); // '<p>Hai <b>kamu</b></p>'
 ```
 

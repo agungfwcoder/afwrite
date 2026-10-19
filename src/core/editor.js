@@ -80,7 +80,7 @@ const isDocEmpty = (doc) => doc.childCount === 1 && doc.firstChild.type.name ===
 
 export class Editor {
   constructor(el, options = {}) {
-    if (!el) throw new Error('[wyswyg] Elemen editor tidak ditemukan.');
+    if (!el) throw new Error('[afwrite] Elemen editor tidak ditemukan.');
 
     this.el = el;
     this.options = { ...DEFAULTS, ...options };
@@ -101,7 +101,7 @@ export class Editor {
     if (name === 'undo' || name === 'redo') return this[name]();
 
     const command = this.commands[name];
-    if (!command) return console.warn(`[wyswyg] Perintah tidak dikenal: ${name}`);
+    if (!command) return console.warn(`[afwrite] Perintah tidak dikenal: ${name}`);
 
     if (!this.hasFocus()) this.focus();
     this._syncSelection();

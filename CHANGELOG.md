@@ -1,8 +1,17 @@
 # Changelog
 
-## Belum dirilis
+## 2.1.0 — 2026-10-20
+
+### Berubah
+- Nama paket menjadi `afwrite` (sebelumnya `wyswyg`, nama yang di npm sudah dipakai paket lain):
+  `import afwrite from 'afwrite'`, `import 'afwrite/style.css'`. Berkas build menjadi
+  `dist/afwrite.js` & `dist/afwrite.css`. Komponen `x-data="wysiwyg(...)"`, event, dan nama di
+  integrasi Laravel (`WyswygHtml`, route `wyswyg.upload`) tidak berubah
+- `dist/` ikut di repo agar bisa dipasang dari GitHub dan dimuat lewat CDN
 
 ### Baru
+- Build standalone `dist/afwrite.min.js` untuk `<script>` / CDN (jsDelivr), sudah berisi
+  Tiptap/ProseMirror. Plugin terdaftar otomatis, API di `window.Afwrite`
 - Opsi `headings` (bawaan `[2, 3]`): level judul H2–H6. Tombol toolbar & bubble (bubble paling
   banyak 2 level), slash menu, shortcut Ctrl/⌘+Alt+2…6, dan markdown `##`…`######` mengikuti
   level aktif; level lain diturunkan ke level aktif terdekat. Prop Blade `:headings`, dan

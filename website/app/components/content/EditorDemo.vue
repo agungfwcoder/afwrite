@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Editor wyswyg sungguhan di dalam halaman dokumentasi.
+// Editor afwrite sungguhan di dalam halaman dokumentasi.
 //
 //   ::editor-demo{:options='{"headings":[2,3,4]}'}
 //   ::
@@ -26,11 +26,11 @@ let host: HTMLElement | null = null
 const theme = () => (colorMode.value === 'dark' ? 'dark' : 'light')
 
 onMounted(async () => {
-  const [{ default: Alpine }, { default: wyswyg }] = await Promise.all([import('alpinejs'), import('wyswyg')])
+  const [{ default: Alpine }, { default: afwrite }] = await Promise.all([import('alpinejs'), import('afwrite')])
   const w = window as unknown as { Alpine?: typeof Alpine }
   if (!w.Alpine) {
     w.Alpine = Alpine
-    Alpine.plugin(wyswyg)
+    Alpine.plugin(afwrite)
     Alpine.start()
   }
 
