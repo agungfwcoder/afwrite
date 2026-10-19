@@ -39,7 +39,16 @@ const heading = (level) => ({
   run(ed) {
     if (!ed.options.headings.includes(level)) return false;
     if (afterTitle(ed) && level === subtitleLevel(ed)) {
-      return tt(ed).commands.setNode(blockType(ed) === 'subtitle' ? 'paragraph' : 'subtitle');
+      if (blockType(ed) === 'subtitle') return tt(ed).commands.setNode('paragraph');
+      // Artikel wajib punya isi: jika baris ini satu-satunya, sediakan paragraf kosong di bawahnya.
+      const isLast = $from(ed).index(0) === ed.tiptap.state.doc.childCount - 1;
+      return tt(ed).chain()
+        .command(({ tr, state }) => {
+          if (isLast) tr.insert(tr.doc.content.size, state.schema.nodes.paragraph.create());
+          return true;
+        })
+        .setNode('subtitle')
+        .run();
     }
     return blockType(ed) === 'subtitle'
       ? tt(ed).commands.setNode('heading', { level })

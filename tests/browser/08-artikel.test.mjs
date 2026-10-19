@@ -69,6 +69,18 @@ await page.click(`${editor} .afw-subtitle`);
 await page.click('#art .afw-toolbar .afw-btn[aria-label="Subjudul"]');
 check('t kecil lagi -> paragraf', (await out()).startsWith('<h1>Judul cerita</h1><p>Ringkasan singkat</p>'), await out());
 
+// ---------- Subjudul tanpa Enter: baris di bawah judul adalah satu-satunya isi ----------
+await set('<h1>Judul</h1><p>sub</p>');
+await page.click(`${editor} p`);
+await page.click('#art .afw-toolbar .afw-btn[aria-label="Subjudul"]');
+check('t kecil di satu-satunya baris isi -> subjudul', (await out()) === '<h1>Judul</h1><p class="afw-subtitle">sub</p>', await out());
+check('paragraf isi kosong disediakan di bawahnya', (await blocks()).join() === 'h1,p.sub,p', (await blocks()).join());
+await set('<h1>Judul</h1>');
+await page.click(`${editor} p`);
+await page.click('#art .afw-toolbar .afw-btn[aria-label="Subjudul"]');
+await page.keyboard.type('Ringkas');
+check('t kecil di baris kosong lalu mengetik', (await out()) === '<h1>Judul</h1><p class="afw-subtitle">Ringkas</p>', await out());
+
 // ---------- Backspace ----------
 await set('<h1>Judul</h1><p class="afw-subtitle">Sub</p><p>Isi</p>');
 await page.click(`${editor} .afw-subtitle`);
