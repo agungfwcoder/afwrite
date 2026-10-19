@@ -26,8 +26,24 @@ const items = [
     icon: 'i-simple-icons:markdown',
     target: '_blank',
     to: `/raw${route.path}.md`
+  },
+  {
+    label: 'Unduh Markdown',
+    icon: 'i-lucide-download',
+    onSelect: downloadPage
   }
 ]
+
+// Simpan isi halaman sebagai file .md (nama file dari bagian terakhir alamat halaman).
+async function downloadPage() {
+  const text = await $fetch<string>(`/raw${route.path.replace(/\/$/, '')}.md`)
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown;charset=utf-8' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${route.path.split('/').filter(Boolean).pop() || 'index'}.md`
+  link.click()
+  URL.revokeObjectURL(url)
+}
 
 async function copyPage() {
   copy(await $fetch<string>(`/raw${route.path}.md`))
