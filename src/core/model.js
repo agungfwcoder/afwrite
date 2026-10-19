@@ -11,21 +11,23 @@
 import { createDocument, getHTMLFromFragment, getSchema } from '@tiptap/core';
 import { Node as PMNode } from '@tiptap/pm/model';
 import { normalizeHeadings, sanitize } from './sanitize.js';
-import { createExtensions } from './schema.js';
+import { createExtensions, withTitle } from './schema.js';
 
 // Schema JSON mengenal semua level judul; level yang dipakai dibatasi lewat sanitize().
-let schema = null;
-const getDocSchema = () => (schema ||= getSchema(createExtensions({ headings: [2, 3, 4, 5, 6] })));
+// Mode artikel (title) memakai schema sendiri: title subtitle? block+.
+const schemas = {};
+const getDocSchema = (title = false) =>
+  (schemas[title] ||= getSchema(createExtensions({ headings: [2, 3, 4, 5, 6], title })));
 
-// Opsi: headings (level judul yang dipakai, bawaan [2, 3]), allowDataImages.
+// Opsi: headings (level judul yang dipakai, bawaan [2, 3]), title (mode artikel), allowDataImages.
 export function toJSON(html, options = {}) {
   const clean = sanitize(html, { ...options, headings: normalizeHeadings(options.headings) });
   if (!clean) return { type: 'doc', content: [] };
-  return createDocument(clean, getDocSchema()).toJSON();
+  return createDocument(withTitle(clean, !!options.title), getDocSchema(!!options.title)).toJSON();
 }
 
 export function fromJSON(doc, options = {}) {
-  const s = getDocSchema();
+  const s = getDocSchema(!!options.title);
   const cleaned = cleanNode(doc, s);
   if (!cleaned || cleaned.type !== 'doc' || !cleaned.content?.length) return '';
   try {

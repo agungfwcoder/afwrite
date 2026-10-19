@@ -71,6 +71,7 @@ Dengan `x-model`:
 | `maxImageSize` | `5 MB` | Batas ukuran gambar (byte); `0` = tanpa batas |
 | `allowDataImages` | `true` | Izinkan `<img src="data:image/…">` di output |
 | `headings` | `[2, 3]` | Level judul yang dipakai (2–6), mis. `[2, 3, 4, 5, 6]`. Tombol toolbar, slash menu, shortcut, dan markdown mengikuti; level lain diturunkan ke level aktif terdekat |
+| `title` | `false` | Mode artikel ala Medium: baris pertama judul `<h1>`; tombol judul kecil (level kedua) di baris tepat setelahnya membuat subjudul `<p class="afw-subtitle">` |
 | `markdown` | `true` | Shortcut markdown |
 | `slash` | `true` | Slash menu |
 | `pasteAsPlainText` | `false` | Buang semua format saat paste |
@@ -238,7 +239,7 @@ Semua warna, font, dan ukuran memakai variabel CSS `--afw-*`:
 
 Semua HTML yang masuk (paste, drop, `setHTML`) dan keluar (`getHTML`) melewati whitelist:
 
-- Tag: `p h2–h6 (sesuai headings) blockquote ul ol li b i a code br pre figure img figcaption iframe hr`
+- Tag: `p h1 (mode artikel) h2–h6 (sesuai headings) blockquote ul ol li b i a code br pre figure img figcaption iframe hr`
 - Atribut: `a[href]` (http/https/mailto/tel/relatif), `img[src alt]` (src divalidasi; data URL
   hanya PNG/JPG/GIF/WebP/AVIF), `figure[data-size data-embed]`, iframe hanya YouTube/Vimeo
   dengan `src` yang dibangun ulang dari ID video.

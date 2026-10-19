@@ -5,6 +5,9 @@
 //            image <figure><img><figcaption>, embed <figure data-embed><iframe><figcaption>
 //   inline : bold <b>, italic <i>, code <code>, link <a href>, hardBreak <br>
 //
+// Mode artikel (opsi title): dokumen = title subtitle? block+, dengan title <h1> (teks polos)
+// dan subtitle <p class="afw-subtitle"> (teks + link) yang hanya boleh tepat setelah judul.
+//
 // Kutipan adalah blok teks (isinya inline + <br>), bukan wadah paragraf, agar output
 // tetap <blockquote>a<br>b</blockquote> seperti v1.
 
@@ -64,6 +67,24 @@ const Link = Mark.create({
 });
 
 // ---------- Blok ----------
+
+const Title = Node.create({
+  name: 'title',
+  content: 'text*',
+  marks: '',
+  defining: true,
+  parseHTML: () => [{ tag: 'h1', priority: 60 }],
+  renderHTML: () => ['h1', 0],
+});
+
+const Subtitle = Node.create({
+  name: 'subtitle',
+  content: 'text*',
+  marks: 'link',
+  defining: true,
+  parseHTML: () => [{ tag: 'p.afw-subtitle', priority: 60 }],
+  renderHTML: () => ['p', { class: 'afw-subtitle' }, 0],
+});
 
 const Blockquote = Node.create({
   name: 'blockquote',
@@ -168,10 +189,16 @@ const Embed = Node.create({
 export const embedOf = (node) =>
   parseEmbed(node.attrs.provider === 'vimeo' ? `https://vimeo.com/${node.attrs.id}` : `https://youtu.be/${node.attrs.id}`);
 
+// Mode artikel: tanpa <h1> di awal, ProseMirror akan memasukkan paragraf pertama ke dalam judul.
+// Judul kosong ditambahkan dulu agar isi tetap di tempatnya.
+export function withTitle(html, title) {
+  return title && !/^\s*<h1[\s>]/i.test(html) ? `<h1></h1>${html}` : html;
+}
+
 // Daftar extension. Opsi: allowDataImages (ikut opsi Editor), captionPlaceholder.
-export function createExtensions({ allowDataImages = true, captionPlaceholder = '', headings = [2, 3] } = {}) {
+export function createExtensions({ allowDataImages = true, captionPlaceholder = '', headings = [2, 3], title = false } = {}) {
   return [
-    Document,
+    ...(title ? [Document.extend({ content: 'title subtitle? block+' }), Title, Subtitle] : [Document]),
     Paragraph,
     Text,
     HardBreak.configure({ keepMarks: true }),

@@ -26,13 +26,13 @@ import { EditorState, NodeSelection, Plugin, Selection, TextSelection } from '@t
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { getStrings } from '../i18n.js';
 import { BLOCKS, filterBlocks } from './blocks.js';
-import { COMMANDS } from './commands.js';
+import { COMMANDS, isCommandDisabled } from './commands.js';
 import { parseEmbed } from './embed.js';
 import { markdownRules } from './markdown.js';
 import { insertImageFiles, insertMediaBlock, isMediaNode, mediaKind, SIZES } from './media.js';
 import { fromJSON, toJSON } from './model.js';
 import { normalizeHeadings, sanitize, sanitizeToElement, textToHtml } from './sanitize.js';
-import { createExtensions } from './schema.js';
+import { createExtensions, withTitle } from './schema.js';
 
 const DEFAULTS = {
   content: '',
@@ -48,6 +48,7 @@ const DEFAULTS = {
   slash: true, // slash menu
   blocks: BLOCKS, // isi slash menu (judul hanya untuk level di `headings`)
   headings: [2, 3], // level judul yang dipakai (2-6)
+  title: false, // mode artikel ala Medium: baris pertama judul <h1>, subjudul lewat tombol judul kecil
   upload: null, // async (file) => url gambar; tanpa ini gambar disimpan sebagai data URL (base64)
   maxImageSize: 5 * 1024 * 1024, // byte; 0 = tanpa batas
   allowDataImages: true, // izinkan <img src="data:image/..."> di output
@@ -104,7 +105,17 @@ export class Editor {
 
     if (!this.hasFocus()) this.focus();
     this._syncSelection();
+    if (this.isDisabled(name)) return false;
     return command.run(this, ...args);
+  }
+
+  // Perintah tidak berlaku di posisi kursor (mis. tebal di judul artikel).
+  isDisabled(name) {
+    return this.hasFocus() && isCommandDisabled(this, name);
+  }
+
+  disabledState() {
+    return Object.fromEntries(Object.keys(this.commands).map((name) => [name, this.isDisabled(name)]));
   }
 
   isActive(name) {
@@ -124,8 +135,15 @@ export class Editor {
     return !!this.tiptap.view?.hasFocus();
   }
 
+  // Tanpa teks dan tanpa media (judul artikel yang kosong juga dianggap kosong).
   isEmpty() {
-    return isDocEmpty(this.tiptap.state.doc);
+    let content = false;
+    this.tiptap.state.doc.descendants((node) => {
+      if (content) return false;
+      if ((node.isText && node.text.trim()) || isMediaNode(node)) content = true;
+      return !content;
+    });
+    return !content;
   }
 
   // Output selalu lewat sanitize(): tag whitelist, tanpa atribut, tanpa paragraf kosong.
@@ -173,12 +191,12 @@ export class Editor {
   // Sisipkan HTML di posisi kursor (disanitasi). Dipakai oleh paste & drop.
   insertHTML(html) {
     this._syncSelection();
-    const clean = sanitizeToElement(html, this._sanitizeOptions());
+    const clean = sanitizeToElement(html, { ...this._sanitizeOptions(), title: false });
     if (!clean.childNodes.length) return;
     if (!this.hasFocus()) this.focus();
 
     const { state, view } = this.tiptap;
-    let content = this._parse(clean.innerHTML).content;
+    let content = this._parseFragment(clean.innerHTML);
 
     // Satu paragraf saja -> sisipkan isinya, agar tidak memecah paragraf tempat kursor berada.
     // Spasi di ujung (yang dibuang sanitize) dikembalikan agar kata tidak menempel.
@@ -438,6 +456,8 @@ export class Editor {
     this._events.forEach(([target, type, handler]) => target.removeEventListener(type, handler));
     cancelAnimationFrame(this._selectionFrame);
     clearTimeout(this._autosaveTimer);
+    this._resize?.disconnect();
+    cancelAnimationFrame(this._wideFrame);
     this.tiptap.destroy();
     this.listeners = {};
   }
@@ -450,6 +470,12 @@ export class Editor {
     this._syncSelection();
     const { state, view } = this.tiptap;
     const parent = state.selection.$from.parent;
+
+    // Judul / subjudul artikel: baris pertama masuk ke sana, sisanya menjadi isi di bawahnya.
+    if (parent.type.name === 'title' || parent.type.name === 'subtitle') {
+      this._pasteIntoTitle(text || new DOMParser().parseFromString(html, 'text/html').body.innerText || '');
+      return;
+    }
 
     // Blok kode & keterangan gambar: teks polos (keterangan: satu baris).
     if (parent.type.name === 'codeBlock' || (isCaption(parent) && !(state.selection instanceof NodeSelection))) {
@@ -488,7 +514,11 @@ export class Editor {
       addInputRules() {
         return options.markdown ? markdownRules(this.editor.schema, options.headings) : [];
       },
-      addProseMirrorPlugins: () => [decorationsPlugin(), trailingParagraphPlugin()],
+      addProseMirrorPlugins: () => [
+        decorationsPlugin(),
+        trailingParagraphPlugin(),
+        ...(options.title ? [titlePlugin(this.strings)] : []),
+      ],
     });
 
     this.tiptap = new TiptapEditor({
@@ -498,6 +528,7 @@ export class Editor {
           allowDataImages: options.allowDataImages,
           captionPlaceholder: this.strings.captionPlaceholder,
           headings: options.headings,
+          title: options.title,
         }),
         behavior,
         UndoRedo.configure({ depth: options.historyLimit, newGroupDelay: 1000 }),
@@ -517,13 +548,29 @@ export class Editor {
         handleDrop: (view, e, slice, moved) => this._handleDrop(e, moved),
         handleClickOn: (view, pos, node, nodePos, e) => this._handleClickOn(node, nodePos, e),
         handleClick: (view, pos, e) => this._handleClick(e),
-        transformPastedHTML: (html) => sanitize(html, this._sanitizeOptions()),
+        transformPastedHTML: (html) => sanitize(html, { ...this._sanitizeOptions(), title: false }),
       },
     });
     this.tiptap.on('transaction', ({ transaction }) => this._afterUpdate(transaction));
 
     if (options.readonly) this.setReadOnly(true);
     this._setupAutosave();
+
+    // Mode artikel: label "Judul/Subjudul" di margin kiri hanya jika editor cukup lebar.
+    // Atribut ini tidak dikelola ProseMirror, jadi aman dipasang langsung.
+    if (options.title && typeof ResizeObserver !== 'undefined') {
+      // Lebar luar (border box): padding yang bertambah saat label tampil tidak boleh
+      // memengaruhi keputusan, agar label tidak menyala-padam di sekitar ambang batas.
+      // Diterapkan di frame berikutnya (di luar callback) karena tinggi editor ikut berubah.
+      this._resize = new ResizeObserver(([entry]) => {
+        const wide = (entry.borderBoxSize?.[0]?.inlineSize ?? el.offsetWidth) >= 640;
+        cancelAnimationFrame(this._wideFrame);
+        this._wideFrame = requestAnimationFrame(() => {
+          if (wide !== el.hasAttribute('data-afw-wide')) el.toggleAttribute('data-afw-wide', wide);
+        });
+      });
+      this._resize.observe(el, { box: 'border-box' });
+    }
 
     this._events = [
       [el, 'focus', () => {
@@ -552,16 +599,101 @@ export class Editor {
   }
 
   _initialHTML(content) {
-    return sanitize(content, this._sanitizeOptions()) || '<p></p>';
+    return withTitle(sanitize(content, this._sanitizeOptions()) || '<p></p>', this.options.title);
   }
 
   _parse(html) {
-    const doc = createDocument(html || '<p></p>', this.tiptap.schema);
+    const doc = createDocument(withTitle(html || '<p></p>', this.options.title), this.tiptap.schema);
     // Selalu ada paragraf setelah media terakhir agar kursor bisa diletakkan di sana.
     if (isMediaNode(doc.lastChild)) {
       return doc.copy(doc.content.append(Fragment.from(this.tiptap.schema.nodes.paragraph.create())));
     }
     return doc;
+  }
+
+  // Isi HTML sebagai fragment blok biasa (tanpa judul kosong yang disisipkan schema artikel).
+  _parseFragment(html) {
+    const content = this._parse(html).content;
+    if (!this.options.title) return content;
+    let start = 0;
+    content.forEach((node, offset) => {
+      if ((node.type.name === 'title' || node.type.name === 'subtitle') && offset === start) start += node.nodeSize;
+    });
+    return content.cut(start);
+  }
+
+  _pasteIntoTitle(text) {
+    const { state, view } = this.tiptap;
+    const lines = text.replace(/\r\n?/g, '\n').split('\n');
+    const first = lines.shift().replace(/\s+/g, ' ');
+    const rest = lines.join('\n').trim();
+    const tr = state.tr.insertText(first);
+    if (rest) {
+      // Sisanya disisipkan setelah judul (dan subjudul, jika ada).
+      let after = tr.doc.child(0).nodeSize;
+      if (tr.doc.child(1)?.type.name === 'subtitle') after += tr.doc.child(1).nodeSize;
+      const content = this._parseFragment(sanitize(textToHtml(rest), { ...this._sanitizeOptions(), title: false }));
+      tr.insert(after, content);
+      tr.setSelection(Selection.near(tr.doc.resolve(after + content.size - 1), -1));
+    }
+    view.dispatch(tr.scrollIntoView());
+  }
+
+  // Enter / Backspace / Delete di sekitar judul & subjudul artikel. Mengembalikan true jika ditangani.
+  _handleTitleKey(e) {
+    if (!this.options.title || e.ctrlKey || e.metaKey || e.altKey) return false;
+    const { state, view } = this.tiptap;
+    const { selection, schema } = state;
+    if (!selection.empty || selection.$from.depth !== 1) return false;
+    const { $from } = selection;
+    const parent = $from.parent;
+    const type = parent.type.name;
+    const index = $from.index(0);
+    const atStart = $from.parentOffset === 0;
+    const atEnd = $from.parentOffset === parent.content.size;
+    const start = $from.before();
+    const end = $from.after();
+    const next = state.doc.maybeChild(index + 1);
+
+    if (e.key === 'Enter' && (type === 'title' || type === 'subtitle')) {
+      // Judul diikuti subjudul: pindah ke awal subjudul.
+      if (type === 'title' && next?.type.name === 'subtitle') {
+        view.dispatch(state.tr.setSelection(TextSelection.create(state.doc, end + 1)));
+        return true;
+      }
+      // Teks setelah kursor pindah ke paragraf baru tepat di bawahnya.
+      const tail = parent.content.cut($from.parentOffset);
+      const tr = state.tr.delete($from.pos, end - 1);
+      const at = tr.mapping.map(end);
+      tr.insert(at, schema.nodes.paragraph.create(null, tail.size ? schema.text(parent.textBetween($from.parentOffset, parent.content.size)) : null));
+      tr.setSelection(TextSelection.create(tr.doc, at + 1));
+      view.dispatch(tr.scrollIntoView());
+      return true;
+    }
+
+    if (e.key === 'Delete' && atEnd && (type === 'title' || type === 'subtitle')) {
+      // Hanya paragraf kosong di bawahnya yang ikut terhapus; isi lain tidak digabung ke judul.
+      const nextIsBody = next && !(type === 'title' && next.type.name === 'subtitle');
+      if (nextIsBody && next.type.name === 'paragraph' && !next.content.size && state.doc.childCount > index + 2) {
+        view.dispatch(state.tr.delete(end, end + next.nodeSize));
+      }
+      return true;
+    }
+
+    if (e.key !== 'Backspace' || !atStart || index === 0) return false;
+    const prev = state.doc.child(index - 1);
+    if (!['title', 'subtitle'].includes(prev.type.name) || !parent.isTextblock) return false;
+
+    // Backspace di awal blok setelah judul/subjudul: teksnya (polos) bergabung ke atas.
+    const prevEnd = start - 1;
+    const tr = state.tr;
+    const isOnlyBody = type !== 'subtitle' && state.doc.childCount === index + 1;
+    if (isOnlyBody) tr.replaceWith(start, end, schema.nodes.paragraph.create());
+    else tr.delete(start, end);
+    if (parent.textContent) tr.insertText(parent.textContent, prevEnd);
+    tr.setSelection(TextSelection.create(tr.doc, prevEnd));
+    view.dispatch(tr.scrollIntoView());
+    return true;
   }
 
   _viewAttributes(state) {
@@ -618,7 +750,7 @@ export class Editor {
   }
 
   _sanitizeOptions() {
-    return { allowDataImages: this.options.allowDataImages, headings: this.options.headings };
+    return { allowDataImages: this.options.allowDataImages, headings: this.options.headings, title: this.options.title };
   }
 
   // Item slash menu: judul hanya untuk level yang aktif.
@@ -839,6 +971,7 @@ export class Editor {
     if (media) return this._handleMediaKey(e, media);
 
     if (this._handleKeyNearMedia(e)) return true;
+    if (this._handleTitleKey(e)) return true;
 
     // Navigasi slash menu.
     if (this.slash.open && !e.shiftKey) {
@@ -1026,6 +1159,38 @@ function decorationsPlugin() {
           decorations.push(Decoration.node(selection.$from.before(), selection.$from.after(), { class: 'afw-is-editing' }));
         }
         return DecorationSet.create(state.doc, decorations);
+      },
+    },
+  });
+}
+
+// Mode artikel: placeholder & label (data-label) untuk judul, subjudul, dan paragraf isi pertama
+// selama isi masih kosong.
+function titlePlugin(strings) {
+  return new Plugin({
+    props: {
+      decorations(state) {
+        const { doc } = state;
+        const decorations = [];
+        const add = (pos, node, attrs) => decorations.push(Decoration.node(pos, pos + node.nodeSize, attrs));
+        const empty = (node) => (node.content.size ? {} : { class: 'afw-is-empty' });
+
+        const title = doc.firstChild;
+        add(0, title, { ...empty(title), 'data-placeholder': strings.titlePlaceholder, 'data-label': strings.titleLabel });
+        let pos = title.nodeSize;
+
+        const second = doc.maybeChild(1);
+        const hasSubtitle = second?.type.name === 'subtitle';
+        if (hasSubtitle) {
+          add(pos, second, { ...empty(second), 'data-placeholder': strings.subtitlePlaceholder, 'data-label': strings.subtitleLabel });
+          pos += second.nodeSize;
+        }
+
+        const body = doc.maybeChild(hasSubtitle ? 2 : 1);
+        if (body?.type.name === 'paragraph' && !body.content.size && doc.lastChild === body) {
+          add(pos, body, { class: 'afw-is-empty', 'data-placeholder': strings.placeholder });
+        }
+        return DecorationSet.create(doc, decorations);
       },
     },
   });

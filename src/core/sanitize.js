@@ -19,11 +19,11 @@
 import { createEmbedIframe, normalizeImageSrc, parseEmbed } from './embed.js';
 import { normalizeUrl } from './url.js';
 
-export const BLOCK_TAGS = new Set(['P', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'FIGURE', 'HR', 'PRE']);
+export const BLOCK_TAGS = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'FIGURE', 'HR', 'PRE']);
 const MEDIA_TAGS = new Set(['FIGURE', 'HR']);
 const FIGURE_SIZES = ['wide', 'full'];
 export const INLINE_TAGS = new Set(['B', 'I', 'A', 'CODE', 'BR']);
-const TEXT_BLOCKS = new Set(['P', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'LI']);
+const TEXT_BLOCKS = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'LI']);
 const LISTS = new Set(['UL', 'OL']);
 
 // Dibuang beserta seluruh isinya.
@@ -53,6 +53,8 @@ const CONTAINER_TAGS = new Set([
 //   allowDataImages (true)  izinkan <img src="data:image/...">
 //   headings ([2, 3])       level judul yang dipakai; level lain diturunkan ke level aktif
 //                           terdekat (H1 menjadi level terkecil yang aktif)
+//   title (false)           mode artikel: <h1> pertama = judul, <p class="afw-subtitle"> tepat
+//                           setelahnya = subjudul; <h1> lain diturunkan seperti biasa
 let options = {};
 
 // [4, 2, 2, 9] -> [2, 4]. Hanya level 2-6; kosong/tidak valid -> [2, 3].
@@ -79,6 +81,7 @@ export function sanitize(html, opts = {}) {
 export function sanitizeToElement(html, opts = {}) {
   options = { allowDataImages: true, ...opts };
   options.headings = normalizeHeadings(opts.headings);
+  options.title = !!opts.title;
 
   // DOMParser menghasilkan dokumen "mati": script tidak jalan, gambar tidak dimuat.
   const source = new DOMParser().parseFromString(String(html), 'text/html');
@@ -87,7 +90,32 @@ export function sanitizeToElement(html, opts = {}) {
   const container = document.createElement('div');
   container.append(...wrapInlineRuns(nodes, 'P'));
   tidy(container);
+  if (options.title) fixTitle(container);
   return container;
+}
+
+// Mode artikel: hanya <h1> paling atas yang menjadi judul (teks polos), dan subjudul hanya sah
+// tepat setelahnya (teks + link). Selain itu kembali menjadi judul bagian / paragraf biasa.
+function fixTitle(root) {
+  const blocks = [...root.children];
+  blocks.forEach((node, index) => {
+    if (node.tagName === 'H1' && index !== 0) node.replaceWith(el(headingTag('H1'), {}, [...node.childNodes]));
+    const isSubtitle = node.tagName === 'P' && node.classList.contains('afw-subtitle');
+    if (isSubtitle && !(index === 1 && blocks[0].tagName === 'H1')) node.removeAttribute('class');
+  });
+
+  const title = root.firstElementChild?.tagName === 'H1' ? root.firstElementChild : null;
+  if (!title) return;
+  const plain = (node) => {
+    node.querySelectorAll('br').forEach((br) => br.replaceWith(' '));
+    return node.textContent.replace(/\s+/g, ' ').trim();
+  };
+  title.textContent = plain(title);
+  const subtitle = title.nextElementSibling;
+  if (subtitle?.classList.contains('afw-subtitle')) {
+    subtitle.querySelectorAll('br').forEach((br) => br.replaceWith(' '));
+    subtitle.querySelectorAll('b, i, code').forEach(unwrap);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -107,6 +135,9 @@ function convert(node) {
 
   // Media
   if (tag === 'IMG') return imageFigure(node);
+  if (tag === 'P' && options.title && node.classList.contains('afw-subtitle')) {
+    return [el('P', { class: 'afw-subtitle' }, flattenToInline([...node.childNodes].flatMap(convert)))];
+  }
   if (tag === 'IFRAME') {
     const embed = parseEmbed(node.getAttribute('src'));
     return embed ? [embedFigure(embed)] : [];
@@ -125,7 +156,7 @@ function convert(node) {
   // Sel tabel: isi dipertahankan, dipisah spasi.
   if (tag === 'TD' || tag === 'TH') return [...children, document.createTextNode(' ')];
 
-  const target = /^H[1-6]$/.test(tag) ? headingTag(tag) : TAG_MAP[tag] || (CONTAINER_TAGS.has(tag) ? 'P' : null);
+  const target = tag === 'H1' && options.title ? 'H1' : /^H[1-6]$/.test(tag) ? headingTag(tag) : TAG_MAP[tag] || (CONTAINER_TAGS.has(tag) ? 'P' : null);
 
   // Tag tak dikenal (span, font, u, ...): ambil isinya, tapi format dari style tetap dibaca.
   if (!target) {
@@ -305,6 +336,7 @@ function flattenToInline(nodes, { keepLists = false } = {}) {
 function makeBlock(tag, children) {
   switch (tag) {
     case 'P':
+    case 'H1':
     case 'H2':
     case 'H3':
     case 'H4':
@@ -355,7 +387,7 @@ function makeBlock(tag, children) {
 // Tahap 2: perapian (spasi, <br>, tag kosong, tag ganda)
 // ---------------------------------------------------------------------------
 
-const HEADINGS = 'h2, h3, h4, h5, h6';
+const HEADINGS = 'h1, h2, h3, h4, h5, h6';
 const TEXT_SELECTOR = `p, ${HEADINGS}, blockquote, li, figcaption`;
 
 export function tidy(root) {

@@ -55,6 +55,13 @@ describe('toJSON', () => {
     expect(fromJSON(doc, { headings: [2, 6] })).toBe('<h6>x</h6>');
   });
 
+  test('mode artikel: judul & subjudul', () => {
+    const doc = toJSON('<h1>J</h1><p class="afw-subtitle">S</p><p>x</p>', { title: true });
+    expect(doc.content.map((n) => n.type)).toEqual(['title', 'subtitle', 'paragraph']);
+    expect(fromJSON(doc, { title: true })).toBe('<h1>J</h1><p class="afw-subtitle">S</p><p>x</p>');
+    expect(toJSON('<p>x</p>', { title: true }).content.map((n) => n.type)).toEqual(['title', 'paragraph']);
+  });
+
   test('kosong', () => {
     expect(toJSON('')).toEqual({ type: 'doc', content: [] });
     expect(toJSON('<p></p>')).toEqual({ type: 'doc', content: [] });

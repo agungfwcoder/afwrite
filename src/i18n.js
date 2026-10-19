@@ -55,6 +55,10 @@ const id = {
   altText: 'Alt text',
   removeMedia: 'Hapus media',
   captionPlaceholder: 'Tulis keterangan (opsional)',
+  titlePlaceholder: 'Judul',
+  subtitlePlaceholder: 'Subjudul',
+  titleLabel: 'Judul',
+  subtitleLabel: 'Subjudul',
 
   words: 'kata',
   minutesRead: 'menit baca',
@@ -126,6 +130,10 @@ const en = {
   altText: 'Alt text',
   removeMedia: 'Remove media',
   captionPlaceholder: 'Write a caption (optional)',
+  titlePlaceholder: 'Title',
+  subtitlePlaceholder: 'Subtitle',
+  titleLabel: 'Title',
+  subtitleLabel: 'Subtitle',
 
   words: 'words',
   minutesRead: 'min read',

@@ -58,6 +58,7 @@ export function wysiwygComponent(options = {}) {
   return {
     html: '',
     active: {},
+    disabled: {},
     uid: `afw-${++uidCounter}`,
     readOnly: !!options.readonly,
     canUndo: false,
@@ -122,7 +123,10 @@ export function wysiwygComponent(options = {}) {
       });
       editor.on('focus', () => root.dispatchEvent(new CustomEvent('wysiwyg-focus', { bubbles: true })));
       editor.on('blur', () => root.dispatchEvent(new CustomEvent('wysiwyg-blur', { bubbles: true })));
-      editor.on('state', (state) => (this.active = state));
+      editor.on('state', (state) => {
+        this.active = state;
+        this.disabled = editor.disabledState();
+      });
       editor.on('selection', (info) => this.onSelection(info));
       editor.on('slash', (state) => this.onSlash(state));
       editor.on('linkrequest', ({ href }) => this.openInput('link', href));
@@ -216,7 +220,7 @@ export function wysiwygComponent(options = {}) {
     isDisabled(name) {
       if (name === 'undo') return !this.canUndo;
       if (name === 'redo') return !this.canRedo;
-      return false;
+      return !!this.disabled[name];
     },
 
     setReadOnly(value = true) {

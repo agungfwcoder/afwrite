@@ -35,14 +35,17 @@ class WyswygHtml
         }
 
         $config->set('HTML.Allowed', implode(',', [
-            // Semua level judul yang bisa diaktifkan editor (opsi `headings`).
-            'p', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'ul', 'ol', 'li', 'b', 'i', 'code', 'br', 'pre', 'hr',
+            // Semua level judul yang bisa diaktifkan editor (opsi `headings`); h1 & p.afw-subtitle
+            // dipakai mode artikel (opsi `title`).
+            'p[class]', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'ul', 'ol', 'li', 'b', 'i', 'code', 'br', 'pre', 'hr',
             'a[href]',
             'figure[data-size|data-embed]', 'figcaption',
             'img[src|alt]',
             'iframe[src|title|allow|allowfullscreen|loading|referrerpolicy]',
         ]));
         $config->set('CSS.AllowedProperties', []);
+        // Satu-satunya class yang boleh ada di konten: subjudul artikel.
+        $config->set('Attr.AllowedClasses', ['afw-subtitle']);
         // Buang elemen kosong (mis. <iframe> yang src-nya ditolak, <figure> tanpa isi).
         $config->set('AutoFormat.RemoveEmpty', true);
         $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'tel' => true, 'data' => true]);

@@ -27,11 +27,33 @@ const blockType = (ed) => $from(ed).parent.type.name;
 
 const toggleBlock = (name, attrs) => (ed) => tt(ed).commands.toggleNode(name, 'paragraph', attrs);
 
+// Mode artikel: blok tepat setelah judul (indeks 1 di dokumen) bisa menjadi subjudul.
+const afterTitle = (ed) => ed.options.title && $from(ed).depth === 1 && $from(ed).index(0) === 1;
+// Tombol judul "kecil" (level kedua yang aktif, seperti t kecil di Medium) = subjudul di posisi itu.
+export const subtitleLevel = (ed) => ed.options.headings[1] ?? ed.options.headings[0];
+
 // Judul hanya untuk level yang diaktifkan lewat opsi `headings`.
 const heading = (level) => ({
-  run: (ed) => ed.options.headings.includes(level) && toggleBlock('heading', { level })(ed),
-  active: (ed) => tt(ed).isActive('heading', { level }),
+  run(ed) {
+    if (!ed.options.headings.includes(level)) return false;
+    if (afterTitle(ed) && level === subtitleLevel(ed)) {
+      return tt(ed).commands.setNode(blockType(ed) === 'subtitle' ? 'paragraph' : 'subtitle');
+    }
+    return blockType(ed) === 'subtitle'
+      ? tt(ed).commands.setNode('heading', { level })
+      : toggleBlock('heading', { level })(ed);
+  },
+  active: (ed) => tt(ed).isActive('heading', { level }) || (blockType(ed) === 'subtitle' && level === subtitleLevel(ed)),
 });
+
+// Perintah yang tidak berlaku di judul / subjudul artikel (tombolnya tampil redup).
+const SUBTITLE_DISABLED = ['bold', 'italic', 'ul', 'ol', 'codeblock', 'indent', 'outdent'];
+export function isCommandDisabled(ed, name) {
+  const type = blockType(ed);
+  if (type === 'title') return !['undo', 'redo'].includes(name);
+  if (type === 'subtitle') return SUBTITLE_DISABLED.includes(name);
+  return false;
+}
 
 export const COMMANDS = {
   bold: {
@@ -68,7 +90,7 @@ export const COMMANDS = {
     // Kembalikan blok menjadi paragraf biasa (termasuk keluar dari list).
     run(ed) {
       if (inList(ed)) tt(ed).commands.liftListItem('listItem');
-      else tt(ed).commands.setNode('paragraph');
+      else if (blockType(ed) !== 'title') tt(ed).commands.setNode('paragraph');
     },
     active: (ed) => blockType(ed) === 'paragraph' && !inList(ed),
   },

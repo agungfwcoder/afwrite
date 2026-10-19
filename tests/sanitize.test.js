@@ -147,3 +147,21 @@ describe('opsi headings', () => {
     expect(sanitize('<h5><b>x</b></h5>', { headings: [5] })).toBe('<h5>x</h5>');
   });
 });
+
+describe('opsi title (mode artikel)', () => {
+  test.each([
+    ['<h1>A</h1><p class="afw-subtitle">B</p><p>c</p>', '<h1>A</h1><p class="afw-subtitle">B</p><p>c</p>'],
+    ['<h1>A <b>tebal</b><br>baris</h1>', '<h1>A tebal baris</h1>'],
+    ['<h1>A</h1><p class="afw-subtitle">B <i>m</i> <a href="https://a.com">l</a></p>', '<h1>A</h1><p class="afw-subtitle">B m <a href="https://a.com">l</a></p>'],
+    ['<p>x</p><h1>A</h1>', '<p>x</p><h2>A</h2>'],
+    ['<h1>A</h1><p>x</p><p class="afw-subtitle">B</p>', '<h1>A</h1><p>x</p><p>B</p>'],
+    ['<p class="afw-subtitle">B</p>', '<p>B</p>'],
+    ['<p class="lain afw-subtitle" onclick="x()">B</p>', '<p>B</p>'],
+  ])('%j', (input, expected) => {
+    expect(sanitize(input, { title: true })).toBe(expected);
+  });
+
+  test('tanpa opsi title: h1 -> h2, class subjudul dibuang', () => {
+    expect(sanitize('<h1>A</h1><p class="afw-subtitle">B</p>')).toBe('<h2>A</h2><p>B</p>');
+  });
+});

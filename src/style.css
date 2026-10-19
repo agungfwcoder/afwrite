@@ -248,6 +248,65 @@
   font-size: inherit;
 }
 
+/* ---------- Mode artikel: judul & subjudul ---------- */
+
+.afw .afw-content h1,
+.afw-prose h1 {
+  margin: 0 0 0.3em;
+  font-family: var(--afw-font-title, var(--afw-font-content));
+  font-size: 2.3em;
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  color: var(--afw-text);
+}
+
+.afw .afw-content .afw-subtitle,
+.afw-prose .afw-subtitle {
+  margin: 0 0 1.2em;
+  font-size: 1.35em;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--afw-muted);
+}
+
+/* Placeholder per baris (judul, subjudul, paragraf isi pertama). */
+.afw .afw-content > [data-placeholder].afw-is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--afw-placeholder);
+}
+
+/* Label "Judul / Subjudul" di margin kiri (seperti Medium), hanya jika editor cukup lebar. */
+.afw .afw-content[data-afw-wide]:not(.afw-is-readonly) {
+  padding-left: max(var(--afw-content-gutter), 128px);
+}
+
+.afw .afw-content[data-afw-wide]:not(.afw-is-readonly) > [data-label] {
+  position: relative;
+}
+
+.afw .afw-content[data-afw-wide]:not(.afw-is-readonly) > [data-label]::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 0;
+  right: 100%;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  margin-right: 22px;
+  padding-right: 18px;
+  font-family: var(--afw-font);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--afw-muted);
+  white-space: nowrap;
+  border-right: 1px solid var(--afw-border);
+}
+
 .afw .afw-content h2,
 .afw .afw-content h3,
 .afw .afw-content h4,
