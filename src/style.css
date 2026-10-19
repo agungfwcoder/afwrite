@@ -308,6 +308,12 @@
   border-right: 1px solid var(--afw-border);
 }
 
+/* Judul diikuti subjudul berlabel: jarak di antaranya dijadikan padding agar garis label tersambung. */
+.afw .afw-content[data-afw-wide]:not(.afw-is-readonly) > h1:not(.afw-is-empty):has(+ .afw-subtitle:not(.afw-is-empty)) {
+  margin-bottom: 0;
+  padding-bottom: 0.3em;
+}
+
 .afw .afw-content h2,
 .afw .afw-content h3,
 .afw .afw-content h4,
