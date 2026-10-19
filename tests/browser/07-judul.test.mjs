@@ -82,6 +82,12 @@ await page.click('.demo-panel-editor .afw-content');
 await page.keyboard.press('ControlOrMeta+Alt+Digit5');
 check('bawaan: Ctrl/Cmd+Alt+5 tidak mengubah apa-apa', (await page.evaluate(() => Alpine.$data(document.querySelector('.demo-panel-editor .afw')).getHTML())) === '<h3>a</h3><h3>b</h3>');
 
+// Ikon: lebih dari dua level = H2/H3/..., tepat dua level (bawaan demo) = T besar & t kecil.
+const iconOf = (root, label) => page.$eval(`${root} .afw-toolbar .afw-btn[aria-label="${label}"]`, (b) => b.innerHTML);
+const ICON_T = 'M5 7V5h14v2';
+check('ikon H saat lebih dari dua level', !(await iconOf('#judul', 'Judul')).includes(ICON_T));
+check('ikon T besar & t kecil saat dua level', (await iconOf('.demo-panel-editor .afw', 'Judul')).includes(ICON_T) && (await iconOf('.demo-panel-editor .afw', 'Subjudul')).includes('M8 12v-1.5h8V12'));
+
 check('tidak ada error JS', errors.length === 0, errors.join(' | '));
 console.log(results.join('\n'));
 await browser.close();

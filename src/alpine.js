@@ -191,6 +191,10 @@ export function wysiwygComponent(options = {}) {
     },
 
     icon(name) {
+      // Hanya dua level judul: tampil sebagai T besar dan t kecil.
+      if (headings.length === 2 && /^h[2-6]$/.test(name) && headings.includes(Number(name[1]))) {
+        return ICONS[Number(name[1]) === headings[0] ? 'headingLarge' : 'headingSmall'];
+      }
       return ICONS[name] || '';
     },
 

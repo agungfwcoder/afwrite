@@ -9,6 +9,8 @@
   `WyswygHtml::clean()` kini mengizinkan h2–h6
 - `toJSON(html, options)` / `fromJSON(doc, options)` menerima `headings`
 - Ikon H4, H5, H6 dan helper `withHeadings()` untuk menyusun toolbar sendiri
+- Tepat dua level judul aktif (termasuk bawaan): tombolnya tampil sebagai **T** besar dan **t** kecil
+  seperti Medium; tiga level atau lebih tetap H2/H3/…
 - Opsi `title` (mode artikel ala Medium): baris pertama selalu judul `<h1>` (teks polos), dengan
   placeholder dan label "Judul/Subjudul" di margin kiri saat editor cukup lebar dan bloknya sudah
   berisi. Tombol judul kecil di baris tepat setelah judul membuat subjudul `<p class="afw-subtitle">` (teks + link); di
