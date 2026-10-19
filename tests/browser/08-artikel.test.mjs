@@ -34,13 +34,14 @@ const blocks = () => page.$$eval(`${editor} > *`, (els) => els.map((e) => e.tagN
 let b = await blocks();
 check('awal: judul <h1> + paragraf', b[0] === 'h1' && b[1] === 'p', JSON.stringify(b));
 check('placeholder judul', await page.$eval(`${editor} h1`, (h) => h.classList.contains('afw-is-empty') && getComputedStyle(h, '::before').content.includes('Judul')));
-check('label Judul di margin (editor lebar)', await page.$eval(`${editor} h1`, (h) => getComputedStyle(h, '::after').content.includes('Judul')));
+check('judul kosong: tanpa label', await page.$eval(`${editor} h1`, (h) => getComputedStyle(h, '::after').content === 'none'));
 check('output kosong', (await out()) === '');
 
 // ---------- Mengetik judul, Enter ke isi ----------
 await page.click(`${editor} h1`);
 await page.keyboard.type('Judul cerita');
 await wait();
+check('label Judul tampil setelah ada tulisan (editor lebar)', await page.$eval(`${editor} h1`, (h) => getComputedStyle(h, '::after').content.includes('Judul')));
 check('tebal tidak berlaku di judul', await disabled('Tebal'));
 await page.keyboard.press('ControlOrMeta+b');
 await page.keyboard.press('Enter');

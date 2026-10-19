@@ -279,7 +279,8 @@
   color: var(--afw-placeholder);
 }
 
-/* Label "Judul / Subjudul" di margin kiri (seperti Medium), hanya jika editor cukup lebar. */
+/* Label "Judul / Subjudul" di margin kiri (seperti Medium), hanya jika editor cukup lebar
+   dan bloknya sudah berisi teks. */
 .afw .afw-content[data-afw-wide]:not(.afw-is-readonly) {
   padding-left: max(var(--afw-content-gutter), 128px);
 }
@@ -288,7 +289,7 @@
   position: relative;
 }
 
-.afw .afw-content[data-afw-wide]:not(.afw-is-readonly) > [data-label]::after {
+.afw .afw-content[data-afw-wide]:not(.afw-is-readonly) > [data-label]:not(.afw-is-empty)::after {
   content: attr(data-label);
   position: absolute;
   top: 0;
