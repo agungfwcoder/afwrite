@@ -4,9 +4,10 @@ import { useClipboard } from '@vueuse/core'
 const route = useRoute()
 const toast = useToast()
 const { copy, copied } = useClipboard()
-const site = useSiteConfig()
+// Alamat yang sedang dibuka (bukan site.url, yang bawaannya http://localhost:3000/).
+const origin = useRequestURL().origin
 
-const mdPath = computed(() => `${site.url}/raw${route.path}.md`)
+const mdPath = computed(() => `${origin}/raw${route.path.replace(/\/$/, '')}.md`)
 
 const items = [
   {
