@@ -32,7 +32,7 @@ import { markdownRules } from './markdown.js';
 import { insertImageFiles, insertMediaBlock, isMediaNode, mediaKind, SIZES } from './media.js';
 import { fromJSON, toJSON } from './model.js';
 import { normalizeHeadings, sanitize, sanitizeToElement, textToHtml } from './sanitize.js';
-import { createExtensions, withTitle } from './schema.js';
+import { createExtensions, titleIndex, titlePos, withTitle } from './schema.js';
 
 const DEFAULTS = {
   content: '',
@@ -158,7 +158,7 @@ export class Editor {
     const { view } = this.tiptap;
 
     if (resetHistory) {
-      view.updateState(EditorState.create({ doc, plugins: view.state.plugins, selection: Selection.atStart(doc) }));
+      view.updateState(EditorState.create({ doc, plugins: view.state.plugins, selection: this._startSelection(doc) }));
       this._afterUpdate({ docChanged: !silent });
     } else {
       const tr = view.state.tr.replaceWith(0, view.state.doc.content.size, doc.content);
@@ -274,6 +274,29 @@ export class Editor {
 
   clear() {
     this.setHTML('', { resetHistory: false });
+  }
+
+  // Data pratinjau artikel ala Medium: gambar pertama, teks pertama (judul), dan teks kedua
+  // (subjudul). Di mode artikel judul/subjudul diambil dari blok judul jika terisi.
+  //   { image: { src, alt, caption } | null, title: string, subtitle: string }
+  getMeta() {
+    const texts = [];
+    let image = null;
+    this.tiptap.state.doc.descendants((node) => {
+      if (node.type.name === 'image') {
+        if (!image && node.attrs.src && !node.attrs.uploading) {
+          image = { src: node.attrs.src, alt: node.attrs.alt, caption: node.textContent.trim() };
+        }
+        return false;
+      }
+      if (isCaption(node) || node.type.name === 'codeBlock') return false;
+      if (node.isTextblock) {
+        const text = node.textBetween(0, node.content.size, ' ', ' ').replace(/\s+/g, ' ').trim();
+        if (text) texts.push(text);
+        return false;
+      }
+    });
+    return { image, title: texts[0] || '', subtitle: texts[1] || '' };
   }
 
   // ----- JSON (format dokumen ProseMirror/Tiptap) -----
@@ -469,7 +492,8 @@ export class Editor {
     const { state, view } = this.tiptap;
     const { doc, selection } = state;
     const index = selection.$from.index(0);
-    const min = this.options.title ? (doc.maybeChild(1)?.type.name === 'subtitle' ? 2 : 1) : 0;
+    const at = this.options.title ? titleIndex(doc) : -1;
+    const min = at < 0 ? 0 : at + (doc.maybeChild(at + 1)?.type.name === 'subtitle' ? 2 : 1);
     const target = index + dir;
     if (index < min || target < min || target >= doc.childCount) return false;
 
@@ -562,6 +586,12 @@ export class Editor {
     const parent = state.selection.$from.parent;
 
     // Judul / subjudul artikel: baris pertama masuk ke sana, sisanya menjadi isi di bawahnya.
+    // Gambar yang ditempel di judul menjadi gambar utama (lewat perintah image).
+    const images = [...files].filter((f) => f.type.startsWith('image/'));
+    if (parent.type.name === 'title' && images.length) {
+      this.exec('image', images);
+      return;
+    }
     if (parent.type.name === 'title' || parent.type.name === 'subtitle') {
       this._pasteIntoTitle(text || new DOMParser().parseFromString(html, 'text/html').body.innerText || '');
       return;
@@ -642,6 +672,10 @@ export class Editor {
       },
     });
     this.tiptap.on('transaction', ({ transaction }) => this._afterUpdate(transaction));
+    if (options.title) {
+      const { state, view } = this.tiptap;
+      view.updateState(state.apply(state.tr.setSelection(this._startSelection(state.doc)).setMeta('addToHistory', false)));
+    }
 
     if (options.readonly) this.setReadOnly(true);
     this._setupAutosave();
@@ -701,6 +735,12 @@ export class Editor {
     return doc;
   }
 
+  // Kursor awal: di awal dokumen, atau di judul artikel (bukan keterangan gambar utama).
+  _startSelection(doc) {
+    if (!this.options.title || !titleIndex(doc)) return Selection.atStart(doc);
+    return TextSelection.create(doc, titlePos(doc) + 1);
+  }
+
   // Isi HTML sebagai fragment blok biasa (tanpa judul kosong yang disisipkan schema artikel).
   _parseFragment(html) {
     const content = this._parse(html).content;
@@ -720,8 +760,10 @@ export class Editor {
     const tr = state.tr.insertText(first);
     if (rest) {
       // Sisanya disisipkan setelah judul (dan subjudul, jika ada).
-      let after = tr.doc.child(0).nodeSize;
-      if (tr.doc.child(1)?.type.name === 'subtitle') after += tr.doc.child(1).nodeSize;
+      let after = 0;
+      const at = titleIndex(tr.doc);
+      for (let i = 0; i <= at; i++) after += tr.doc.child(i).nodeSize;
+      if (tr.doc.maybeChild(at + 1)?.type.name === 'subtitle') after += tr.doc.child(at + 1).nodeSize;
       const content = this._parseFragment(sanitize(textToHtml(rest), { ...this._sanitizeOptions(), title: false }));
       tr.insert(after, content);
       tr.setSelection(Selection.near(tr.doc.resolve(after + content.size - 1), -1));
@@ -845,7 +887,9 @@ export class Editor {
 
   // Item slash menu: judul hanya untuk level yang aktif.
   _blocks() {
-    return this.options.blocks.filter((b) => !/^h[2-6]$/.test(b.command) || this.options.headings.includes(Number(b.command[1])));
+    // Hanya blok yang berlaku di posisi kursor (mis. di judul artikel: gambar, video, pemisah).
+    return this.options.blocks.filter((b) =>
+      (!/^h[2-6]$/.test(b.command) || this.options.headings.includes(Number(b.command[1]))) && !this.isDisabled(b.command));
   }
 
   // Baca seleksi DOM sekarang juga. ProseMirror biasanya membacanya dari event
@@ -920,10 +964,7 @@ export class Editor {
     const before = index === -1 ? blocks[blocks.length - 1] : blocks[index - 1];
     if (!isMediaNode(before?.node) && !isMediaNode(after?.node)) return false;
 
-    const pos = after ? after.offset : state.doc.content.size;
-    const tr = state.tr.insert(pos, state.schema.nodes.paragraph.create());
-    tr.setSelection(TextSelection.create(tr.doc, pos + 1));
-    view.dispatch(tr);
+    this._insertParagraphAt(after ? after.offset : state.doc.content.size);
     return true;
   }
 
@@ -963,6 +1004,11 @@ export class Editor {
 
   _insertParagraphAt(pos) {
     const { state, view } = this.tiptap;
+    // Di atas judul artikel tidak boleh ada teks: pindah ke judul saja.
+    if (state.doc.nodeAt(pos)?.type.name === 'title') {
+      view.dispatch(state.tr.setSelection(TextSelection.create(state.doc, pos + 1)).scrollIntoView());
+      return;
+    }
     const tr = state.tr.insert(pos, state.schema.nodes.paragraph.create());
     tr.setSelection(TextSelection.create(tr.doc, pos + 1));
     view.dispatch(tr.scrollIntoView());
@@ -1061,9 +1107,8 @@ export class Editor {
     if (media) return this._handleMediaKey(e, media);
 
     if (this._handleKeyNearMedia(e)) return true;
-    if (this._handleTitleKey(e)) return true;
 
-    // Navigasi slash menu.
+    // Navigasi slash menu (juga di judul artikel, jadi sebelum tombol khusus judul).
     if (this.slash.open && !e.shiftKey) {
       const keys = {
         ArrowDown: () => this.setSlashIndex(this.slash.index + 1),
@@ -1078,6 +1123,7 @@ export class Editor {
       }
     }
 
+    if (this._handleTitleKey(e)) return true;
     if (this._handleCodeKey(e)) return true;
 
     // Ctrl/Cmd+Shift+Panah atas/bawah: pindah blok.
@@ -1173,7 +1219,7 @@ export class Editor {
     if (!selection.empty) return null;
     const { $from } = selection;
     const parent = $from.parent;
-    if ($from.depth !== 1 || parent.type.name !== 'paragraph' || $from.parentOffset !== parent.content.size) return null;
+    if ($from.depth !== 1 || !['paragraph', 'title'].includes(parent.type.name) || $from.parentOffset !== parent.content.size) return null;
     return { from: $from.start(), to: $from.pos, text: parent.textContent };
   }
 
@@ -1227,7 +1273,8 @@ export class Editor {
     const { $from, empty } = state.selection;
     const parent = $from.parent;
     const anchor = closestInRoot(this.el, 'a');
-    const isEmptyParagraph = $from.depth === 1 && parent.type.name === 'paragraph' && !parent.content.size;
+    // Baris kosong mendapat tombol "+"; juga judul artikel kosong (untuk media di atas judul).
+    const isEmptyParagraph = $from.depth === 1 && !parent.content.size && ['paragraph', 'title'].includes(parent.type.name);
 
     return {
       inside: true,
@@ -1271,18 +1318,20 @@ function titlePlugin(strings) {
         const add = (pos, node, attrs) => decorations.push(Decoration.node(pos, pos + node.nodeSize, attrs));
         const empty = (node) => (node.content.size ? {} : { class: 'afw-is-empty' });
 
-        const title = doc.firstChild;
-        add(0, title, { ...empty(title), 'data-placeholder': strings.titlePlaceholder, 'data-label': strings.titleLabel });
-        let pos = title.nodeSize;
+        const at = titleIndex(doc);
+        let pos = titlePos(doc);
+        const title = doc.child(at);
+        add(pos, title, { ...empty(title), 'data-placeholder': strings.titlePlaceholder, 'data-label': strings.titleLabel });
+        pos += title.nodeSize;
 
-        const second = doc.maybeChild(1);
+        const second = doc.maybeChild(at + 1);
         const hasSubtitle = second?.type.name === 'subtitle';
         if (hasSubtitle) {
           add(pos, second, { ...empty(second), 'data-placeholder': strings.subtitlePlaceholder, 'data-label': strings.subtitleLabel });
           pos += second.nodeSize;
         }
 
-        const body = doc.maybeChild(hasSubtitle ? 2 : 1);
+        const body = doc.maybeChild(at + (hasSubtitle ? 2 : 1));
         if (body?.type.name === 'paragraph' && !body.content.size && doc.lastChild === body) {
           add(pos, body, { class: 'afw-is-empty', 'data-placeholder': strings.placeholder });
         }

@@ -7,6 +7,7 @@
 
 import { insertImageFiles, pickImageFiles } from './media.js';
 import { parseEmbed } from './embed.js';
+import { titleIndex } from './schema.js';
 import { normalizeUrl } from './url.js';
 
 const tt = (ed) => ed.tiptap;
@@ -27,8 +28,9 @@ const blockType = (ed) => $from(ed).parent.type.name;
 
 const toggleBlock = (name, attrs) => (ed) => tt(ed).commands.toggleNode(name, 'paragraph', attrs);
 
-// Mode artikel: blok tepat setelah judul (indeks 1 di dokumen) bisa menjadi subjudul.
-const afterTitle = (ed) => ed.options.title && $from(ed).depth === 1 && $from(ed).index(0) === 1;
+// Mode artikel: blok tepat setelah judul bisa menjadi subjudul.
+const afterTitle = (ed) =>
+  ed.options.title && $from(ed).depth === 1 && $from(ed).index(0) === titleIndex(ed.tiptap.state.doc) + 1;
 // Tombol judul "kecil" (level kedua yang aktif, seperti t kecil di Medium) = subjudul di posisi itu.
 export const subtitleLevel = (ed) => ed.options.headings[1] ?? ed.options.headings[0];
 
@@ -50,7 +52,8 @@ const heading = (level) => ({
 const SUBTITLE_DISABLED = ['bold', 'italic', 'ul', 'ol', 'codeblock', 'indent', 'outdent'];
 export function isCommandDisabled(ed, name) {
   const type = blockType(ed);
-  if (type === 'title') return !['undo', 'redo'].includes(name);
+  // Dari judul hanya bisa menyisipkan blok non-teks; blok itu dipasang di atas judul.
+  if (type === 'title') return !['undo', 'redo', 'image', 'embed', 'hr'].includes(name);
   if (type === 'subtitle') return SUBTITLE_DISABLED.includes(name);
   return false;
 }

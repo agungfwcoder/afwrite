@@ -93,6 +93,52 @@ const json = await page.evaluate(() => Alpine.$data(document.getElementById('art
 check('getJSON: node title', json.content[0].type === 'title' && json.content[0].content[0].text === 'J', JSON.stringify(json.content[0]));
 check('input hidden ikut', (await page.$eval('input[name=artikel]', (i) => i.value)) === '<h1>J</h1><p>x</p>');
 
+// ---------- Gambar/video/pemisah di atas judul (gambar pertama = gambar utama) ----------
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+const plusOpen = () => page.$eval('#art .afw-plus', (b) => b.classList.contains('afw-is-open'));
+await set('<p>Isi</p>');
+await page.click(`${editor} h1`);
+await wait();
+check('judul kosong: tombol + tampil', await plusOpen());
+await page.click('#art .afw-plus');
+await page.waitForSelector('#art .afw-menu.afw-is-open');
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#art .afw-menu.afw-is-open [role=option]:has-text("Gambar")')]);
+await chooser.setFiles({ name: 'a.png', mimeType: 'image/png', buffer: PNG });
+await page.waitForFunction(() => document.querySelector('#art .afw-content > figure img[src^="data:"]'));
+await page.keyboard.type('Judul');
+b = await blocks();
+check('gambar dari judul -> gambar utama di atas judul, kursor tetap di judul', b.join() === 'figure,h1,p' && /^<figure><img src="data:image\/png[^"]*" alt=""><\/figure><h1>Judul<\/h1><p>Isi<\/p>$/.test(await out()), b.join() + ' ' + (await out()).slice(-60));
+for (let i = 0; i < 'Judul'.length; i++) await page.keyboard.press('Backspace');
+await wait();
+check('judul dikosongkan, gambar utama tetap', (await blocks()).join() === 'figure,h1,p', (await blocks()).join());
+check('judul kosong lagi: + tetap tampil', await plusOpen());
+// "/" di judul: slash menu hanya berisi blok non-teks.
+await page.keyboard.type('/');
+await wait();
+const items = await page.$$eval('#art .afw-menu.afw-is-open [role=option]', (els) => els.map((e) => e.textContent.trim()));
+check('slash di judul: hanya gambar, video, pemisah', items.length === 3 && !items.some((t) => /Paragraf|Kutipan|Kode/.test(t)), JSON.stringify(items));
+await page.keyboard.type('pemisah');
+await page.keyboard.press('Enter');
+await wait();
+check('pemisah dari judul dipasang di atas judul', (await blocks()).join() === 'figure,hr,h1,p', (await blocks()).join());
+await page.keyboard.type('X');
+check('kursor tetap di judul', (await out()).includes('<hr><h1>X</h1>'), await out());
+await page.keyboard.press('Backspace');
+await page.keyboard.press('ArrowUp');
+await page.keyboard.press('Enter');
+await wait();
+check('Enter di pemisah atas judul -> ke judul, bukan paragraf baru', (await blocks()).join() === 'figure,hr,h1,p', (await blocks()).join());
+let meta = await page.evaluate(() => Alpine.$data(document.getElementById('art')).getMeta());
+check('getMeta: judul kosong -> teks pertama', meta.image?.src.startsWith('data:image/png') && meta.title === 'Isi' && meta.subtitle === '', JSON.stringify({ ...meta, image: !!meta.image }));
+
+await set('<figure><img src="https://example.com/a.png" alt="A"><figcaption>Foto</figcaption></figure><h1>J</h1><p class="afw-subtitle">S</p><p>x</p>');
+check('setHTML: gambar + judul dipertahankan', (await blocks()).join() === 'figure,h1,p.sub,p', (await blocks()).join());
+check('setHTML: kursor di judul, bukan keterangan gambar', !(await page.$('#art .afw-is-editing')));
+meta = await page.evaluate(() => Alpine.$data(document.getElementById('art')).getMeta());
+check('getMeta: gambar, judul, subjudul', JSON.stringify(meta) === JSON.stringify({ image: { src: 'https://example.com/a.png', alt: 'A', caption: 'Foto' }, title: 'J', subtitle: 'S' }), JSON.stringify(meta));
+await set('<figure><img src="https://example.com/a.png" alt=""></figure><p>x</p>');
+check('gambar tanpa judul sesudahnya tetap isi biasa', (await blocks()).join() === 'h1,figure,p', (await blocks()).join());
+
 // ---------- Editor biasa tidak terpengaruh ----------
 await page.evaluate(() => Alpine.$data(document.querySelector('.demo-panel-editor .afw')).setHTML('<h1>A</h1><p class="afw-subtitle">B</p>'));
 const demo = await page.evaluate(() => Alpine.$data(document.querySelector('.demo-panel-editor .afw')).getHTML());

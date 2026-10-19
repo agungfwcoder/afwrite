@@ -5,8 +5,10 @@
 //            image <figure><img><figcaption>, embed <figure data-embed><iframe><figcaption>
 //   inline : bold <b>, italic <i>, code <code>, link <a href>, hardBreak <br>
 //
-// Mode artikel (opsi title): dokumen = title subtitle? block+, dengan title <h1> (teks polos)
-// dan subtitle <p class="afw-subtitle"> (teks + link) yang hanya boleh tepat setelah judul.
+// Mode artikel (opsi title): dokumen = (image | embed | horizontalRule)* title subtitle? block+,
+// dengan title <h1> (teks polos) dan subtitle <p class="afw-subtitle"> (teks + link) yang hanya
+// boleh tepat setelah judul. Di atas judul hanya boleh blok non-teks: teks pertama selalu judul.
+// Gambar pertama dipakai sebagai gambar utama (feature image), lihat Editor#getMeta().
 //
 // Kutipan adalah blok teks (isinya inline + <br>), bukan wadah paragraf, agar output
 // tetap <blockquote>a<br>b</blockquote> seperti v1.
@@ -189,16 +191,32 @@ const Embed = Node.create({
 export const embedOf = (node) =>
   parseEmbed(node.attrs.provider === 'vimeo' ? `https://vimeo.com/${node.attrs.id}` : `https://youtu.be/${node.attrs.id}`);
 
-// Mode artikel: tanpa <h1> di awal, ProseMirror akan memasukkan paragraf pertama ke dalam judul.
-// Judul kosong ditambahkan dulu agar isi tetap di tempatnya.
+// Mode artikel: tanpa <h1> sebagai teks pertama (boleh didahului gambar/video/pemisah), ProseMirror
+// akan memasukkan paragraf pertama ke dalam judul. Judul kosong ditambahkan dulu agar isi tetap di tempatnya.
+const TITLE_START = /^\s*(?:(?:<figure[\s>][\s\S]*?<\/figure>|<hr\s*\/?>)\s*)*<h1[\s>]/i;
 export function withTitle(html, title) {
-  return title && !/^\s*<h1[\s>]/i.test(html) ? `<h1></h1>${html}` : html;
+  return title && !TITLE_START.test(html) ? `<h1></h1>${html}` : html;
+}
+
+// Blok yang boleh berada di atas judul artikel.
+export const ABOVE_TITLE = ['image', 'embed', 'horizontalRule'];
+
+// Indeks & posisi judul di dokumen artikel (setelah blok non-teks di atasnya).
+export function titleIndex(doc) {
+  let index = 0;
+  while (index < doc.childCount - 1 && doc.child(index).type.name !== 'title') index++;
+  return index;
+}
+export function titlePos(doc) {
+  let pos = 0;
+  for (let i = 0, end = titleIndex(doc); i < end; i++) pos += doc.child(i).nodeSize;
+  return pos;
 }
 
 // Daftar extension. Opsi: allowDataImages (ikut opsi Editor), captionPlaceholder.
 export function createExtensions({ allowDataImages = true, captionPlaceholder = '', headings = [2, 3], title = false } = {}) {
   return [
-    ...(title ? [Document.extend({ content: 'title subtitle? block+' }), Title, Subtitle] : [Document]),
+    ...(title ? [Document.extend({ content: `(${ABOVE_TITLE.join(' | ')})* title subtitle? block+` }), Title, Subtitle] : [Document]),
     Paragraph,
     Text,
     HardBreak.configure({ keepMarks: true }),

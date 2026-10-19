@@ -72,7 +72,7 @@ Dengan `x-model`:
 | `maxImageSize` | `5 MB` | Batas ukuran gambar (byte); `0` = tanpa batas |
 | `allowDataImages` | `true` | Izinkan `<img src="data:image/…">` di output |
 | `headings` | `[2, 3]` | Level judul yang dipakai (2–6), mis. `[2, 3, 4, 5, 6]`. Tombol toolbar, slash menu, shortcut, dan markdown mengikuti; level lain diturunkan ke level aktif terdekat |
-| `title` | `false` | Mode artikel ala Medium: baris pertama judul `<h1>`; tombol judul kecil (level kedua) di baris tepat setelahnya membuat subjudul `<p class="afw-subtitle">` |
+| `title` | `false` | Mode artikel ala Medium: teks paling atas judul `<h1>` (di atasnya hanya boleh gambar/video/pemisah); tombol judul kecil (level kedua) di baris tepat setelahnya membuat subjudul `<p class="afw-subtitle">` |
 | `markdown` | `true` | Shortcut markdown |
 | `slash` | `true` | Slash menu |
 | `pasteAsPlainText` | `false` | Buang semua format saat paste |
@@ -100,6 +100,7 @@ Dipanggil dari markup di dalam komponen atau lewat `Alpine.$data(el)`:
 |---|---|
 | `getHTML()` / `setHTML(html)` | Ambil / ganti isi (selalu disanitasi) |
 | `getJSON()` / `setJSON(doc)` | Isi sebagai JSON dokumen ProseMirror |
+| `getMeta()` | Pratinjau ala Medium: `{ image, title, subtitle }` dari gambar pertama, teks pertama, dan teks kedua |
 | `exec(perintah, ...arg)` | Jalankan perintah, lihat tabel perintah |
 | `isActive(perintah)` | Format aktif di posisi kursor |
 | `setReadOnly(bool)` | Ubah mode baca saja |

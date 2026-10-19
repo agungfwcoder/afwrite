@@ -53,8 +53,9 @@ const CONTAINER_TAGS = new Set([
 //   allowDataImages (true)  izinkan <img src="data:image/...">
 //   headings ([2, 3])       level judul yang dipakai; level lain diturunkan ke level aktif
 //                           terdekat (H1 menjadi level terkecil yang aktif)
-//   title (false)           mode artikel: <h1> pertama = judul, <p class="afw-subtitle"> tepat
-//                           setelahnya = subjudul; <h1> lain diturunkan seperti biasa
+//   title (false)           mode artikel: <h1> pertama (boleh setelah gambar/video/pemisah) = judul,
+//                           <p class="afw-subtitle"> tepat setelahnya = subjudul; <h1> lain
+//                           diturunkan seperti biasa
 let options = {};
 
 // [4, 2, 2, 9] -> [2, 4]. Hanya level 2-6; kosong/tidak valid -> [2, 3].
@@ -94,17 +95,21 @@ export function sanitizeToElement(html, opts = {}) {
   return container;
 }
 
-// Mode artikel: hanya <h1> paling atas yang menjadi judul (teks polos), dan subjudul hanya sah
-// tepat setelahnya (teks + link). Selain itu kembali menjadi judul bagian / paragraf biasa.
+// Mode artikel: hanya <h1> yang menjadi teks pertama (boleh didahului gambar/video/pemisah) yang
+// menjadi judul (teks polos), dan subjudul hanya sah tepat setelahnya (teks + link). Selain itu
+// kembali menjadi judul bagian / paragraf biasa.
 function fixTitle(root) {
   const blocks = [...root.children];
+  let at = 0;
+  while (['FIGURE', 'HR'].includes(blocks[at]?.tagName)) at++;
+  if (blocks[at]?.tagName !== 'H1') at = 0;
+  const title = blocks[at]?.tagName === 'H1' ? blocks[at] : null;
   blocks.forEach((node, index) => {
-    if (node.tagName === 'H1' && index !== 0) node.replaceWith(el(headingTag('H1'), {}, [...node.childNodes]));
+    if (node.tagName === 'H1' && node !== title) node.replaceWith(el(headingTag('H1'), {}, [...node.childNodes]));
     const isSubtitle = node.tagName === 'P' && node.classList.contains('afw-subtitle');
-    if (isSubtitle && !(index === 1 && blocks[0].tagName === 'H1')) node.removeAttribute('class');
+    if (isSubtitle && !(title && index === at + 1)) node.removeAttribute('class');
   });
 
-  const title = root.firstElementChild?.tagName === 'H1' ? root.firstElementChild : null;
   if (!title) return;
   const plain = (node) => {
     node.querySelectorAll('br').forEach((br) => br.replaceWith(' '));

@@ -157,8 +157,20 @@ describe('opsi title (mode artikel)', () => {
     ['<h1>A</h1><p>x</p><p class="afw-subtitle">B</p>', '<h1>A</h1><p>x</p><p>B</p>'],
     ['<p class="afw-subtitle">B</p>', '<p>B</p>'],
     ['<p class="lain afw-subtitle" onclick="x()">B</p>', '<p>B</p>'],
+    // Blok non-teks (gambar, video, pemisah) boleh di atas judul; teks pertama tetap judul.
+    ['<figure><img src="https://a.com/x.png" alt=""></figure><h1>A <b>b</b></h1><p class="afw-subtitle">S</p>',
+      '<figure><img src="https://a.com/x.png" alt=""></figure><h1>A b</h1><p class="afw-subtitle">S</p>'],
+    ['<figure><img src="https://a.com/x.png" alt=""></figure><figure><img src="https://a.com/y.png" alt=""></figure><h1>A</h1>',
+      '<figure><img src="https://a.com/x.png" alt=""></figure><figure><img src="https://a.com/y.png" alt=""></figure><h1>A</h1>'],
+    ['<hr><h1>A</h1>', '<hr><h1>A</h1>'],
+    ['<figure><img src="https://a.com/x.png" alt=""></figure><p>x</p><h1>A</h1>', '<figure><img src="https://a.com/x.png" alt=""></figure><p>x</p><h2>A</h2>'],
   ])('%j', (input, expected) => {
     expect(sanitize(input, { title: true })).toBe(expected);
+  });
+
+  test('video di atas judul', () => {
+    const input = '<figure data-embed="youtube"><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe></figure><h1>A</h1><p class="afw-subtitle">S</p>';
+    expect(sanitize(input, { title: true })).toMatch(/<\/figure><h1>A<\/h1><p class="afw-subtitle">S<\/p>$/);
   });
 
   test('tanpa opsi title: h1 -> h2, class subjudul dibuang', () => {

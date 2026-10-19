@@ -208,6 +208,10 @@ export function wysiwygComponent(options = {}) {
       return editor?.getJSON();
     },
 
+    getMeta() {
+      return editor?.getMeta() ?? { image: null, title: '', subtitle: '' };
+    },
+
     setJSON(doc) {
       editor?.setJSON(doc);
     },

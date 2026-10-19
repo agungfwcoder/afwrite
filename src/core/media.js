@@ -82,7 +82,17 @@ export function insertMediaBlock(content) {
 
     let from;
     let to;
-    if (selection instanceof NodeSelection || $from.depth === 0) {
+    if ($from.depth === 1 && $from.parent.type.name === 'title') {
+      // Mode artikel: media dari judul dipasang tepat di atas judul; kursor tetap di judul.
+      if (!dispatch) return true;
+      tr.insert($from.before(1), node);
+      tr.setSelection(TextSelection.create(tr.doc, selection.from + node.nodeSize));
+      tr.scrollIntoView();
+      return true;
+    }
+    if ($from.depth === 1 && $from.parent.type.name === 'subtitle') {
+      from = to = $from.after(1);
+    } else if (selection instanceof NodeSelection || $from.depth === 0) {
       from = to = selection instanceof NodeSelection ? selection.to : $from.pos;
     } else {
       const top = $from.node(1);

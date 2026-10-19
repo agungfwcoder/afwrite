@@ -60,6 +60,14 @@ describe('toJSON', () => {
     expect(doc.content.map((n) => n.type)).toEqual(['title', 'subtitle', 'paragraph']);
     expect(fromJSON(doc, { title: true })).toBe('<h1>J</h1><p class="afw-subtitle">S</p><p>x</p>');
     expect(toJSON('<p>x</p>', { title: true }).content.map((n) => n.type)).toEqual(['title', 'paragraph']);
+    const img = '<figure><img src="https://a.com/x.png" alt=""></figure>';
+    const feature = toJSON(`${img}<h1>J</h1><p>x</p>`, { title: true });
+    expect(feature.content.map((n) => n.type)).toEqual(['image', 'title', 'paragraph']);
+    expect(fromJSON(feature, { title: true })).toBe(`${img}<h1>J</h1><p>x</p>`);
+    const many = toJSON(`${img}<hr>${img}<h1>J</h1><p>x</p>`, { title: true });
+    expect(many.content.map((n) => n.type)).toEqual(['image', 'horizontalRule', 'image', 'title', 'paragraph']);
+    // Gambar tanpa judul setelahnya tetap isi biasa; judul kosong di paling atas.
+    expect(toJSON(`${img}<p>x</p>`, { title: true }).content.map((n) => n.type)).toEqual(['title', 'image', 'paragraph']);
   });
 
   test('kosong', () => {
