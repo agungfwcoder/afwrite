@@ -27,10 +27,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/agungfwibowo/afwrite.git"
+    "url": "git+https://github.com/agungfwcoder/afwrite.git"
   },
-  "homepage": "https://agungfwibowo.github.io/afwrite/",
-  "bugs": "https://github.com/agungfwibowo/afwrite/issues",
+  "homepage": "https://agungfwcoder.github.io/afwrite/",
+  "bugs": "https://github.com/agungfwcoder/afwrite/issues",
   "peerDependencies": {
     "alpinejs": "^3.0.0"
   },
