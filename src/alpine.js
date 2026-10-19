@@ -10,7 +10,7 @@
 //     <p>Konten awal (opsional)</p>
 //   </div>
 //
-// Opsi UI: toolbar (true), bubble (true), stats (true), name (nama input hidden),
+// Opsi UI: toolbar (true), bubble (true), stats (true), dragHandle (true), name (nama input hidden),
 // format ('html' | 'json': isi input hidden).
 // Autosave: opsi autosave: 'kunci-unik'. Draf dihapus otomatis saat form dikirim.
 // Opsi lain diteruskan ke Editor (lang, placeholder, upload, readonly, markdown, ...).
@@ -51,6 +51,7 @@ export function wysiwygComponent(options = {}) {
   let savedRange = null;
   let inputBusy = false;
   let toastTimer = null;
+  let cleanup = null;
   const strings = getStrings(options.lang, options.strings);
   // Susunan tombol bawaan mengikuti level judul aktif (bubble: paling banyak 2 level).
   const headings = normalizeHeadings(options.headings);
@@ -78,7 +79,9 @@ export function wysiwygComponent(options = {}) {
     mediaSizes: MEDIA_SIZES,
     toast: { open: false, message: '' },
     slash: { open: false, ready: false, items: [], index: 0, x: 0, y: 0 },
-    plus: { visible: false, y: 0 },
+    plus: { visible: false, x: 2, y: 0 },
+    handle: { visible: false, x: 2, y: 0, pos: null },
+    dragging: false,
 
     init() {
       root = this.$el;
@@ -106,6 +109,7 @@ export function wysiwygComponent(options = {}) {
 
       editor.on('change', (html) => {
         this.html = html;
+        this.handle.visible = false; // posisi blok bisa bergeser
         this.stats = editor.stats();
         root.dispatchEvent(new CustomEvent('wysiwyg-change', { detail: { html }, bubbles: true }));
       });
@@ -119,6 +123,7 @@ export function wysiwygComponent(options = {}) {
           this.closeBubble();
           this.hideMediaBar();
           this.plus.visible = false;
+          this.handle.visible = false;
         }
       });
       editor.on('focus', () => root.dispatchEvent(new CustomEvent('wysiwyg-focus', { bubbles: true })));
@@ -141,6 +146,16 @@ export function wysiwygComponent(options = {}) {
       this.canUndo = editor.canUndo();
       this.draft = editor.draft || null;
 
+      // Drag blok selesai (drop atau dibatalkan) di mana pun: browser bisa tidak mengirim dragend
+      // ke pegangan yang sudah disembunyikan saat isi editor berubah.
+      const finishDrag = () => this.dragging && this.endBlockDrag();
+      document.addEventListener('drop', finishDrag, true);
+      document.addEventListener('dragend', finishDrag, true);
+      cleanup = () => {
+        document.removeEventListener('drop', finishDrag, true);
+        document.removeEventListener('dragend', finishDrag, true);
+      };
+
       // Draf autosave tidak diperlukan lagi setelah form dikirim.
       root.closest('form')?.addEventListener('submit', () => {
         if (this.draft) editor.discardDraft();
@@ -160,6 +175,7 @@ export function wysiwygComponent(options = {}) {
     },
 
     destroy() {
+      cleanup?.();
       editor?.destroy();
       editor = null;
     },
@@ -500,16 +516,57 @@ export function wysiwygComponent(options = {}) {
     },
 
     updatePlus(info) {
-      if (!info.inside || !info.emptyBlock || this.slash.open) {
+      if (!info.inside || !info.emptyBlock || this.slash.open || this.dragging) {
         this.plus.visible = false;
         return;
       }
       const box = root.getBoundingClientRect();
       const block = info.emptyBlock.rect;
-      this.plus.y = Math.round(block.top - box.top + block.height / 2 - 14);
+      this.plus.y = Math.round(block.top - box.top + block.height / 2 - 12);
+      this.plus.x = gutterX(block, box);
       this.plus.visible = true;
     },
+
+    // ---------- Pegangan drag (pindah blok) ----------
+
+    onBodyHover(event) {
+      if (this.readOnly || this.dragging || options.dragHandle === false || isCoarsePointer()) return;
+      const info = editor?.blockAt(event.clientY);
+      if (!info || info.empty) return this.hideHandle();
+      const box = root.getBoundingClientRect();
+      this.handle.y = Math.round(info.line.top - box.top + info.line.height / 2 - 12);
+      this.handle.x = gutterX(info.rect, box);
+      this.handle.pos = info.pos;
+      this.handle.visible = true;
+    },
+
+    hideHandle() {
+      if (!this.dragging) this.handle.visible = false;
+    },
+
+    selectHandleBlock() {
+      if (this.handle.pos !== null) editor.selectBlock(this.handle.pos);
+    },
+
+    startBlockDrag(event) {
+      if (this.handle.pos === null) return event.preventDefault();
+      this.dragging = true;
+      this.closeBubble();
+      this.plus.visible = false;
+      editor.startBlockDrag(this.handle.pos, event);
+    },
+
+    endBlockDrag() {
+      this.dragging = false;
+      this.handle.visible = false;
+      editor.endBlockDrag();
+    },
   };
+}
+
+// Posisi kiri tombol di celah kiri konten: tepat sebelum tepi kiri blok (lebar tombol 24px).
+function gutterX(blockRect, rootRect) {
+  return Math.max(2, Math.round(blockRect.left - rootRect.left - 30));
 }
 
 export default function wyswygPlugin(Alpine) {

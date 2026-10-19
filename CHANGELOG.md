@@ -15,6 +15,10 @@
   tempat lain tetap judul bagian biasa. Format yang tidak berlaku tampil redup. Paste beberapa
   baris ke judul: baris pertama jadi judul, sisanya isi. Prop Blade `:title`, dan
   `WyswygHtml::clean()` mengizinkan `h1` & class `afw-subtitle`
+- Pindah blok: pegangan ⋮⋮ muncul di kiri blok saat mouse di atasnya (satu slot dengan tombol `+`,
+  yang kini 24px). Seret untuk memindah (penanda posisi & satu langkah undo), klik untuk memilih
+  blok utuh. Ctrl/⌘+Shift+↑/↓ memindah blok lewat keyboard. Judul/subjudul artikel tidak ikut
+  dipindah. Opsi `dragHandle: false` untuk mematikan pegangan. API `moveBlock()`, `selectBlock()`
 
 ## 2.0.0 — 2026-10-18
 

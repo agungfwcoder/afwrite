@@ -58,6 +58,7 @@ const id = {
   titlePlaceholder: 'Judul',
   subtitlePlaceholder: 'Subjudul',
   titleLabel: 'Judul',
+  dragBlock: 'Seret untuk memindahkan, klik untuk memilih blok',
   subtitleLabel: 'Subjudul',
 
   words: 'kata',
@@ -133,6 +134,7 @@ const en = {
   titlePlaceholder: 'Title',
   subtitlePlaceholder: 'Subtitle',
   titleLabel: 'Title',
+  dragBlock: 'Drag to move, click to select the block',
   subtitleLabel: 'Subtitle',
 
   words: 'words',

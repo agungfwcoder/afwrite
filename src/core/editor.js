@@ -400,6 +400,96 @@ export class Editor {
     view.dispatch(tr.scrollIntoView());
   }
 
+  // ----- Pindah blok (drag & drop, keyboard) -----
+
+  // Blok tingkat teratas di koordinat Y layar, untuk pegangan drag.
+  // { pos, rect, line: { top, height }, empty } atau null (judul/subjudul artikel tidak bisa dipindah).
+  blockAt(clientY) {
+    const { state, view } = this.tiptap;
+    let found = null;
+    state.doc.forEach((node, offset) => {
+      const dom = view.nodeDOM(offset);
+      if (!(dom instanceof Element)) return;
+      const rect = dom.getBoundingClientRect();
+      if (rect.top - 8 <= clientY) found = { node, pos: offset, rect, dom };
+    });
+    if (!found || found.rect.bottom + 16 < clientY) return null;
+    const { node, pos, rect } = found;
+    if (node.type.name === 'title' || node.type.name === 'subtitle') return null;
+
+    // Tinggi baris pertama, agar pegangan sejajar dengan teks (bukan tengah blok yang tinggi).
+    let line = { top: rect.top, height: Math.min(rect.height, 28) };
+    const first = Selection.findFrom(state.doc.resolve(pos + 1), 1, true);
+    if (!node.isAtom && first && first.from < pos + node.nodeSize) {
+      try {
+        const c = view.coordsAtPos(first.from);
+        line = { top: c.top, height: c.bottom - c.top };
+      } catch {
+        // posisi tanpa koordinat: pakai bagian atas blok
+      }
+    }
+    return { pos, rect, line, empty: node.type.name === 'paragraph' && !node.content.size };
+  }
+
+  selectBlock(pos) {
+    const { state, view } = this.tiptap;
+    if (this.readOnly || !state.doc.nodeAt(pos)) return;
+    view.focus();
+    view.dispatch(state.tr.setSelection(NodeSelection.create(state.doc, pos)));
+  }
+
+  // Mulai menyeret blok di `pos` (dipanggil dari event dragstart pegangan). Penurunan blok
+  // ditangani ProseMirror: penanda posisi, pindah dalam satu langkah undo.
+  startBlockDrag(pos, event) {
+    const { view } = this.tiptap;
+    const { state } = view;
+    if (this.readOnly || !event.dataTransfer || !state.doc.nodeAt(pos)) return;
+    const selection = NodeSelection.create(state.doc, pos);
+    view.dispatch(state.tr.setSelection(selection));
+    const slice = selection.content();
+    const { dom, text } = view.serializeForClipboard(slice);
+    event.dataTransfer.clearData();
+    event.dataTransfer.setData('text/html', dom.innerHTML);
+    event.dataTransfer.setData('text/plain', text);
+    event.dataTransfer.effectAllowed = 'copyMove';
+    const blockDom = view.nodeDOM(pos);
+    if (blockDom instanceof Element) event.dataTransfer.setDragImage(blockDom, 0, 0);
+    view.dragging = { slice, move: true, node: selection };
+  }
+
+  endBlockDrag() {
+    // Drop di luar editor: ProseMirror tidak sempat membersihkan status drag.
+    setTimeout(() => {
+      if (this.tiptap.view) this.tiptap.view.dragging = null;
+    }, 0);
+  }
+
+  // Pindah blok tingkat teratas di posisi kursor ke atas (-1) atau ke bawah (1).
+  moveBlock(dir) {
+    const { state, view } = this.tiptap;
+    const { doc, selection } = state;
+    const index = selection.$from.index(0);
+    const min = this.options.title ? (doc.maybeChild(1)?.type.name === 'subtitle' ? 2 : 1) : 0;
+    const target = index + dir;
+    if (index < min || target < min || target >= doc.childCount) return false;
+
+    let pos = 0;
+    for (let i = 0; i < index; i++) pos += doc.child(i).nodeSize;
+    const node = doc.child(index);
+    const other = doc.child(target);
+    const newPos = dir < 0 ? pos - other.nodeSize : pos + other.nodeSize;
+
+    const tr = state.tr.delete(pos, pos + node.nodeSize).insert(newPos, node);
+    if (selection instanceof NodeSelection) {
+      tr.setSelection(NodeSelection.create(tr.doc, newPos));
+    } else {
+      const shift = newPos - pos;
+      tr.setSelection(TextSelection.create(tr.doc, selection.from + shift, selection.to + shift));
+    }
+    view.dispatch(tr.scrollIntoView());
+    return true;
+  }
+
   // ----- Slash menu -----
 
   // Buka slash menu dari tombol "+": ketik "/" di posisi kursor.
@@ -989,6 +1079,12 @@ export class Editor {
     }
 
     if (this._handleCodeKey(e)) return true;
+
+    // Ctrl/Cmd+Shift+Panah atas/bawah: pindah blok.
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      this.moveBlock(e.key === 'ArrowUp' ? -1 : 1);
+      return true;
+    }
 
     // Enter di judul/kutipan kosong -> kembali menjadi paragraf.
     const parent = state.selection.$from.parent;

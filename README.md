@@ -66,6 +66,7 @@ Dengan `x-model`:
 | `toolbar` | `true` | Toolbar di atas; `false` = hanya bubble (ala Medium) |
 | `bubble` | `true` | Bubble toolbar saat teks diblok |
 | `stats` | `true` | Jumlah kata & waktu baca |
+| `dragHandle` | `true` | Pegangan ⋮⋮ di kiri blok: seret untuk memindah, klik untuk memilih |
 | `readonly` | `false` | Mode baca saja |
 | `upload` | `null` | `async (file) => url`. Tanpa ini gambar disimpan sebagai base64 |
 | `maxImageSize` | `5 MB` | Batas ukuran gambar (byte); `0` = tanpa batas |
@@ -132,6 +133,7 @@ Dikirim dari elemen editor dan *bubbling*, jadi bisa ditangkap di parent:
 | `hr` | | `--- ` |
 | `codeblock` | Ctrl/⌘ + Alt + C | ```` ``` ```` + spasi, `/kode` |
 | `undo` / `redo` | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (atau Ctrl + Y) | |
+| pindah blok | Ctrl/⌘ + Shift + ↑ / ↓, atau seret pegangan ⋮⋮ | |
 | `unlink` | | |
 
 Di dalam blok kode: **Enter** = baris baru, **Tab / Shift+Tab** = indentasi, **Enter** di baris

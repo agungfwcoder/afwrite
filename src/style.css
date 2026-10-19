@@ -722,8 +722,8 @@
   display: none;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   margin: 0;
   padding: 0;
   color: var(--afw-muted);
@@ -741,13 +741,58 @@
 }
 
 .afw .afw-plus .afw-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Pegangan drag: satu slot dengan tombol + (bergantian, tidak pernah tampil bersamaan). */
+.afw .afw-handle {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  left: 2px;
+  z-index: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  color: var(--afw-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  opacity: 0.75;
+  cursor: grab;
+}
+
+.afw .afw-handle:hover {
+  color: var(--afw-text);
+  background: var(--afw-surface);
+  opacity: 1;
+}
+
+.afw .afw-handle:active {
+  cursor: grabbing;
+}
+
+.afw .afw-handle .afw-icon {
   width: 16px;
   height: 16px;
 }
 
+/* Blok teks yang dipilih utuh (klik pegangan / sedang diseret). */
+.afw .afw-content > .ProseMirror-selectednode:not(figure):not(hr) {
+  border-radius: 6px;
+  background: var(--afw-accent-soft);
+  outline: none;
+}
+
 /* Hanya di layar lebar dengan mouse; di HP pakai slash (/) atau toolbar. */
 @media (hover: hover) and (min-width: 641px) {
-  .afw .afw-plus.afw-is-open {
+  .afw .afw-plus.afw-is-open,
+  .afw .afw-handle.afw-is-open {
     display: inline-flex;
   }
 }

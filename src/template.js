@@ -32,11 +32,21 @@ export const TEMPLATE = `
   <button type="button" class="afw-draft-btn" @click="discardDraft()" x-text="t('draftDiscard')"></button>
 </div>
 
-<div class="afw-body">
+<div class="afw-body" @mousemove="onBodyHover($event)" @mouseleave="hideHandle()">
   <div data-afw-editor x-ignore></div>
 
+  <!-- Pegangan drag: seret untuk memindah blok, klik untuk memilihnya. Satu slot dengan tombol +
+       (tombol + hanya di baris kosong, pegangan hanya di blok berisi). mousedown sengaja tidak
+       di-prevent: itu akan membatalkan drag. -->
+  <button type="button" class="afw-handle" draggable="true" tabindex="-1"
+          :class="{ 'afw-is-open': handle.visible }"
+          :style="\`top: \${handle.y}px; left: \${handle.x}px\`"
+          :title="t('dragBlock')" :aria-label="t('dragBlock')"
+          @click="selectHandleBlock()" @dragstart="startBlockDrag($event)" @dragend="endBlockDrag()"
+          x-html="icon('grip')"></button>
+
   <button type="button" class="afw-plus" :class="{ 'afw-is-open': plus.visible }"
-          :style="\`top: \${plus.y}px\`"
+          :style="\`top: \${plus.y}px; left: \${plus.x}px\`"
           :title="t('addBlock')" :aria-label="t('addBlock')"
           @mousedown.prevent @click="openBlockMenu()"
           x-html="icon('plus')"></button>
