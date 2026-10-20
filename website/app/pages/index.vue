@@ -177,6 +177,10 @@ async function playDemo() {
 const showcase = ref<'fitur' | 'coba'>('fitur')
 // Di ponsel kartu fitur dipotong (5 pertama) sampai tombol "Tampilkan semua" ditekan.
 const showAll = ref(false)
+function collapseFeatures() {
+  showAll.value = false
+  document.getElementById('coba')?.scrollIntoView({ block: 'start' })
+}
 
 // Animasi reveal: elemen [data-reveal] di bawah layar disembunyikan lalu muncul saat di-scroll.
 // Yang sudah terlihat saat halaman dibuka dibiarkan (tanpa kedip); hero memakai animasi CSS.
@@ -1272,6 +1276,24 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             Tampilkan semua fitur
             <svg
               class="size-4"
+              v-bind="svgAttrs"
+              v-html="ICON.down"
+            />
+          </button>
+        </div>
+
+        <div
+          v-if="showcase === 'fitur' && showAll"
+          class="flex justify-center pt-1 pb-1 sm:hidden"
+        >
+          <button
+            type="button"
+            class="btn-soft cursor-pointer gap-2"
+            @click="collapseFeatures"
+          >
+            Tampilkan lebih sedikit
+            <svg
+              class="size-4 rotate-180"
               v-bind="svgAttrs"
               v-html="ICON.down"
             />
