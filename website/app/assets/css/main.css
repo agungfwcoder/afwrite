@@ -75,7 +75,7 @@
 html .afw,
 html .afw-prose {
   --afw-accent: #009994;
-  --afw-accent-soft: #edfcfa;
+  --afw-accent-soft: rgba(12, 180, 174, 0.2);
   --afw-link: #127a76;
   --afw-quote-bar: #abefea;
 }
