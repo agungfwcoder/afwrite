@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Landing page. Layout mengikuti halaman depan Nuxt UI: hero (teks + kartu editor bertab), panel showcase berisi
-// kartu-kartu demo fitur (masonry) dan tab "Coba langsung", lalu CTA dan footer. Warna: emerald + zinc, dengan aksen kecil kuning logo (sun).
+// kartu-kartu demo fitur (masonry) dan tab "Coba langsung", lalu CTA dan footer. Warna: brand (#009994) + zinc, dengan aksen kecil kuning logo (sun).
 // Teks SEO diambil dari content/index.md.
 import { useClipboard } from '@vueuse/core'
 import { BRAND, SLOGAN } from '~~/brand'
@@ -71,7 +71,7 @@ const ICON = {
 
 // Token pewarnaan kode: [teks, kelas warna]; baris = array token.
 type Token = [string, string?]
-const T = { tag: 'text-pink-600 dark:text-pink-400', attr: 'text-emerald-600 dark:text-emerald-300', str: 'text-emerald-700 dark:text-emerald-300', kw: 'italic text-violet-600 dark:text-violet-300', dim: 'text-zinc-400 dark:text-zinc-500' }
+const T = { tag: 'text-pink-600 dark:text-pink-400', attr: 'text-brand-600 dark:text-brand-300', str: 'text-brand-700 dark:text-brand-300', kw: 'italic text-violet-600 dark:text-violet-300', dim: 'text-zinc-400 dark:text-zinc-500' }
 
 // Kartu hero: tab "Editor" (mockup animasi) dan contoh kode.
 const tabs: { name: string, icon: string, lines: Token[][] }[] = [
@@ -116,7 +116,7 @@ const heroTab = ref(-1) // -1 = Editor
 
 // Deretan chip blok di bawah kartu hero (seperti deretan tema di halaman Nuxt UI).
 const chips = [
-  { icon: 'headingLarge', label: 'Judul', cls: 'bg-emerald-500/12 text-emerald-600 ring-emerald-500/25 dark:text-emerald-300' },
+  { icon: 'headingLarge', label: 'Judul', cls: 'bg-brand-500/12 text-brand-600 ring-brand-500/25 dark:text-brand-300' },
   { icon: 'list', label: 'Daftar berpoin', cls: 'bg-sky-500/12 text-sky-600 ring-sky-500/25 dark:text-sky-300' },
   { icon: 'quote', label: 'Kutipan', cls: 'bg-violet-500/12 text-violet-600 ring-violet-500/25 dark:text-violet-300' },
   { icon: 'code', label: 'Blok kode', cls: 'bg-rose-500/12 text-rose-600 ring-rose-500/25 dark:text-rose-300' },
@@ -324,7 +324,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 </script>
 
 <template>
-  <div class="landing bg-white text-zinc-700 dark:bg-[#09090b] dark:text-zinc-200">
+  <div class="landing bg-[#f4f6f6] text-zinc-700 dark:bg-[#09090b] dark:text-zinc-200">
     <!-- HERO -->
     <section class="hero relative overflow-hidden">
       <div
@@ -342,7 +342,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
       <!-- Garis tegas di bawah hero, seperti halaman Nuxt UI. -->
       <div
         aria-hidden="true"
-        class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-emerald-500 to-transparent dark:via-emerald-400"
+        class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-brand-500 to-transparent dark:via-brand-400"
       />
       <!-- Horizon: cahaya di garis bawah yang membesar & meredup bergelombang. -->
       <div
@@ -358,7 +358,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <NuxtLink
             to="/panduan/event-api#judul-slug"
             style="--reveal-delay: 0ms"
-            class="hero-in inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-500/15 dark:text-emerald-400"
+            class="hero-in inline-flex items-center gap-1.5 rounded-full bg-brand-500/10 px-3 py-1 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-500/15 dark:text-brand-400"
           >
             Baru di v2: judul &amp; slug
             <svg
@@ -372,7 +372,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             style="--reveal-delay: 80ms"
             class="hero-in m-0 text-[clamp(44px,5.6vw,64px)] leading-[1.06] font-semibold tracking-[-0.03em] text-zinc-950 dark:text-zinc-50"
           >
-            All fine.<br><span class="text-emerald-600 dark:text-emerald-400">Just write</span><span class="text-sun">.</span>
+            All fine.<br><span class="text-brand-600 dark:text-brand-400">Just write</span><span class="text-sun">.</span>
           </h1>
           <p
             style="--reveal-delay: 160ms"
@@ -476,8 +476,8 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   />{{ t.name }}
                 </button>
               </div>
-              <div class="ml-auto hidden shrink-0 items-center gap-1.5 pr-2 text-xs text-emerald-600 sm:flex dark:text-emerald-300">
-                <span class="mock-pulse size-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />Draf tersimpan
+              <div class="ml-auto hidden shrink-0 items-center gap-1.5 pr-2 text-xs text-brand-600 sm:flex dark:text-brand-300">
+                <span class="mock-pulse size-1.5 rounded-full bg-brand-500 dark:bg-brand-400" />Draf tersimpan
               </div>
             </div>
 
@@ -510,7 +510,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   >
                     <span
                       class="bubble-btn text-sm font-extrabold transition-colors duration-200"
-                      :class="demo.bold ? 'bg-emerald-500/20 text-emerald-200' : 'text-zinc-300'"
+                      :class="demo.bold ? 'bg-brand-500/20 text-brand-200' : 'text-zinc-300'"
                     >B</span>
                     <span class="bubble-btn font-serif text-[15px] text-zinc-300 italic">i</span>
                     <span class="bubble-btn text-zinc-300"><svg
@@ -541,7 +541,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   >tenang dan fokus</span>. Toolbar hanya muncul ketika Anda memblok teks, lalu menghilang lagi.
                 </div>
 
-                <div class="border-l-[3px] border-emerald-600 pl-4 text-zinc-500 dark:text-zinc-400">
+                <div class="border-l-[3px] border-brand-600 pl-4 text-zinc-500 dark:text-zinc-400">
                   Ketik ## untuk judul, &gt; untuk kutipan, dan **teks** untuk tebal.
                 </div>
 
@@ -583,11 +583,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                     ]"
                     :key="item.label"
                     class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150"
-                    :class="i === demo.active ? 'bg-emerald-500/15 text-zinc-950 dark:bg-emerald-500/20 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'"
+                    :class="i === demo.active ? 'bg-brand-500/15 text-zinc-950 dark:bg-brand-500/20 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'"
                   >
                     <span
                       class="flex size-7 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800"
-                      :class="i === demo.active ? 'text-emerald-600 dark:text-emerald-300' : 'text-zinc-500 dark:text-zinc-400'"
+                      :class="i === demo.active ? 'text-brand-600 dark:text-brand-300' : 'text-zinc-500 dark:text-zinc-400'"
                     ><svg
                       class="size-[15px]"
                       v-bind="svgAttrs"
@@ -682,7 +682,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
       <div
         data-reveal
         style="--reveal-delay: 80ms"
-        class="mt-4 rounded-[24px] border border-zinc-200 bg-zinc-50 p-3 sm:rounded-[28px] sm:p-4 dark:border-zinc-800/80 dark:bg-[#0d0d0f]"
+        class="mt-4 rounded-[24px] border border-zinc-200 bg-[#edf0f0] p-3 sm:rounded-[28px] sm:p-4 dark:border-zinc-800/80 dark:bg-[#0d0d0f]"
       >
         <!-- FITUR -->
         <div
@@ -714,11 +714,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   v-for="(item, i) in slashItems.slice(0, 6)"
                   :key="item.label"
                   class="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[13px] transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
-                  :class="i === 0 ? 'bg-emerald-500/10 dark:bg-emerald-500/15' : ''"
+                  :class="i === 0 ? 'bg-brand-500/10 dark:bg-brand-500/15' : ''"
                 >
                   <span
                     class="flex size-6 shrink-0 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800"
-                    :class="i === 0 ? 'text-emerald-600 dark:text-emerald-300' : 'text-zinc-500 dark:text-zinc-400'"
+                    :class="i === 0 ? 'text-brand-600 dark:text-brand-300' : 'text-zinc-500 dark:text-zinc-400'"
                   ><svg
                     class="size-3.5"
                     v-bind="svgAttrs"
@@ -757,7 +757,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             </label>
             <div class="flex flex-col gap-1.5">
               <span class="text-xs font-medium text-zinc-700 dark:text-zinc-300">Slug</span>
-              <div class="sc-field justify-between gap-2 font-mono text-emerald-700 dark:text-emerald-300">
+              <div class="sc-field justify-between gap-2 font-mono text-brand-700 dark:text-brand-300">
                 <span class="min-w-0 truncate">{{ slug || '—' }}</span>
                 <button
                   type="button"
@@ -792,7 +792,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 <button
                   type="button"
                   class="bubble-btn cursor-pointer text-sm font-extrabold transition-colors"
-                  :class="fmt.bold ? 'bg-emerald-500/20 text-emerald-200' : 'text-zinc-300 hover:bg-zinc-800'"
+                  :class="fmt.bold ? 'bg-brand-500/20 text-brand-200' : 'text-zinc-300 hover:bg-zinc-800'"
                   :aria-pressed="fmt.bold"
                   aria-label="Tebal"
                   @click="fmt.bold = !fmt.bold"
@@ -802,7 +802,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 <button
                   type="button"
                   class="bubble-btn cursor-pointer font-serif text-[15px] italic transition-colors"
-                  :class="fmt.italic ? 'bg-emerald-500/20 text-emerald-200' : 'text-zinc-300 hover:bg-zinc-800'"
+                  :class="fmt.italic ? 'bg-brand-500/20 text-brand-200' : 'text-zinc-300 hover:bg-zinc-800'"
                   :aria-pressed="fmt.italic"
                   aria-label="Miring"
                   @click="fmt.italic = !fmt.italic"
@@ -828,7 +828,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               </div>
               <p class="m-0 text-[13.5px] leading-[1.7] text-zinc-600 dark:text-zinc-300">
                 Menulis seharusnya terasa <span
-                  class="rounded-[3px] bg-emerald-500/25 px-0.5"
+                  class="rounded-[3px] bg-brand-500/25 px-0.5"
                   :class="{ 'font-bold text-zinc-950 dark:text-zinc-50': fmt.bold, 'italic': fmt.italic }"
                 >tenang dan fokus</span>, tanpa toolbar yang terus terlihat.
               </p>
@@ -960,7 +960,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   :name="b.icon"
                   class="size-4 shrink-0"
                   :class="b.color"
-                />{{ b.name }}</span><span class="text-xs font-semibold text-emerald-600 dark:text-emerald-300">✓ Konsisten</span>
+                />{{ b.name }}</span><span class="text-xs font-semibold text-brand-600 dark:text-brand-300">✓ Konsisten</span>
               </div>
             </div>
           </div>
@@ -983,7 +983,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   v-html="ICON.grip"
                 />Pembuka
               </div>
-              <div class="h-0.5 rounded-full bg-emerald-500" />
+              <div class="h-0.5 rounded-full bg-brand-500" />
               <div class="flex items-center gap-2 px-1 py-1.5 text-zinc-600 dark:text-zinc-400">
                 <svg
                   class="size-3.5 text-zinc-300 dark:text-zinc-600"
@@ -991,9 +991,9 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   v-html="ICON.grip"
                 />Isi utama
               </div>
-              <div class="flex translate-x-3 -rotate-1 items-center gap-2 rounded-md border border-emerald-500/40 bg-white px-2 py-1.5 text-zinc-900 shadow-[0_10px_24px_-8px_rgba(5,150,105,0.45)] dark:bg-zinc-900 dark:text-zinc-100">
+              <div class="flex translate-x-3 -rotate-1 items-center gap-2 rounded-md border border-brand-500/40 bg-white px-2 py-1.5 text-zinc-900 shadow-[0_10px_24px_-8px_rgba(5,150,105,0.45)] dark:bg-zinc-900 dark:text-zinc-100">
                 <svg
-                  class="size-3.5 text-emerald-600 dark:text-emerald-400"
+                  class="size-3.5 text-brand-600 dark:text-brand-400"
                   v-bind="svgAttrs"
                   v-html="ICON.grip"
                 />Kutipan narasumber
@@ -1024,7 +1024,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 :key="l"
                 type="button"
                 class="cursor-pointer rounded-md py-1.5 transition-colors"
-                :class="lang === l ? 'bg-emerald-600 text-white' : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'"
+                :class="lang === l ? 'bg-brand-600 text-white' : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'"
                 @click="lang = l"
               >
                 {{ l === 'id' ? 'Indonesia' : 'English' }}
@@ -1056,7 +1056,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               </div>
               <NuxtLink
                 to="/panduan/json"
-                class="shrink-0 text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-300"
+                class="shrink-0 text-xs font-semibold text-brand-700 hover:underline dark:text-brand-300"
               >Panduan →</NuxtLink>
             </div>
             <div
@@ -1146,7 +1146,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             >
               <span
                 class="relative h-5 w-9 shrink-0 rounded-full transition-colors"
-                :class="autosave ? 'bg-emerald-600' : 'bg-zinc-300 dark:bg-zinc-700'"
+                :class="autosave ? 'bg-brand-600' : 'bg-zinc-300 dark:bg-zinc-700'"
               ><span
                 class="absolute top-0.5 left-0.5 size-4 rounded-full bg-white transition-transform"
                 :class="{ 'translate-x-4': autosave }"
@@ -1241,7 +1241,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             <div class="sc-inset flex flex-col gap-1 p-3 font-mono text-xs">
               <span><span :class="T.tag">.afw</span> <span class="text-zinc-400">{ … }</span></span>
               <span><span :class="T.tag">.afw-toolbar</span> <span class="text-zinc-400">{ … }</span></span>
-              <span><span :class="T.attr">--afw-accent</span>: <span :class="T.str">#059669</span>;</span>
+              <span><span :class="T.attr">--afw-accent</span>: <span :class="T.str">#009994</span>;</span>
             </div>
             <div class="flex flex-wrap gap-1.5 text-xs">
               <span class="flex items-center gap-1.5 rounded-full border border-zinc-200 px-2.5 py-1 text-zinc-700 dark:border-zinc-800 dark:text-zinc-300"><UIcon
@@ -1271,7 +1271,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 :key="t"
                 class="flex gap-2 text-zinc-700 dark:text-zinc-300"
               >
-                <span class="text-emerald-600 dark:text-emerald-300">✓</span>{{ t }}
+                <span class="text-brand-600 dark:text-brand-300">✓</span>{{ t }}
               </li>
             </ul>
           </div>
@@ -1330,7 +1330,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               role="tab"
               :aria-selected="variant === i"
               class="cursor-pointer rounded-full border px-4 py-1.5 text-sm font-medium transition-colors"
-              :class="variant === i ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-zinc-300 text-zinc-600 hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:text-zinc-50'"
+              :class="variant === i ? 'border-brand-600 bg-brand-600 text-white' : 'border-zinc-300 text-zinc-600 hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:text-zinc-50'"
               @click="variant = i"
             >
               {{ v.name }}
@@ -1353,7 +1353,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
     <section class="mx-auto max-w-(--ui-container) px-4 sm:px-6 lg:px-8 pb-24">
       <div
         data-reveal
-        class="relative flex flex-col items-center gap-5 overflow-hidden rounded-2xl border border-emerald-500/30 bg-zinc-50 px-6 py-20 text-center sm:px-8 dark:bg-[#0d0d0f]"
+        class="relative flex flex-col items-center gap-5 overflow-hidden rounded-2xl border border-brand-500/30 bg-zinc-50 px-6 py-20 text-center sm:px-8 dark:bg-[#0d0d0f]"
       >
         <div
           aria-hidden="true"
@@ -1451,7 +1451,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 <style>
 /* Tidak scoped: semua aturan diawali .landing agar tidak bocor ke halaman lain. */
 
-/* Latar hero & CTA: titik-titik halus + pendar emerald dari bawah. */
+/* Latar hero & CTA: titik-titik halus + pendar brand dari bawah. */
 .landing .hero-dots {
   background-image: radial-gradient(rgba(24, 24, 27, 0.16) 1.5px, transparent 1.5px);
   background-size: 28px 28px;
@@ -1465,11 +1465,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .landing .hero-fade {
-  background: linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.14));
+  background: linear-gradient(to bottom, transparent, rgba(12, 180, 174, 0.14));
 }
 
 .dark .landing .hero-fade {
-  background: linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.16));
+  background: linear-gradient(to bottom, transparent, rgba(12, 180, 174, 0.16));
 }
 
 /* Horizon hero: cahaya di sepanjang garis bawah (tepi kiri sampai kanan layar) yang membesar lalu
@@ -1485,7 +1485,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   position: absolute;
   inset: auto 0 0;
   height: 70px;
-  background: linear-gradient(to top, rgba(16, 185, 129, 0.22), transparent);
+  background: linear-gradient(to top, rgba(12, 180, 174, 0.22), transparent);
   -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.45), #000 28%, rgba(0, 0, 0, 0.6) 55%, #000 80%, rgba(0, 0, 0, 0.5));
   mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.45), #000 28%, rgba(0, 0, 0, 0.6) 55%, #000 80%, rgba(0, 0, 0, 0.5));
   transform-origin: 50% 100%;
@@ -1493,7 +1493,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .dark .landing .hero-horizon::before {
-  background: linear-gradient(to top, rgba(52, 211, 153, 0.18), transparent);
+  background: linear-gradient(to top, rgba(20, 204, 198, 0.18), transparent);
 }
 
 /* Garis horizon yang menyala, paling terang agak ke kiri. */
@@ -1502,12 +1502,12 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   position: absolute;
   inset: auto 0 0;
   height: 1px;
-  background: linear-gradient(to right, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.95) 36%, rgba(16, 185, 129, 0.55) 70%, rgba(16, 185, 129, 0.35));
+  background: linear-gradient(to right, rgba(12, 180, 174, 0.3), rgba(12, 180, 174, 0.95) 36%, rgba(12, 180, 174, 0.55) 70%, rgba(12, 180, 174, 0.35));
   animation: hero-core 5s ease-in-out infinite;
 }
 
 .dark .landing .hero-horizon::after {
-  background: linear-gradient(to right, rgba(52, 211, 153, 0.35), rgba(209, 250, 229, 0.95) 36%, rgba(52, 211, 153, 0.6) 70%, rgba(52, 211, 153, 0.4));
+  background: linear-gradient(to right, rgba(20, 204, 198, 0.35), rgba(211, 247, 244, 0.95) 36%, rgba(20, 204, 198, 0.6) 70%, rgba(20, 204, 198, 0.4));
 }
 
 /* Pita cahaya datar yang menempel di garis (memudar ke atas dan ke kedua sisi, tanpa lengkung).
@@ -1520,7 +1520,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   left: 0;
   width: var(--w);
   height: 80px;
-  background: linear-gradient(to top, rgba(16, 185, 129, 0.34), rgba(16, 185, 129, 0.08) 45%, transparent);
+  background: linear-gradient(to top, rgba(12, 180, 174, 0.34), rgba(12, 180, 174, 0.08) 45%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, #000 30%, #000 60%, transparent);
   mask-image: linear-gradient(to right, transparent, #000 30%, #000 60%, transparent);
   opacity: 0;
@@ -1529,7 +1529,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .dark .landing .hero-wave {
-  background: linear-gradient(to top, rgba(52, 211, 153, 0.3), rgba(52, 211, 153, 0.07) 45%, transparent);
+  background: linear-gradient(to top, rgba(20, 204, 198, 0.3), rgba(20, 204, 198, 0.07) 45%, transparent);
 }
 
 /* Ke kanan, sedang. */
@@ -1673,12 +1673,12 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .landing .btn-solid {
-  background: #059669;
+  background: #009994;
   color: #fff;
 }
 
 .landing .btn-solid:hover {
-  background: #10b981;
+  background: #0cb4ae;
 }
 
 .landing .btn-soft {
@@ -1706,16 +1706,16 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   height: 44px;
   padding: 0 20px;
   border-radius: 10px;
-  background: #059669;
+  background: #009994;
   color: #fff;
   font-size: 15px;
   font-weight: 600;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset, 0 8px 24px -8px rgba(5, 150, 105, 0.6);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset, 0 8px 24px -8px rgba(0, 153, 148, 0.6);
   transition: background-color 0.2s;
 }
 
 .landing .btn-primary:hover {
-  background: #10b981;
+  background: #0cb4ae;
 }
 
 .landing .btn-ghost {
@@ -1802,7 +1802,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .landing .sc-card-link:hover {
-  border-color: rgba(16, 185, 129, 0.45);
+  border-color: rgba(12, 180, 174, 0.45);
 }
 
 .landing .sc-title {
@@ -1870,8 +1870,8 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .landing .sc-field:focus {
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  border-color: #0cb4ae;
+  box-shadow: 0 0 0 3px rgba(12, 180, 174, 0.15);
 }
 
 .dark .landing .sc-field {
@@ -1975,7 +1975,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   }
 }
 .landing .mock-sel {
-  background-image: linear-gradient(rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.3));
+  background-image: linear-gradient(rgba(12, 180, 174, 0.3), rgba(12, 180, 174, 0.3));
   background-repeat: no-repeat;
   background-size: 0% 100%;
   transition: background-size 0.55s cubic-bezier(0.65, 0, 0.35, 1);
@@ -1998,11 +1998,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 @keyframes afw-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55);
+    box-shadow: 0 0 0 0 rgba(20, 204, 198, 0.55);
   }
   70%,
   100% {
-    box-shadow: 0 0 0 6px rgba(52, 211, 153, 0);
+    box-shadow: 0 0 0 6px rgba(20, 204, 198, 0);
   }
 }
 @media (prefers-reduced-motion: reduce) {

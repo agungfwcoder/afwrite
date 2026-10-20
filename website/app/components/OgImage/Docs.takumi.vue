@@ -23,7 +23,7 @@ defineProps<{
   >
     <div
       class="absolute top-0 left-0 w-1.5 h-full"
-      style="background-color: #34d399"
+      style="background-color: #14ccc6"
     />
 
     <div class="flex flex-col justify-between flex-1 px-20 py-16">
@@ -33,7 +33,7 @@ defineProps<{
         <span
           v-if="headline"
           class="text-2xl font-medium"
-          style="color: #34d399"
+          style="color: #14ccc6"
         >
           {{ headline }}
         </span>

@@ -22,6 +22,19 @@
   --color-green-900: #0A5331;
   --color-green-950: #052E16;
 
+  /* Warna utama (brand), 600 = #009994. Dipakai Nuxt UI sebagai primary dan kelas brand-*. */
+  --color-brand-50: #edfcfa;
+  --color-brand-100: #d3f7f4;
+  --color-brand-200: #abefea;
+  --color-brand-300: #70e2dc;
+  --color-brand-400: #14ccc6;
+  --color-brand-500: #0cb4ae;
+  --color-brand-600: #009994;
+  --color-brand-700: #127a76;
+  --color-brand-800: #16615d;
+  --color-brand-900: #184f4c;
+  --color-brand-950: #0c2c2b;
+
   /* Kuning logo, dipakai sebagai aksen kecil. Untuk teks di mode terang pakai sun-ink (kontras cukup). */
   --color-sun: #ffbb00;
   --color-sun-ink: #9a6b00;
@@ -38,6 +51,14 @@
   --ui-radius: 0.5rem;
 }
 
+/* Mode terang: latar tidak putih penuh, abu-abu lembut yang sedikit senada dengan brand. Kartu tetap putih. */
+:root:not(.dark) {
+  --ui-bg: #f4f6f6;
+  --ui-bg-muted: #edf0f0;
+  --ui-bg-elevated: #e8ecec;
+  --ui-bg-accented: #dfe4e4;
+}
+
 /* Mode gelap mengikuti referensi desain (zinc-950 + kartu #111113). */
 .dark {
   --ui-bg: #09090b;
@@ -49,20 +70,20 @@
   --ui-text-highlighted: #fafafa;
 }
 
-/* Editor afwrite di situs ini mengikuti warna emerald (library tetap memakai warna bawaannya).
+/* Editor afwrite di situs ini mengikuti warna brand (library tetap memakai warna bawaannya).
    Diawali `html` agar menang dari aturan .afw di CSS library yang dimuat belakangan. */
 html .afw,
 html .afw-prose {
-  --afw-accent: #059669;
-  --afw-accent-soft: #ecfdf5;
-  --afw-link: #047857;
-  --afw-quote-bar: #a7f3d0;
+  --afw-accent: #009994;
+  --afw-accent-soft: #edfcfa;
+  --afw-link: #127a76;
+  --afw-quote-bar: #abefea;
 }
 
 html .afw[data-afw-theme='dark'],
 html .afw-prose[data-afw-theme='dark'] {
-  --afw-accent: #34d399;
-  --afw-accent-soft: rgba(52, 211, 153, 0.16);
-  --afw-link: #6ee7b7;
-  --afw-quote-bar: #059669;
+  --afw-accent: #14ccc6;
+  --afw-accent-soft: rgba(20, 204, 198, 0.16);
+  --afw-link: #70e2dc;
+  --afw-quote-bar: #009994;
 }

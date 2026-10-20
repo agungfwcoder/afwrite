@@ -15,7 +15,7 @@ const base = useRuntimeConfig().app.baseURL
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-    { name: 'theme-color', content: '#059669' }
+    { name: 'theme-color', content: '#009994' }
   ],
   link: [
     { rel: 'icon', href: `${base}favicon.ico`, sizes: '48x48' },

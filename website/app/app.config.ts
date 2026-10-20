@@ -1,11 +1,11 @@
 import { BRAND } from '../brand'
 import pkg from '../../package.json'
 
-// Tema: gaya bawaan Nuxt UI 4.12 dengan warna utama emerald dan netral zinc (latar gelap diatur di main.css).
+// Tema: gaya bawaan Nuxt UI 4.12 dengan warna utama brand (#009994) dan netral zinc (latar gelap diatur di main.css).
 export default defineAppConfig({
   ui: {
     colors: {
-      primary: 'emerald',
+      primary: 'brand',
       neutral: 'zinc'
     },
     // Komponen memakai gaya bawaan Nuxt UI 4.12; hanya titik kuning logo di headline halaman yang ditambahkan.
