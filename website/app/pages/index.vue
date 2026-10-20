@@ -231,7 +231,11 @@ const variants = [
 ]
 const variant = ref(0)
 
-const browsers = ['Chrome', 'Firefox', 'Safari']
+const browsers = [
+  { name: 'Chrome', icon: 'i-simple-icons-googlechrome', color: 'text-[#4285F4]' },
+  { name: 'Firefox', icon: 'i-simple-icons-firefoxbrowser', color: 'text-[#FF7139]' },
+  { name: 'Safari', icon: 'i-simple-icons-safari', color: 'text-[#006CFF] dark:text-[#3B8EFF]' }
+]
 
 // Pratinjau output di card "HTML atau JSON": isi yang sama dalam dua format.
 const outFormat = ref<'html' | 'json'>('html')
@@ -748,10 +752,14 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             <div class="flex flex-[1_1_220px] flex-col gap-2">
               <div
                 v-for="b in browsers"
-                :key="b"
+                :key="b.name"
                 class="flex items-center justify-between rounded-[10px] border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-800 dark:bg-[#09090b]"
               >
-                <span class="text-zinc-800 dark:text-zinc-200">{{ b }}</span><span class="text-[13px] font-semibold text-emerald-600 dark:text-emerald-300">✓ Konsisten</span>
+                <span class="flex items-center gap-2.5 text-zinc-800 dark:text-zinc-200"><UIcon
+                  :name="b.icon"
+                  class="size-[18px] shrink-0"
+                  :class="b.color"
+                />{{ b.name }}</span><span class="text-[13px] font-semibold text-emerald-600 dark:text-emerald-300">✓ Konsisten</span>
               </div>
             </div>
           </div>
