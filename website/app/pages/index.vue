@@ -428,7 +428,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           style="--reveal-delay: 200ms"
           class="hero-in hero-in-mockup relative min-w-0"
         >
-          <div class="rounded-2xl border border-zinc-200/80 bg-zinc-100/70 p-2 backdrop-blur sm:p-2.5 dark:border-white/[0.06] dark:bg-white/[0.035]">
+          <div class="rounded-[20px] border border-zinc-200/80 bg-zinc-100/70 p-2 backdrop-blur sm:rounded-[22px] sm:p-2.5 dark:border-white/[0.06] dark:bg-white/[0.035]">
             <div class="flex items-center gap-1 overflow-x-auto px-0.5 pb-2 sm:pb-2.5">
               <div
                 role="tablist"
@@ -672,7 +672,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
       <div
         data-reveal
         style="--reveal-delay: 80ms"
-        class="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 sm:p-4 dark:border-zinc-800/80 dark:bg-[#0d0d0f]"
+        class="mt-4 rounded-[24px] border border-zinc-200 bg-zinc-50 p-3 sm:rounded-[28px] sm:p-4 dark:border-zinc-800/80 dark:bg-[#0d0d0f]"
       >
         <!-- FITUR -->
         <div
