@@ -175,6 +175,8 @@ async function playDemo() {
 
 // Panel showcase: "fitur" (kartu demo) atau "coba" (editor sungguhan). #coba di URL membuka tab kedua.
 const showcase = ref<'fitur' | 'coba'>('fitur')
+// Di ponsel kartu fitur dipotong (5 pertama) sampai tombol "Tampilkan semua" ditekan.
+const showAll = ref(false)
 
 // Animasi reveal: elemen [data-reveal] di bawah layar disembunyikan lalu muncul saat di-scroll.
 // Yang sudah terlihat saat halaman dibuka dibiarkan (tanpa kedip); hero memakai animasi CSS.
@@ -338,7 +340,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         aria-hidden="true"
         class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-emerald-500 to-transparent dark:via-emerald-400"
       />
-      <div class="relative mx-auto grid max-w-[1200px] items-center gap-12 px-6 pt-16 pb-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:pt-24 lg:pb-24">
+      <div class="relative mx-auto grid max-w-(--ui-container) items-center gap-12 px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:pt-24 lg:pb-24">
         <div class="flex min-w-0 flex-col items-start gap-6">
           <NuxtLink
             to="/panduan/event-api#judul-slug"
@@ -627,7 +629,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
     <!-- SHOWCASE: kartu demo fitur / editor sungguhan -->
     <section
       id="coba"
-      class="mx-auto max-w-[1200px] scroll-mt-20 px-6 pt-16 pb-24"
+      class="mx-auto max-w-(--ui-container) scroll-mt-20 px-4 sm:px-6 lg:px-8 pt-16 pb-24"
     >
       <div
         data-reveal
@@ -672,6 +674,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         <div
           v-if="showcase === 'fitur'"
           class="columns-1 gap-3 sm:columns-2 sm:gap-4 lg:columns-3 xl:columns-4"
+          :class="{ 'sc-clamp': !showAll }"
         >
           <!-- Slash menu -->
           <div class="sc-card">
@@ -1257,6 +1260,24 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           </div>
         </div>
 
+        <div
+          v-if="showcase === 'fitur' && !showAll"
+          class="relative -mt-28 flex justify-center bg-linear-to-b from-transparent via-zinc-50 to-zinc-50 pt-20 pb-1 sm:hidden dark:via-[#0d0d0f] dark:to-[#0d0d0f]"
+        >
+          <button
+            type="button"
+            class="btn-soft cursor-pointer gap-2"
+            @click="showAll = true"
+          >
+            Tampilkan semua fitur
+            <svg
+              class="size-4"
+              v-bind="svgAttrs"
+              v-html="ICON.down"
+            />
+          </button>
+        </div>
+
         <!-- COBA LANGSUNG -->
         <div
           v-else
@@ -1294,7 +1315,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
     </section>
 
     <!-- CTA -->
-    <section class="mx-auto max-w-[1200px] px-6 pb-24">
+    <section class="mx-auto max-w-(--ui-container) px-4 sm:px-6 lg:px-8 pb-24">
       <div
         data-reveal
         class="relative flex flex-col items-center gap-5 overflow-hidden rounded-2xl border border-emerald-500/30 bg-zinc-50 px-6 py-20 text-center sm:px-8 dark:bg-[#0d0d0f]"
@@ -1344,7 +1365,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
     <!-- FOOTER landing -->
     <footer class="border-t border-zinc-200 dark:border-zinc-800">
-      <div class="mx-auto flex max-w-[1200px] flex-col items-center gap-5 px-6 py-8 text-[13px] text-zinc-500 md:flex-row md:justify-between dark:text-zinc-400">
+      <div class="mx-auto flex max-w-(--ui-container) flex-col items-center gap-5 px-4 sm:px-6 lg:px-8 py-8 text-[13px] text-zinc-500 md:flex-row md:justify-between dark:text-zinc-400">
         <div class="flex items-center gap-2">
           <img
             :src="`${base}logo.svg`"
@@ -1615,6 +1636,13 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 .dark .landing .sc-card {
   border-color: #27272a;
   background: #111113;
+}
+
+/* Ponsel: hanya 5 kartu pertama sampai "Tampilkan semua fitur" ditekan. */
+@media (max-width: 639px) {
+  .landing .sc-clamp > :nth-child(n + 6) {
+    display: none;
+  }
 }
 
 .landing .sc-card-link:hover {
