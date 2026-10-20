@@ -708,8 +708,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 <div class="px-2 pt-1.5 pb-1 text-[11px] font-semibold tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
                   BLOK
                 </div>
+                <!-- Sampai Kutipan terlihat jelas; satu item sesudahnya memudar, sisanya tidak ditampilkan. -->
+                <div class="sc-fade-end">
                 <div
-                  v-for="(item, i) in slashItems"
+                  v-for="(item, i) in slashItems.slice(0, 6)"
                   :key="item.label"
                   class="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[13px] transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
                   :class="i === 0 ? 'bg-emerald-500/10 dark:bg-emerald-500/15' : ''"
@@ -728,6 +730,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                     v-if="item.key"
                     class="sc-kbd"
                   >{{ item.key }}</kbd>
+                </div>
                 </div>
               </div>
             </div>
@@ -1832,6 +1835,12 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 .dark .landing .sc-inset {
   border-color: #27272a;
   background: #09090b;
+}
+
+/* Daftar yang terpotong: item terakhir memudar ke bawah. */
+.landing .sc-fade-end {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent);
 }
 
 /* Panel terakhir menembus tepi bawah kartu dan terpotong olehnya (seperti landing Livewire). */
