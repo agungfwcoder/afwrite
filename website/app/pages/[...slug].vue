@@ -65,6 +65,7 @@ const links = computed(() => [
       <ContentRenderer
         v-if="page"
         :value="page"
+        :class="{ 'afw-changelog': page.path === '/lainnya/changelog' }"
       />
 
       <USeparator v-if="surround?.length" />

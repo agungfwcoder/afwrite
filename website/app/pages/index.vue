@@ -370,7 +370,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
           <h1
             style="--reveal-delay: 80ms"
-            class="hero-in m-0 text-[clamp(44px,5.6vw,64px)] leading-[1.06] font-semibold tracking-[-0.03em] text-zinc-950 dark:text-zinc-50"
+            class="hero-in m-0 text-[clamp(44px,5.8vw,72px)] leading-[1.02] font-extrabold tracking-[-0.04em] text-zinc-950 dark:text-zinc-50"
           >
             All fine.<br><span class="text-brand-600 dark:text-brand-400">Just write</span><span class="text-sun">.</span>
           </h1>
@@ -438,7 +438,28 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           style="--reveal-delay: 200ms"
           class="hero-in hero-in-mockup relative min-w-0"
         >
-          <div class="rounded-[20px] border border-zinc-200/80 bg-zinc-100/70 p-2 backdrop-blur sm:rounded-[22px] sm:p-2.5 dark:border-white/[0.06] dark:bg-white/[0.035]">
+          <!-- Kertas berwarna di belakang kaca (ukuran tetap, diperkecil di ponsel). -->
+          <span
+            aria-hidden="true"
+            class="paper paper-teal -top-8 -right-5 size-[150px] sm:-top-12 sm:-right-9 sm:size-[230px]"
+            style="--r: 12deg; --d: 13s"
+          />
+          <span
+            aria-hidden="true"
+            class="paper paper-sun -top-4 right-20 size-[84px] sm:-top-5 sm:right-[70px] sm:size-[120px]"
+            style="--r: -6deg; --d: 9s"
+          />
+          <span
+            aria-hidden="true"
+            class="paper paper-sun -left-5 bottom-6 size-[130px] sm:-left-11 sm:bottom-2.5 sm:size-[190px]"
+            style="--r: -10deg; --d: 11s"
+          />
+          <span
+            aria-hidden="true"
+            class="paper paper-teal-soft -bottom-10 left-[38%] size-[100px] sm:-bottom-[54px] sm:size-[140px]"
+            style="--r: 18deg; --d: 15s"
+          />
+          <div class="glass-strong relative rounded-[20px] p-2 sm:rounded-[22px] sm:p-2.5">
             <div class="flex items-center gap-1 overflow-x-auto px-0.5 pb-2 sm:pb-2.5">
               <div
                 role="tablist"
@@ -481,7 +502,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               </div>
             </div>
 
-            <div class="relative rounded-xl border border-zinc-200 bg-white shadow-[0_24px_60px_-28px_rgba(24,24,27,0.3)] dark:border-white/[0.06] dark:bg-[#0b0b0d] dark:shadow-[0_24px_60px_-28px_rgba(0,0,0,0.8)]">
+            <div class="relative rounded-xl border border-zinc-200/80 bg-white/90 shadow-[0_24px_60px_-28px_rgba(24,24,27,0.3)] dark:border-white/[0.06] dark:bg-[#0a0a0a]/88 dark:shadow-[0_24px_60px_-28px_rgba(0,0,0,0.8)]">
               <!-- Mockup editor. Selalu ikut alur (hanya disembunyikan) agar tinggi kartu mengikuti isinya
                    dan tidak berubah saat tab kode dibuka; animasinya juga tetap jalan. -->
               <div
@@ -682,12 +703,42 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
       <div
         data-reveal
         style="--reveal-delay: 80ms"
-        class="mt-4 rounded-[24px] border border-zinc-200 bg-[#edf0f0] p-3 sm:rounded-[28px] sm:p-4 dark:border-zinc-800/80 dark:bg-[#0d0d0f]"
+        class="relative mt-4 overflow-hidden rounded-[24px] border border-zinc-200 bg-[#edf0f0] p-3 sm:rounded-[28px] sm:p-4 dark:border-white/[0.07] dark:bg-[#0d0d0d]"
       >
+        <template v-if="showcase === 'fitur'">
+          <div
+            aria-hidden="true"
+            class="sc-dots pointer-events-none absolute inset-0"
+          />
+          <span
+            aria-hidden="true"
+            class="paper paper-teal top-[70px] left-[60px] size-[210px]"
+          />
+          <span
+            aria-hidden="true"
+            class="paper paper-sun top-[36%] left-[33%] size-[170px]"
+          />
+          <span
+            aria-hidden="true"
+            class="paper paper-sun top-10 right-[22%] size-[150px]"
+          />
+          <span
+            aria-hidden="true"
+            class="paper paper-teal-soft top-[24%] right-[30px] size-[220px]"
+          />
+          <span
+            aria-hidden="true"
+            class="paper paper-sun bottom-[60px] left-[10%] size-[150px]"
+          />
+          <span
+            aria-hidden="true"
+            class="paper paper-teal right-[12%] bottom-10 size-[180px]"
+          />
+        </template>
         <!-- FITUR -->
         <div
           v-if="showcase === 'fitur'"
-          class="columns-1 gap-3 sm:columns-2 sm:gap-4 lg:columns-3 xl:columns-4"
+          class="relative columns-1 gap-3 sm:columns-2 sm:gap-4 lg:columns-3 xl:columns-4"
           :class="{ 'sc-clamp': !showAll }"
         >
           <!-- Slash menu -->
@@ -710,27 +761,27 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 </div>
                 <!-- Sampai Kutipan terlihat jelas; satu item sesudahnya memudar, sisanya tidak ditampilkan. -->
                 <div class="sc-fade-end">
-                <div
-                  v-for="(item, i) in slashItems.slice(0, 6)"
-                  :key="item.label"
-                  class="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[13px] transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
-                  :class="i === 0 ? 'bg-brand-500/10 dark:bg-brand-500/15' : ''"
-                >
-                  <span
-                    class="flex size-6 shrink-0 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800"
-                    :class="i === 0 ? 'text-brand-600 dark:text-brand-300' : 'text-zinc-500 dark:text-zinc-400'"
-                  ><svg
-                    class="size-3.5"
-                    v-bind="svgAttrs"
-                    stroke-linejoin="round"
-                    v-html="ICON[item.icon]"
-                  /></span>
-                  <span class="min-w-0 flex-1 truncate"><span class="text-zinc-900 dark:text-zinc-100">{{ item.label }}</span> <span class="text-zinc-400 dark:text-zinc-500">{{ item.desc }}</span></span>
-                  <kbd
-                    v-if="item.key"
-                    class="sc-kbd"
-                  >{{ item.key }}</kbd>
-                </div>
+                  <div
+                    v-for="(item, i) in slashItems.slice(0, 6)"
+                    :key="item.label"
+                    class="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[13px] transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
+                    :class="i === 0 ? 'bg-brand-500/10 dark:bg-brand-500/15' : ''"
+                  >
+                    <span
+                      class="flex size-6 shrink-0 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800"
+                      :class="i === 0 ? 'text-brand-600 dark:text-brand-300' : 'text-zinc-500 dark:text-zinc-400'"
+                    ><svg
+                      class="size-3.5"
+                      v-bind="svgAttrs"
+                      stroke-linejoin="round"
+                      v-html="ICON[item.icon]"
+                    /></span>
+                    <span class="min-w-0 flex-1 truncate"><span class="text-zinc-900 dark:text-zinc-100">{{ item.label }}</span> <span class="text-zinc-400 dark:text-zinc-500">{{ item.desc }}</span></span>
+                    <kbd
+                      v-if="item.key"
+                      class="sc-kbd"
+                    >{{ item.key }}</kbd>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1279,7 +1330,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
         <div
           v-if="showcase === 'fitur' && !showAll"
-          class="relative -mt-28 flex justify-center bg-linear-to-b from-transparent via-zinc-50 to-zinc-50 pt-20 pb-1 sm:hidden dark:via-[#0d0d0f] dark:to-[#0d0d0f]"
+          class="relative -mt-28 flex justify-center bg-linear-to-b from-transparent via-[#edf0f0] to-[#edf0f0] pt-20 pb-1 sm:hidden dark:via-[#0d0d0d] dark:to-[#0d0d0d]"
         >
           <button
             type="button"
@@ -1316,7 +1367,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         <!-- COBA LANGSUNG (syarat eksplisit: blok di atasnya bukan pasangan v-if/v-else) -->
         <div
           v-if="showcase === 'coba'"
-          class="mx-auto flex w-full max-w-[860px] flex-col gap-4 py-4 sm:py-8"
+          class="relative mx-auto flex w-full max-w-[860px] flex-col gap-4 py-4 sm:py-8"
         >
           <div
             role="tablist"
@@ -1353,48 +1404,70 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
     <section class="mx-auto max-w-(--ui-container) px-4 sm:px-6 lg:px-8 pb-24">
       <div
         data-reveal
-        class="relative flex flex-col items-center gap-5 overflow-hidden rounded-2xl border border-brand-500/30 bg-zinc-100 px-6 py-20 text-center sm:px-8 dark:bg-[#070809]"
+        class="relative overflow-hidden rounded-[24px] p-1"
       >
         <div
           aria-hidden="true"
-          class="hero-dots pointer-events-none absolute inset-0"
+          class="sc-dots pointer-events-none absolute inset-0"
         />
-        <!-- Cahaya yang bergerak sambil meredup dan menerang (latar sengaja gelap; cahaya hanya dari sini). -->
-        <div
+        <span
           aria-hidden="true"
-          class="cta-glow pointer-events-none absolute inset-0"
+          class="paper paper-teal top-[18%] left-[6%] size-[120px] sm:size-[170px]"
+          style="--r: -14deg; --d: 12s"
         />
-        <h2 class="section-title relative">
-          Siap mencoba<span class="text-sun">?</span>
-        </h2>
-        <p class="relative m-0 max-w-[520px] text-[17px] leading-[1.65] text-zinc-600 dark:text-zinc-400">
-          Pasang lewat npm atau CDN, tambahkan satu atribut x-data, dan editor siap dipakai di form Anda.
-        </p>
-        <div class="relative mt-2 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
-          <NuxtLink
-            to="/memulai/instalasi"
-            class="btn-primary justify-center"
-          >
-            Instalasi
-            <svg
-              class="size-4"
-              v-bind="svgAttrs"
-              v-html="ICON.arrow"
-            />
-          </NuxtLink>
-          <a
-            href="#coba"
-            class="btn-ghost justify-center bg-white/60 dark:bg-[#09090b]/60"
-            @click="showcase = 'coba'"
-          >
-            <svg
-              class="size-4"
-              v-bind="svgAttrs"
-              stroke-linejoin="round"
-              v-html="ICON.play"
-            />
-            Coba editornya
-          </a>
+        <span
+          aria-hidden="true"
+          class="paper paper-sun -bottom-10 left-[16%] size-[110px]"
+          style="--r: 10deg; --d: 9s"
+        />
+        <span
+          aria-hidden="true"
+          class="paper paper-sun -top-[30px] right-[8%] size-[110px] sm:size-[150px]"
+          style="--r: 16deg; --d: 14s"
+        />
+        <span
+          aria-hidden="true"
+          class="paper paper-teal-soft right-[18%] bottom-[10%] size-[120px]"
+          style="--r: -8deg; --d: 10s"
+        />
+        <div class="glass cta-panel relative flex flex-col items-center gap-5 overflow-hidden rounded-[22px] px-6 py-20 text-center sm:px-8">
+          <!-- Cahaya yang bergerak sambil meredup dan menerang. -->
+          <div
+            aria-hidden="true"
+            class="cta-glow pointer-events-none absolute inset-0"
+          />
+          <h2 class="section-title relative">
+            Siap mencoba<span class="text-sun">?</span>
+          </h2>
+          <p class="relative m-0 max-w-[520px] text-[17px] leading-[1.65] text-zinc-600 dark:text-zinc-400">
+            Pasang lewat npm atau CDN, tambahkan satu atribut x-data, dan editor siap dipakai di form Anda.
+          </p>
+          <div class="relative mt-2 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
+            <NuxtLink
+              to="/memulai/instalasi"
+              class="btn-primary justify-center"
+            >
+              Instalasi
+              <svg
+                class="size-4"
+                v-bind="svgAttrs"
+                v-html="ICON.arrow"
+              />
+            </NuxtLink>
+            <a
+              href="#coba"
+              class="btn-ghost justify-center bg-white/50 dark:bg-[#0a0a0a]/40"
+              @click="showcase = 'coba'"
+            >
+              <svg
+                class="size-4"
+                v-bind="svgAttrs"
+                stroke-linejoin="round"
+                v-html="ICON.play"
+              />
+              Coba editornya
+            </a>
+          </div>
         </div>
       </div>
     </section>
@@ -1861,7 +1934,98 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   color: #fafafa;
 }
 
-/* Kartu showcase (masonry lewat CSS columns). */
+/* Kaca + kertas: bentuk berwarna (kertas) di belakang panel kaca buram. */
+.landing .glass,
+.landing .glass-strong {
+  border: 1px solid rgba(24, 24, 27, 0.08);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+}
+
+.landing .glass {
+  background-color: rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 24px 48px -24px rgba(24, 24, 27, 0.22);
+}
+
+.landing .glass-strong {
+  background-color: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: blur(28px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 30px 60px -20px rgba(24, 24, 27, 0.28);
+}
+
+.dark .landing .glass {
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(22, 22, 22, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 48px -24px rgba(0, 0, 0, 0.7);
+}
+
+.dark .landing .glass-strong {
+  border-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(16, 16, 16, 0.86);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 30px 60px -20px rgba(0, 0, 0, 0.75);
+}
+
+/* Panel CTA sedikit lebih gelap dari kaca biasa agar cahayanya menonjol. */
+.dark .landing .cta-panel {
+  background-color: rgba(8, 9, 10, 0.8);
+}
+
+/* --r: rotasi, --d: durasi melayang. Tanpa --d deklarasi animation tidak valid, jadi kertas diam. */
+.landing .paper {
+  position: absolute;
+  border-radius: 16px;
+  pointer-events: none;
+  transform: rotate(var(--r, 0deg));
+  animation: paper-float var(--d) ease-in-out infinite;
+}
+
+.landing .paper-teal {
+  background: #009994;
+}
+
+.landing .paper-teal-soft {
+  background: #3fb5ae;
+}
+
+.landing .paper-sun {
+  background: #f7c143;
+}
+
+.dark .landing .paper-teal {
+  background: #0a8a85;
+}
+
+.dark .landing .paper-teal-soft {
+  background: #2f9c96;
+}
+
+@keyframes paper-float {
+  0%,
+  100% { transform: rotate(var(--r, 0deg)) translateY(0); }
+  50% { transform: rotate(calc(var(--r, 0deg) + 4deg)) translateY(-10px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing .paper {
+    animation: none;
+  }
+}
+
+/* Titik-titik di wadah showcase & CTA, memudar di atas dan bawah. */
+.landing .sc-dots {
+  background-image: radial-gradient(rgba(24, 24, 27, 0.16) 1px, transparent 1.3px);
+  background-size: 22px 22px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 70%, transparent);
+  opacity: 0.6;
+}
+
+.dark .landing .sc-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1.3px);
+}
+
+/* Kartu showcase (masonry lewat CSS columns), berupa kaca di atas kertas. */
 .landing .sc-card {
   display: flex;
   flex-direction: column;
@@ -1869,10 +2033,17 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   break-inside: avoid;
   margin-bottom: 12px;
   padding: 16px;
-  border: 1px solid #e4e4e7;
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid rgba(24, 24, 27, 0.08);
+  border-radius: 16px;
+  background-color: rgba(255, 255, 255, 0.66);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 24px 48px -24px rgba(24, 24, 27, 0.18);
   transition: border-color 0.2s;
+}
+
+.landing .sc-card:hover {
+  border-color: rgba(12, 180, 174, 0.45);
 }
 
 @media (min-width: 640px) {
@@ -1882,8 +2053,9 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .dark .landing .sc-card {
-  border-color: #27272a;
-  background: #111113;
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(22, 22, 22, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 48px -24px rgba(0, 0, 0, 0.7);
 }
 
 /* Ponsel: hanya 5 kartu pertama sampai "Tampilkan semua fitur" ditekan. */
@@ -1891,10 +2063,6 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   .landing .sc-clamp > :nth-child(n + 6) {
     display: none;
   }
-}
-
-.landing .sc-card-link:hover {
-  border-color: rgba(12, 180, 174, 0.45);
 }
 
 .landing .sc-title {
@@ -1919,14 +2087,14 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .landing .sc-inset {
-  border: 1px solid #e4e4e7;
-  border-radius: 8px;
-  background: #fafafa;
+  border: 1px solid rgba(24, 24, 27, 0.08);
+  border-radius: 10px;
+  background: rgba(250, 250, 250, 0.7);
 }
 
 .dark .landing .sc-inset {
-  border-color: #27272a;
-  background: #09090b;
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 10, 0.55);
 }
 
 /* Daftar yang terpotong: item terakhir memudar ke bawah. */
@@ -1967,8 +2135,8 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .dark .landing .sc-field {
-  border-color: #27272a;
-  background: #09090b;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(10, 10, 10, 0.55);
   color: #f4f4f5;
 }
 

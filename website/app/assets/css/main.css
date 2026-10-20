@@ -87,3 +87,140 @@ html .afw-prose[data-afw-theme='dark'] {
   --afw-link: #70e2dc;
   --afw-quote-bar: #009994;
 }
+
+/* Catatan rilis: timeline vertikal dengan penanda kertas per versi dan chip jenis perubahan. */
+.afw-changelog {
+  position: relative;
+  padding-left: 30px;
+}
+
+.afw-changelog::before {
+  content: '';
+  position: absolute;
+  top: 3.25rem;
+  bottom: 0;
+  left: 6px;
+  border-left: 1px solid rgb(12 180 174 / 0.35);
+}
+
+.afw-changelog > h2 {
+  font-family: var(--font-mono);
+  font-weight: 800;
+}
+
+.afw-changelog > h2::before {
+  content: '';
+  position: absolute;
+  top: 0.4em;
+  left: -30px;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--color-brand-500);
+  border-radius: 3px;
+  background: var(--ui-bg);
+  transform: rotate(-8deg);
+}
+
+.afw-changelog > h2:first-of-type::before {
+  background: var(--color-brand-500);
+}
+
+.afw-changelog > h2:nth-of-type(3n)::before {
+  border-color: var(--color-sun);
+  transform: rotate(10deg);
+}
+
+.afw-changelog .ch-date {
+  margin-left: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--ui-text-muted);
+}
+
+.afw-changelog .ch-latest {
+  margin-left: 0.5rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-brand-600);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  vertical-align: 0.3em;
+  color: #fff;
+}
+
+/* Judul bagian versi lama (Termin …): label mono kecil berwarna kuning. */
+.afw-changelog > h3 {
+  margin-top: 1.75rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-sun-ink);
+}
+
+.dark .afw-changelog > h3 {
+  color: var(--color-sun);
+}
+
+.afw-changelog > h3:has(.ch-chip) {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.afw-changelog .ch-chip {
+  display: inline-block;
+  padding: 2px 9px;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.afw-changelog .ch-changed {
+  border-color: rgb(245 158 11 / 0.4);
+  background: rgb(245 158 11 / 0.12);
+  color: #92400e;
+}
+
+.afw-changelog .ch-new {
+  border-color: rgb(12 180 174 / 0.4);
+  background: rgb(12 180 174 / 0.12);
+  color: var(--color-brand-700);
+}
+
+.afw-changelog .ch-fix {
+  border-color: var(--ui-border-accented);
+  background: var(--ui-bg-elevated);
+  color: var(--ui-text-highlighted);
+}
+
+.dark .afw-changelog .ch-changed {
+  color: #fde68a;
+}
+
+.dark .afw-changelog .ch-new {
+  color: var(--color-brand-300);
+}
+
+/* Butir daftar: kotak kecil sewarna chip bagiannya. */
+.afw-changelog > ul {
+  list-style-type: square;
+}
+
+.afw-changelog > ul > li::marker {
+  color: var(--color-brand-500);
+}
+
+.afw-changelog > h3:has(.ch-changed) + ul > li::marker {
+  color: var(--color-sun);
+}
+
+.afw-changelog > h3:has(.ch-fix) + ul > li::marker {
+  color: var(--ui-text-dimmed);
+}
