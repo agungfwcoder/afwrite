@@ -1404,7 +1404,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
     <section class="mx-auto max-w-(--ui-container) px-4 sm:px-6 lg:px-8 pb-24">
       <div
         data-reveal
-        class="relative overflow-hidden rounded-[24px] p-1"
+        class="relative overflow-hidden rounded-[22px]"
       >
         <div
           aria-hidden="true"
@@ -1417,12 +1417,12 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         />
         <span
           aria-hidden="true"
-          class="paper paper-sun -bottom-10 left-[16%] size-[110px]"
+          class="paper paper-sun bottom-[6%] left-[16%] size-[90px] sm:size-[110px]"
           style="--r: 10deg; --d: 9s"
         />
         <span
           aria-hidden="true"
-          class="paper paper-sun -top-[30px] right-[8%] size-[110px] sm:size-[150px]"
+          class="paper paper-sun top-[6%] right-[8%] size-[110px] sm:size-[150px]"
           style="--r: 16deg; --d: 14s"
         />
         <span
