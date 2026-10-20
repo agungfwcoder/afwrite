@@ -12,15 +12,21 @@ if (!page.value) {
 const title = `${BRAND} — ${page.value.seo?.title || page.value.title}`
 const description = page.value.seo?.description || page.value.description
 
+// Gambar OG landing memakai nama tetap (public/og.png), bukan hasil defineOgImage yang namanya berganti tiap isinya
+// berubah: WhatsApp dkk. menyimpan alamat gambar lama, dan alamat yang hilang membuat pratinjau link kosong.
+// Gambar ini dirender dari template OgImage/Docs (judul SLOGAN, headline BRAND); salin ulang jika slogan berubah.
+const ogImage = unref(createSitePathResolver({ absolute: true, withBase: true })('/og.png'))
+
 useSeoMeta({
   titleTemplate: '',
   title,
   ogTitle: title,
   description,
-  ogDescription: description
+  ogDescription: description,
+  ogImage: { url: ogImage, width: 1200, height: 630, type: 'image/png', alt: `${BRAND} — ${SLOGAN}` },
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImage
 })
-
-defineOgImage('Docs', { title: SLOGAN, description, headline: BRAND })
 
 const REPO = 'https://github.com/agungfwcoder/afwrite'
 const base = useRuntimeConfig().app.baseURL
