@@ -457,11 +457,13 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               </div>
             </div>
 
-            <div class="relative h-[470px] sm:h-[460px]">
-              <!-- Mockup editor (v-show agar animasinya tetap jalan saat tab berganti) -->
+            <div class="relative">
+              <!-- Mockup editor. Selalu ikut alur (hanya disembunyikan) agar tinggi kartu mengikuti isinya
+                   dan tidak berubah saat tab kode dibuka; animasinya juga tetap jalan. -->
               <div
-                v-show="heroTab === -1"
                 class="relative flex flex-col gap-4 px-6 pt-12 pb-8 text-base leading-[1.7] text-zinc-700 sm:px-10 dark:text-zinc-300"
+                :class="{ invisible: heroTab >= 0 }"
+                :aria-hidden="heroTab >= 0 ? 'true' : undefined"
               >
                 <!-- Teks penuh (tak terlihat) menahan ukuran, teks yang sedang diketik ditumpuk di atasnya. -->
                 <div class="relative text-[30px] leading-tight font-extrabold tracking-[-0.02em] text-zinc-950 dark:text-zinc-50">
@@ -580,7 +582,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               <pre
                 v-if="heroTab >= 0"
                 role="tabpanel"
-                class="m-0 h-full overflow-auto p-5 font-mono text-[13px] leading-[1.85] text-zinc-700 sm:p-6 dark:text-zinc-300"
+                class="absolute inset-0 m-0 overflow-auto p-5 font-mono text-[13px] leading-[1.85] text-zinc-700 sm:p-6 dark:text-zinc-300"
               ><template
                 v-for="(line, n) in tabs[heroTab]!.lines"
                 :key="n"
