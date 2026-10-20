@@ -94,10 +94,11 @@ html .afw-prose[data-afw-theme='dark'] {
   padding-left: 30px;
 }
 
+/* Garis dimulai dari dalam penanda versi pertama agar menempel; penanda berlatar sehingga menutupinya. */
 .afw-changelog::before {
   content: '';
   position: absolute;
-  top: 3.25rem;
+  top: 16px;
   bottom: 0;
   left: 6px;
   border-left: 1px solid rgb(12 180 174 / 0.35);
@@ -121,8 +122,23 @@ html .afw-prose[data-afw-theme='dark'] {
   transform: rotate(-8deg);
 }
 
+/* Versi terbaru: dua kertas bertumpuk (kuning di belakang, teal di depan). */
 .afw-changelog > h2:first-of-type::before {
+  border-color: var(--color-sun);
+  background: var(--color-sun);
+  transform: translate(4px, 4px) rotate(10deg);
+}
+
+.afw-changelog > h2:first-of-type::after {
+  content: '';
+  position: absolute;
+  top: 0.4em;
+  left: -30px;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
   background: var(--color-brand-500);
+  transform: rotate(-8deg);
 }
 
 .afw-changelog > h2:nth-of-type(3n)::before {
