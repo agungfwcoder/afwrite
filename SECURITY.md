@@ -7,10 +7,10 @@
 
 | Versi | Didukung |
 | ----- | -------- |
-| v2 (checkpoint terbaru) | ✅ |
+| v2 (terbaru) | ✅ |
 | v1 | ❌ |
 
-Perbaikan keamanan hanya dirilis sebagai checkpoint v2 terbaru. Jika memakai CDN `@2` atau
+Perbaikan keamanan hanya dirilis di v2 terbaru. Jika memakai CDN `@2` atau
 `github:agungfwcoder/afwrite#semver:^2`, perbaikan ikut terambil otomatis.
 
 ## Melaporkan celah keamanan
@@ -29,8 +29,8 @@ Perkiraan waktu (proyek dikelola satu orang, jadi bisa lebih lama):
 
 - konfirmasi laporan diterima: dalam 7 hari;
 - perbaikan untuk masalah yang terkonfirmasi: secepatnya, lalu diumumkan lewat
-  [security advisory](https://github.com/agungfwcoder/afwrite/security/advisories) setelah checkpoint
-  perbaikan rilis.
+  [security advisory](https://github.com/agungfwcoder/afwrite/security/advisories) setelah
+  perbaikannya rilis.
 
 ## Cakupan
 
