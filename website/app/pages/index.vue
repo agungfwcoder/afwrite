@@ -1712,8 +1712,8 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   align-items: center;
   gap: 6px;
   height: 30px;
-  padding: 0 10px;
-  border-radius: 8px;
+  padding: 0 12px;
+  border-radius: 999px;
   font-size: 13px;
   font-weight: 500;
   color: #71717a;
@@ -1723,6 +1723,12 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
 .landing .hero-tab:hover {
   color: #18181b;
+}
+
+/* Ring di dalam pill: baris tab bisa di-scroll, jadi ring di luar akan terpotong. */
+.landing .hero-tab:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: -2px;
 }
 
 .landing .hero-tab.is-active {
