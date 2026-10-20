@@ -1,3 +1,5 @@
+<p align="center"><img src="website/public/logo.svg" width="72" height="72" alt="afwrite"></p>
+
 # afwrite
 
 Editor WYSIWYG modern berbasis **vanilla JS + Alpine.js**, dengan engine
@@ -22,15 +24,15 @@ Dokumentasi lengkap: https://agungfwcoder.github.io/afwrite/
 Script afwrite dimuat **sebelum** Alpine; plugin terdaftar otomatis dan API lain ada di `window.Afwrite`:
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/agungfwcoder/afwrite@v2.1.0/dist/afwrite.css">
-<script defer src="https://cdn.jsdelivr.net/gh/agungfwcoder/afwrite@v2.1.0/dist/afwrite.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/agungfwcoder/afwrite@v2.2.0/dist/afwrite.css">
+<script defer src="https://cdn.jsdelivr.net/gh/agungfwcoder/afwrite@v2.2.0/dist/afwrite.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 ```
 
 ### Lewat bundler
 
 ```bash
-npm install github:agungfwcoder/afwrite#v2.1.0 alpinejs
+npm install github:agungfwcoder/afwrite#v2.2.0 alpinejs
 # setelah dipublish ke npm: npm install afwrite alpinejs
 ```
 
@@ -94,6 +96,7 @@ Dengan `x-model`:
 | `toolbarItems`, `bubbleItems` | bawaan | Susunan tombol (lihat `src/icons.js`) |
 | `historyLimit` | `100` | Jumlah langkah undo |
 | `format` | `'html'` | Isi input hidden: `'html'` atau `'json'` |
+| `titleName` | `''` | Nama input hidden berisi judul (`<h1>` artikel / teks pertama) |
 | `autosave` | `null` | `'kunci-unik'` atau `{ key, delay }`: simpan draf ke localStorage |
 
 Contoh `upload`:
@@ -115,7 +118,7 @@ Dipanggil dari markup di dalam komponen atau lewat `Alpine.$data(el)`:
 |---|---|
 | `getHTML()` / `setHTML(html)` | Ambil / ganti isi (selalu disanitasi) |
 | `getJSON()` / `setJSON(doc)` | Isi sebagai JSON dokumen ProseMirror |
-| `getMeta()` | Pratinjau ala Medium: `{ image, title, subtitle }` dari gambar pertama, teks pertama, dan teks kedua |
+| `getMeta()` | Pratinjau ala Medium: `{ image, title, subtitle, slug }` dari gambar pertama, teks pertama, dan teks kedua |
 | `exec(perintah, ...arg)` | Jalankan perintah, lihat tabel perintah |
 | `isActive(perintah)` | Format aktif di posisi kursor |
 | `setReadOnly(bool)` | Ubah mode baca saja |
@@ -130,7 +133,7 @@ Dikirim dari elemen editor dan *bubbling*, jadi bisa ditangkap di parent:
 <div x-data="wysiwyg()" @wysiwyg-change="console.log($event.detail.html)"></div>
 ```
 
-`wysiwyg-ready` (`{ editor }`), `wysiwyg-change` (`{ html }`), `wysiwyg-focus`, `wysiwyg-blur`,
+`wysiwyg-ready` (`{ editor }`), `wysiwyg-change` (`{ html, meta }`), `wysiwyg-focus`, `wysiwyg-blur`,
 `wysiwyg-error` (`{ message }`).
 
 ### Perintah & shortcut

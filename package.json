@@ -1,6 +1,6 @@
 {
   "name": "afwrite",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Editor WYSIWYG ala Medium untuk Alpine.js, berbasis Tiptap/ProseMirror: bubble toolbar, slash command, markdown, mode artikel, gambar & video, drag & drop blok, sanitasi HTML.",
   "type": "module",
   "main": "./dist/afwrite.js",

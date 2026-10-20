@@ -155,4 +155,8 @@ export const TEMPLATE = `
 <template x-if="name">
   <input type="hidden" :name="name" :value="inputValue()">
 </template>
+<!-- Opsi titleName: judul (teks pertama / <h1> artikel) dikirim terpisah. -->
+<template x-if="titleName">
+  <input type="hidden" :name="titleName" :value="meta.title">
+</template>
 `;

@@ -18,8 +18,10 @@ await page.waitForSelector('.afw-btn');
 await page.evaluate(() => {
   const host = document.createElement('div');
   host.style.width = '900px';
-  host.innerHTML = '<div id="art" x-data="wysiwyg({ name: \'artikel\', title: true })"></div>';
+  host.innerHTML = '<div id="art" x-data="wysiwyg({ name: \'artikel\', title: true, titleName: \'judul\' })"></div>';
   document.body.prepend(host);
+  // Catat detail event perubahan terakhir.
+  host.addEventListener('wysiwyg-change', (e) => (window.__lastChange = e.detail));
 });
 await page.waitForSelector('#art .afw-content h1');
 // Label di margin dipasang satu frame setelah ukuran editor diketahui.
@@ -46,6 +48,9 @@ check('tebal tidak berlaku di judul', await disabled('Tebal'));
 await page.keyboard.press('ControlOrMeta+b');
 await page.keyboard.press('Enter');
 await page.keyboard.type('Ringkasan singkat');
+const last = await page.evaluate(() => window.__lastChange);
+check('event wysiwyg-change membawa meta (judul & slug)', last?.meta?.title === 'Judul cerita' && last.meta.slug === 'judul-cerita' && typeof last.html === 'string', JSON.stringify(last?.meta));
+check('opsi titleName: input hidden berisi judul', (await page.$eval('input[name=judul]', (i) => i.value)) === 'Judul cerita');
 check('Enter dari judul -> paragraf di bawahnya', (await out()) === '<h1>Judul cerita</h1><p>Ringkasan singkat</p>', await out());
 
 // ---------- t kecil (Subjudul) di baris tepat setelah judul = subjudul ----------
@@ -148,7 +153,7 @@ await set('<figure><img src="https://example.com/a.png" alt="A"><figcaption>Foto
 check('setHTML: gambar + judul dipertahankan', (await blocks()).join() === 'figure,h1,p.sub,p', (await blocks()).join());
 check('setHTML: kursor di judul, bukan keterangan gambar', !(await page.$('#art .afw-is-editing')));
 meta = await page.evaluate(() => Alpine.$data(document.getElementById('art')).getMeta());
-check('getMeta: gambar, judul, subjudul', JSON.stringify(meta) === JSON.stringify({ image: { src: 'https://example.com/a.png', alt: 'A', caption: 'Foto' }, title: 'J', subtitle: 'S' }), JSON.stringify(meta));
+check('getMeta: gambar, judul, subjudul', JSON.stringify(meta) === JSON.stringify({ image: { src: 'https://example.com/a.png', alt: 'A', caption: 'Foto' }, title: 'J', subtitle: 'S', slug: 'j' }), JSON.stringify(meta));
 await set('<figure><img src="https://example.com/a.png" alt=""></figure><p>x</p>');
 check('gambar tanpa judul sesudahnya tetap isi biasa', (await blocks()).join() === 'h1,figure,p', (await blocks()).join());
 

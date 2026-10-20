@@ -43,6 +43,15 @@ class WyswygTest extends TestCase
         $this->assertSame(['name' => 'body', 'lang' => 'id', 'placeholder' => 'Tulis "sesuatu" </div><script>alert(1)</script>', 'toolbar' => false, 'readonly' => false, 'format' => 'html'], $options);
     }
 
+    public function test_title_name_diteruskan_ke_alpine(): void
+    {
+        $html = Blade::render('<x-wysiwyg name="body" :title="true" title-name="title" />');
+        preg_match("/JSON\\.parse\\('(.*?)'\\)/", html_entity_decode($html), $json);
+        $options = json_decode(json_decode('"'.$json[1].'"'), true);
+        $this->assertTrue($options['title']);
+        $this->assertSame('title', $options['titleName']);
+    }
+
     public function test_nilai_old_diutamakan_setelah_validasi_gagal(): void
     {
         $this->withSession(['_old_input' => ['body' => '<p>dari old()</p>']]);

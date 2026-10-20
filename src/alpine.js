@@ -11,7 +11,7 @@
 //   </div>
 //
 // Opsi UI: toolbar (true), bubble (true), stats (true), dragHandle (true), name (nama input hidden),
-// format ('html' | 'json': isi input hidden).
+// format ('html' | 'json': isi input hidden), titleName (nama input hidden berisi judul).
 // Autosave: opsi autosave: 'kunci-unik'. Draf dihapus otomatis saat form dikirim.
 // Opsi lain diteruskan ke Editor (lang, placeholder, upload, readonly, markdown, ...).
 //
@@ -33,6 +33,7 @@ import { BUBBLE, ICONS, TOOLBAR, withHeadings } from './icons.js';
 import { TEMPLATE } from './template.js';
 
 const GAP = 10;
+const EMPTY_META = { image: null, title: '', subtitle: '', slug: '' };
 const EDGE = 8;
 const INPUT_PLACEHOLDERS = { link: 'inputLink', embed: 'inputEmbed', alt: 'inputAlt' };
 const MEDIA_SIZES = [
@@ -73,6 +74,9 @@ export function wysiwygComponent(options = {}) {
     showBubble: options.bubble ?? true,
     showStats: options.stats ?? true,
     stats: { words: 0, minutes: 0 },
+    // Judul/slug terkini (lihat Editor#getMeta), dipakai event & input judul (opsi titleName).
+    meta: { ...EMPTY_META },
+    titleName: options.titleName || '',
     // mode: format | input | linkinfo; purpose (mode input): link | embed | alt
     bubble: { open: false, ready: false, mode: 'format', purpose: 'link', x: 0, y: 0, url: '', href: '', hasLink: false, error: '' },
     media: { open: false, ready: false, x: 0, y: 0, kind: 'image', size: 'normal', alt: '' },
@@ -106,12 +110,14 @@ export function wysiwygComponent(options = {}) {
       }
 
       editor = new Editor(el, editorOptions);
+      this.meta = editor.getMeta();
 
       editor.on('change', (html) => {
         this.html = html;
         this.handle.visible = false; // posisi blok bisa bergeser
         this.stats = editor.stats();
-        root.dispatchEvent(new CustomEvent('wysiwyg-change', { detail: { html }, bubbles: true }));
+        this.meta = editor.getMeta();
+        root.dispatchEvent(new CustomEvent('wysiwyg-change', { detail: { html, meta: this.meta }, bubbles: true }));
       });
       editor.on('history', ({ canUndo, canRedo }) => {
         this.canUndo = canUndo;
@@ -213,7 +219,7 @@ export function wysiwygComponent(options = {}) {
     },
 
     getMeta() {
-      return editor?.getMeta() ?? { image: null, title: '', subtitle: '' };
+      return editor?.getMeta() ?? { ...EMPTY_META };
     },
 
     setJSON(doc) {

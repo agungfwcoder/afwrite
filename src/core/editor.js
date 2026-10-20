@@ -33,6 +33,7 @@ import { insertImageFiles, insertMediaBlock, isMediaNode, mediaKind, SIZES } fro
 import { fromJSON, toJSON } from './model.js';
 import { normalizeHeadings, sanitize, sanitizeToElement, textToHtml } from './sanitize.js';
 import { createExtensions, titleIndex, titlePos, withTitle } from './schema.js';
+import { slugify } from './slug.js';
 
 const DEFAULTS = {
   content: '',
@@ -278,7 +279,8 @@ export class Editor {
 
   // Data pratinjau artikel ala Medium: gambar pertama, teks pertama (judul), dan teks kedua
   // (subjudul). Di mode artikel judul/subjudul diambil dari blok judul jika terisi.
-  //   { image: { src, alt, caption } | null, title: string, subtitle: string }
+  //   { image: { src, alt, caption } | null, title: string, subtitle: string, slug: string }
+  // slug = slugify(title), hanya pratinjau: slug final tetap dibuat server.
   getMeta() {
     const texts = [];
     let image = null;
@@ -296,7 +298,8 @@ export class Editor {
         return false;
       }
     });
-    return { image, title: texts[0] || '', subtitle: texts[1] || '' };
+    const title = texts[0] || '';
+    return { image, title, subtitle: texts[1] || '', slug: slugify(title) };
   }
 
   // ----- JSON (format dokumen ProseMirror/Tiptap) -----
