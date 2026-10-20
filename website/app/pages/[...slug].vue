@@ -35,19 +35,15 @@ const headline = computed(() => findPageHeadline(navigation?.value, page.value?.
 
 defineOgImage('Docs', { title, description, headline: headline.value })
 
-const links = computed(() => {
-  const links = []
-  if (toc?.bottom?.edit) {
-    links.push({
-      icon: 'i-lucide-external-link',
-      label: 'Edit halaman ini',
-      to: `${toc.bottom.edit}/${page?.value?.stem}.${page?.value?.extension}`,
-      target: '_blank'
-    })
-  }
+const editLink = computed(() => toc?.bottom?.edit && `${toc.bottom.edit}/${page.value?.stem}.${page.value?.extension}`)
+const links = computed(() => (toc?.bottom?.links || []).filter(Boolean))
 
-  return [...links, ...(toc?.bottom?.links || [])].filter(Boolean)
-})
+const toast = useToast()
+const feedback = ref<boolean | null>(null)
+function sendFeedback(helpful: boolean) {
+  feedback.value = helpful
+  toast.add({ title: 'Terima kasih atas masukannya!', icon: 'i-lucide-heart' })
+}
 </script>
 
 <template>
@@ -55,8 +51,23 @@ const links = computed(() => {
     <UPageHeader
       :title="page.title"
       :description="page.description"
-      :headline="headline"
     >
+      <template #headline>
+        <nav
+          aria-label="Breadcrumb"
+          class="flex items-center gap-2"
+        >
+          <NuxtLink
+            to="/memulai"
+            class="hover:text-highlighted transition-colors"
+          >Dokumentasi</NuxtLink>
+          <template v-if="headline">
+            <span aria-hidden="true">/</span>
+            <span class="font-medium text-primary">{{ headline }}</span>
+          </template>
+        </nav>
+      </template>
+
       <template #links>
         <UButton
           v-for="(link, index) in page.links"
@@ -74,9 +85,53 @@ const links = computed(() => {
         :value="page"
       />
 
-      <USeparator v-if="surround?.length" />
+      <div class="mt-14 flex flex-wrap items-center justify-between gap-3 border-t border-default pt-6 text-sm text-muted">
+        <NuxtLink
+          v-if="editLink"
+          :to="editLink"
+          target="_blank"
+          class="inline-flex items-center gap-2 hover:text-highlighted transition-colors"
+        >
+          <UIcon
+            name="i-lucide-pencil"
+            class="size-3.5"
+          />
+          Sunting halaman ini di GitHub
+        </NuxtLink>
+        <div class="flex items-center gap-2">
+          Halaman ini membantu?
+          <UButton
+            v-for="option in [{ label: 'Ya', value: true }, { label: 'Tidak', value: false }]"
+            :key="option.label"
+            :label="option.label"
+            color="neutral"
+            :variant="feedback === option.value ? 'soft' : 'outline'"
+            :disabled="feedback !== null"
+            @click="sendFeedback(option.value)"
+          />
+        </div>
+      </div>
 
-      <UContentSurround :surround="surround" />
+      <UContentSurround
+        v-if="surround?.length"
+        :surround="surround"
+        class="mt-6"
+      >
+        <template #link-leading="{ link }">
+          <template v-if="link.path === surround?.[0]?.path">
+            <UIcon
+              name="i-lucide-arrow-left"
+              class="size-3.5"
+            />Sebelumnya
+          </template>
+          <template v-else>
+            Berikutnya<UIcon
+              name="i-lucide-arrow-right"
+              class="size-3.5"
+            />
+          </template>
+        </template>
+      </UContentSurround>
     </UPageBody>
 
     <template
@@ -84,6 +139,7 @@ const links = computed(() => {
       #right
     >
       <UContentToc
+        highlight
         :title="toc?.title"
         :links="page.body?.toc?.links"
       >

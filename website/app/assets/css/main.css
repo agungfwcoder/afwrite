@@ -4,7 +4,7 @@
 @source "../../../content/**/*";
 
 @theme static {
-  --container-8xl: 90rem;
+  --container-8xl: 85rem;
   --font-sans: 'Public Sans', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
@@ -23,4 +23,15 @@
 
 :root {
   --ui-container: var(--container-8xl);
+}
+
+/* Mode gelap mengikuti referensi desain (zinc-950 + kartu #111113). */
+.dark {
+  --ui-bg: #09090b;
+  --ui-bg-muted: #111113;
+  --ui-bg-elevated: #18181b;
+  --ui-bg-accented: #27272a;
+  --ui-border: #27272a;
+  --ui-text: var(--ui-color-neutral-300);
+  --ui-text-highlighted: #fafafa;
 }

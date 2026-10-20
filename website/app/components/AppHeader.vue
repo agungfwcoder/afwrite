@@ -4,18 +4,31 @@ import type { ContentNavigationItem } from '@nuxt/content'
 const navigation = inject<Ref<ContentNavigationItem[]>>('navigation')
 
 const { header } = useAppConfig()
+const route = useRoute()
+
+const isActive = (item: { match: string }) => new RegExp(item.match).test(route.path)
 </script>
 
 <template>
   <UHeader
-    :ui="{ center: 'flex-1' }"
+    :ui="{ title: 'text-[17px] items-center', left: 'lg:flex-none gap-8', center: 'flex-1 justify-start', right: 'lg:flex-none gap-2' }"
     :to="header?.to || '/'"
   >
-    <UContentSearchButton
-      v-if="header?.search"
-      :collapsed="false"
-      class="w-full"
-    />
+    <nav
+      v-if="header?.nav"
+      aria-label="Utama"
+      class="flex items-center gap-6 text-sm font-medium"
+    >
+      <NuxtLink
+        v-for="item in header.nav"
+        :key="item.to"
+        :to="item.to"
+        :aria-current="isActive(item) ? 'page' : undefined"
+        :class="isActive(item) ? 'text-highlighted' : 'text-muted hover:text-highlighted transition-colors'"
+      >
+        {{ item.label }}
+      </NuxtLink>
+    </nav>
 
     <template
       v-if="header?.logo?.dark || header?.logo?.light || header?.title"
@@ -46,6 +59,10 @@ const { header } = useAppConfig()
           ><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
         </span>
         {{ header.title }}
+        <span
+          v-if="header?.version"
+          class="rounded-full border border-accented px-2 py-0.5 font-mono text-[11px] font-medium text-muted"
+        >{{ header.version }}</span>
       </span>
     </template>
 
@@ -59,6 +76,12 @@ const { header } = useAppConfig()
     </template>
 
     <template #right>
+      <UContentSearchButton
+        v-if="header?.search"
+        :collapsed="false"
+        label="Cari dokumentasi…"
+        class="hidden lg:flex w-70"
+      />
       <UContentSearchButton
         v-if="header?.search"
         class="lg:hidden"
