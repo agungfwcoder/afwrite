@@ -197,13 +197,16 @@ onMounted(() => {
       el.classList.add('is-revealed')
       observer?.unobserve(el)
       // Setelah selesai, kembalikan transisi bawaan elemen (mis. hover kartu).
-      el.addEventListener('transitionend', () => el.classList.remove('reveal', 'is-revealed'), { once: true })
+      el.addEventListener('transitionend', () => el.classList.remove('reveal', 'reveal-move', 'is-revealed'), { once: true })
     }
   }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 })
 
   for (const el of document.querySelectorAll<HTMLElement>('.landing [data-reveal]')) {
     if (el.getBoundingClientRect().top < window.innerHeight) continue
     el.classList.add('reveal')
+    // data-reveal="move": hanya naik tanpa memudar. Opacity < 1 mematikan backdrop-filter kaca selama
+    // animasi, sehingga kertas di belakangnya sempat tampil tajam sebelum buram.
+    if (el.dataset.reveal === 'move') el.classList.add('reveal-move')
     observer.observe(el)
   }
 })
@@ -697,7 +700,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
       </div>
 
       <div
-        data-reveal
+        data-reveal="move"
         style="--reveal-delay: 80ms"
         class="relative mt-4 overflow-hidden rounded-[24px] border border-zinc-200 bg-[#edf0f0] p-3 sm:rounded-[28px] sm:p-4 dark:border-white/[0.07] dark:bg-[#0d0d0d]"
       >
@@ -1399,7 +1402,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
     <!-- CTA -->
     <section class="mx-auto max-w-(--ui-container) px-4 sm:px-6 lg:px-8 pb-24">
       <div
-        data-reveal
+        data-reveal="move"
         class="relative overflow-hidden rounded-[22px]"
       >
         <div
@@ -2174,9 +2177,9 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
     transform: translateY(18px);
   }
 }
+/* Mock hero berkaca: tanpa opacity (lihat data-reveal="move"). */
 @keyframes afw-rise-mockup {
   from {
-    opacity: 0;
     transform: translateY(28px) scale(0.98);
   }
 }
@@ -2192,6 +2195,9 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   transform: translateY(28px);
   transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
   transition-delay: var(--reveal-delay, 0ms);
+}
+.landing .reveal.reveal-move {
+  opacity: 1;
 }
 .landing .reveal.is-revealed {
   opacity: 1;
