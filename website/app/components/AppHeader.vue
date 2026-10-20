@@ -52,7 +52,7 @@ const isActive = (item: { match: string }) => new RegExp(item.match).test(route.
           alt=""
           class="size-7"
         >
-        {{ header.title }}
+        <span class="font-logo">{{ header.title }}</span>
         <span
           v-if="header?.version"
           class="rounded-full border border-sun/40 bg-sun/10 px-2 py-0.5 font-mono text-[11px] font-medium text-sun-ink dark:text-sun"

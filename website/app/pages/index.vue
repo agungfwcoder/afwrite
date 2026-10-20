@@ -1394,7 +1394,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             alt=""
             class="size-5"
           >
-          <span class="font-semibold text-zinc-950 dark:text-zinc-50">{{ BRAND }}</span>
+          <span class="font-logo font-semibold text-zinc-950 dark:text-zinc-50">{{ BRAND }}</span>
           <span>· Lisensi MIT</span>
         </div>
         <nav class="flex flex-wrap justify-center gap-x-5 gap-y-2">

@@ -7,6 +7,8 @@
   --container-8xl: 85rem;
   --font-sans: 'Public Sans', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  /* Teks logo (header & footer). */
+  --font-logo: 'Intel One Mono', ui-monospace, monospace;
 
   --color-green-50: #EFFDF5;
   --color-green-100: #D9FBE8;
