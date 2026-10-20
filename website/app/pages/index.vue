@@ -20,7 +20,10 @@ useSeoMeta({
   ogDescription: description
 })
 
+defineOgImage('Docs', { title: page.value.seo?.title || title, description, headline: BRAND })
+
 const REPO = 'https://github.com/agungfwcoder/afwrite'
+const base = useRuntimeConfig().app.baseURL
 const INSTALL = 'npm i github:agungfwcoder/afwrite'
 
 const { copy, copied } = useClipboard()
@@ -59,8 +62,7 @@ const ICON = {
   box: '<path d="M12 22V12M12 12 3 7M12 12l9-5M3 7l9-5 9 5v10l-9 5-9-5Z"/>',
   save: '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7M7 3v4a1 1 0 0 0 1 1h7"/>',
   language: '<path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/>',
-  flask: '<path d="M9 2v6l-5 9a3 3 0 0 0 2.6 4.5h10.8A3 3 0 0 0 20 17l-5-9V2M8 2h8M7 15h10"/>',
-  pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>'
+  flask: '<path d="M9 2v6l-5 9a3 3 0 0 0 2.6 4.5h10.8A3 3 0 0 0 20 17l-5-9V2M8 2h8M7 15h10"/>'
 }
 
 // Warna aksen per kartu: [latar ikon, border ikon, warna ikon] untuk terang / gelap.
@@ -199,6 +201,29 @@ onBeforeUnmount(() => {
   demoStopped = true
 })
 
+// Varian editor di bagian "Coba langsung".
+const variants = [
+  {
+    name: 'Artikel ala Medium',
+    hint: 'Judul & subjudul otomatis, hanya bubble toolbar. Blok teks untuk memformat.',
+    options: { title: true, toolbar: false, stats: false },
+    content: '<h1>All fine. Just write.</h1><p class="afw-subtitle">Subjudul muncul lewat tombol t kecil di baris tepat setelah judul.</p><p>Blok kalimat ini untuk memunculkan <b>bubble toolbar</b>. Tekan Enter, lalu ketik <code>/</code> untuk memilih blok: judul, kutipan, daftar, kode, gambar, atau video.</p><blockquote>Tulisan yang baik dimulai dari editor yang tidak mengganggu.</blockquote>'
+  },
+  {
+    name: 'Lengkap',
+    hint: 'Toolbar atas, bubble, slash menu, dan statistik kata.',
+    options: {},
+    content: '<h2>Catatan rapat</h2><p>Coba shortcut markdown: ketik <code>## </code> untuk judul, <code>- </code> untuk daftar, atau <code>**tebal**</code>.</p><ul><li><p>Rilis v2.2 minggu ini</p></li><li><p>Siapkan contoh Laravel</p></li></ul><p>Tempel link YouTube di baris kosong untuk menyisipkan video.</p>'
+  },
+  {
+    name: 'Minimal',
+    hint: 'Tanpa toolbar atas & statistik: hanya bubble dan slash menu.',
+    options: { toolbar: false, stats: false },
+    content: '<p>Editor paling ringkas. Ketik apa saja, blok untuk format, <code>/</code> untuk blok baru.</p>'
+  }
+]
+const variant = ref(0)
+
 const browsers = ['Chrome', 'Firefox', 'Safari']
 const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Browser · WebKit', 'Feature test Laravel']
 </script>
@@ -214,12 +239,12 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
       <div class="relative mx-auto flex max-w-[1200px] flex-wrap items-center gap-16 px-6 pt-24 pb-28">
         <div class="flex min-w-0 flex-[1_1_460px] flex-col gap-7">
           <NuxtLink
-            to="/memulai/instalasi"
+            to="/panduan/event-api#judul-slug"
             style="--reveal-delay: 0ms"
             class="hero-in inline-flex items-center gap-2 self-start rounded-full border border-emerald-400/30 bg-emerald-600/10 py-1 pr-3 pl-1 text-[13px] font-medium text-emerald-700 transition-colors hover:bg-emerald-600/15 dark:text-emerald-200"
           >
             <span class="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-bold tracking-[0.04em] text-white">BARU</span>
-            v2.1 · Pakai langsung dari CDN
+            v2.2 · Judul & slug untuk URL
             <svg
               class="size-3.5"
               v-bind="svgAttrs"
@@ -231,7 +256,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             style="--reveal-delay: 80ms"
             class="hero-in m-0 text-[clamp(44px,6vw,72px)] leading-[1.02] font-extrabold tracking-[-0.035em] text-zinc-950 dark:text-zinc-50"
           >
-            Editor WYSIWYG yang <span class="text-emerald-600 dark:text-emerald-400">tidak mengganggu.</span>
+            All fine. <span class="text-emerald-600 dark:text-emerald-400">Just write.</span>
           </h1>
           <p
             style="--reveal-delay: 160ms"
@@ -256,7 +281,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               />
             </NuxtLink>
             <NuxtLink
-              to="/memulai/demo"
+              to="#coba"
               class="btn-ghost"
             >
               <svg
@@ -437,6 +462,61 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COBA LANGSUNG: editor sungguhan (seperti halaman depan Tiptap) -->
+    <section
+      id="coba"
+      class="border-b border-zinc-100 dark:border-zinc-900"
+    >
+      <div class="mx-auto flex max-w-[1200px] flex-col gap-10 px-6 py-24">
+        <div
+          data-reveal
+          class="flex flex-col items-center gap-3 text-center"
+        >
+          <span class="eyebrow">COBA LANGSUNG</span>
+          <h2 class="section-title">
+            Ketik di sini, sekarang juga.
+          </h2>
+          <p class="m-0 max-w-[600px] text-[17px] leading-[1.65] text-zinc-600 dark:text-zinc-400">
+            Ini editor sungguhan, bukan gambar. Blok teks, ketik <code class="inline-code">/</code>, tempel dari Word, atau seret blok lewat pegangan ⋮⋮.
+          </p>
+        </div>
+
+        <div
+          data-reveal
+          style="--reveal-delay: 100ms"
+          class="mx-auto flex w-full max-w-[860px] flex-col gap-4"
+        >
+          <div
+            role="tablist"
+            aria-label="Varian editor"
+            class="flex flex-wrap justify-center gap-2"
+          >
+            <button
+              v-for="(v, i) in variants"
+              :key="v.name"
+              type="button"
+              role="tab"
+              :aria-selected="variant === i"
+              class="cursor-pointer rounded-full border px-4 py-1.5 text-sm font-medium transition-colors"
+              :class="variant === i ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-zinc-300 text-zinc-600 hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-500 dark:hover:text-zinc-50'"
+              @click="variant = i"
+            >
+              {{ v.name }}
+            </button>
+          </div>
+          <p class="m-0 text-center text-sm text-zinc-500 dark:text-zinc-400">
+            {{ variants[variant]!.hint }}
+          </p>
+          <LazyEditorDemo
+            :key="variant"
+            hydrate-on-visible
+            :content="variants[variant]!.content"
+            :options="variants[variant]!.options"
+          />
         </div>
       </div>
     </section>
@@ -824,14 +904,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
       <div class="mx-auto flex max-w-[1200px] flex-wrap justify-between gap-8 px-6 py-12">
         <div class="flex flex-[1_1_260px] flex-col gap-3">
           <div class="flex items-center gap-2.5 text-base font-bold text-zinc-950 dark:text-zinc-50">
-            <span class="flex size-6 items-center justify-center rounded-[7px] bg-emerald-600"><svg
-              class="size-[13px]"
-              v-bind="svgAttrs"
-              stroke="#ffffff"
-              stroke-width="2.4"
-              stroke-linejoin="round"
-              v-html="ICON.pen"
-            /></span>{{ BRAND }}
+            <img
+              :src="`${base}logo.svg`"
+              alt=""
+              class="size-6"
+            >{{ BRAND }}
           </div>
           <div class="max-w-[300px] text-sm leading-[1.6] text-zinc-500 dark:text-zinc-400">
             Editor WYSIWYG untuk Alpine.js. Lisensi MIT.

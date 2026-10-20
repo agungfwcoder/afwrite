@@ -4,6 +4,7 @@ import type { ContentNavigationItem } from '@nuxt/content'
 const navigation = inject<Ref<ContentNavigationItem[]>>('navigation')
 
 const { header } = useAppConfig()
+const base = useRuntimeConfig().app.baseURL
 const route = useRoute()
 
 const isActive = (item: { match: string }) => new RegExp(item.match).test(route.path)
@@ -46,18 +47,11 @@ const isActive = (item: { match: string }) => new RegExp(item.match).test(route.
         v-else-if="header?.title"
         class="flex items-center gap-2.5"
       >
-        <span class="flex size-7 items-center justify-center rounded-lg bg-emerald-600">
-          <svg
-            aria-hidden="true"
-            class="size-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#fff"
-            stroke-width="2.2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          ><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
-        </span>
+        <img
+          :src="`${base}logo.svg`"
+          alt=""
+          class="size-7"
+        >
         {{ header.title }}
         <span
           v-if="header?.version"

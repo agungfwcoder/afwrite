@@ -48,7 +48,7 @@ jobs:
         working-directory: website
         env:
           NUXT_APP_BASE_URL: ${{ steps.pages.outputs.base_path }}/
-          NUXT_SITE_URL: ${{ steps.pages.outputs.base_url }}/
+          NUXT_SITE_URL: ${{ steps.pages.outputs.origin }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

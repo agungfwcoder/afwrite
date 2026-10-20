@@ -7,6 +7,11 @@ import { BRAND } from './brand'
 // beserta Alpine dari node_modules repo induk.
 const root = fileURLToPath(new URL('..', import.meta.url))
 
+// Origin situs (tanpa path). NUXT_SITE_URL juga dibaca langsung oleh modul site-config, jadi
+// isinya cukup origin; base path (/afwrite/ di GitHub Pages) datang dari NUXT_APP_BASE_URL.
+const siteOrigin = new URL(process.env.NUXT_SITE_URL || 'http://localhost:3000').origin
+const siteUrl = `${siteOrigin}${process.env.NUXT_APP_BASE_URL || '/'}`
+
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
@@ -24,15 +29,11 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
-  alias: {
-    'afwrite': `${root}src/index.js`,
-    'alpinejs': `${root}node_modules/alpinejs/dist/module.esm.js`
-  },
-
-  vite: {
-    server: {
-      fs: { allow: [root] }
-    }
+  // Alamat situs untuk URL absolut (og:image). Base path ditambahkan sendiri oleh modul.
+  site: {
+    url: siteOrigin,
+    name: BRAND,
+    defaultLocale: 'id'
   },
 
   content: {
@@ -46,6 +47,11 @@ export default defineNuxtConfig({
     experimental: {
       sqliteConnector: 'native'
     }
+  },
+
+  alias: {
+    afwrite: `${root}src/index.js`,
+    alpinejs: `${root}node_modules/alpinejs/dist/module.esm.js`
   },
 
   experimental: {
@@ -64,6 +70,23 @@ export default defineNuxtConfig({
     }
   },
 
+  vite: {
+    server: {
+      fs: { allow: [root] }
+    },
+    // Nuxt UI membawa Tiptap/ProseMirror sendiri di website/node_modules, sedangkan ../src
+    // mengambilnya dari node_modules root. Dua salinan ProseMirror tidak bisa bercampur
+    // ("Adding different instances of a keyed plugin"), jadi dipaksa satu salinan.
+    resolve: {
+      dedupe: [
+        '@tiptap/core', '@tiptap/pm', '@tiptap/extensions', '@tiptap/extension-code-block',
+        '@tiptap/extension-document', '@tiptap/extension-hard-break', '@tiptap/extension-heading',
+        '@tiptap/extension-list', '@tiptap/extension-paragraph', '@tiptap/extension-text',
+        'prosemirror-model', 'prosemirror-state', 'prosemirror-view', 'prosemirror-transform'
+      ]
+    }
+  },
+
   eslint: {
     config: {
       stylistic: {
@@ -78,8 +101,7 @@ export default defineNuxtConfig({
   },
 
   llms: {
-    // Saat build di GitHub Actions diisi alamat GitHub Pages (lihat .github/workflows/docs.yml).
-    domain: process.env.NUXT_SITE_URL || 'http://localhost:3000/',
+    domain: siteUrl.replace(/\/$/, ''),
     title: BRAND,
     description: `Dokumentasi ${BRAND}: editor WYSIWYG modern untuk Alpine.js berbasis Tiptap/ProseMirror.`,
     full: {
@@ -116,6 +138,8 @@ export default defineNuxtConfig({
   },
 
   ogImage: {
-    zeroRuntime: true
+    zeroRuntime: true,
+    // Render pertama saat prerender lebih lambat (memuat font & renderer); bawaan 15 detik.
+    security: { renderTimeout: 60_000 }
   }
 })

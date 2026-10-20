@@ -35,3 +35,21 @@
   --ui-text: var(--ui-color-neutral-300);
   --ui-text-highlighted: #fafafa;
 }
+
+/* Editor afwrite di situs ini mengikuti warna emerald (library tetap memakai warna bawaannya).
+   Diawali `html` agar menang dari aturan .afw di CSS library yang dimuat belakangan. */
+html .afw,
+html .afw-prose {
+  --afw-accent: #059669;
+  --afw-accent-soft: #ecfdf5;
+  --afw-link: #047857;
+  --afw-quote-bar: #a7f3d0;
+}
+
+html .afw[data-afw-theme='dark'],
+html .afw-prose[data-afw-theme='dark'] {
+  --afw-accent: #34d399;
+  --afw-accent-soft: rgba(52, 211, 153, 0.16);
+  --afw-link: #6ee7b7;
+  --afw-quote-bar: #059669;
+}
