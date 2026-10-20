@@ -736,7 +736,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           />
           <span
             aria-hidden="true"
-            class="paper paper-teal right-[12%] bottom-10 size-[180px]"
+            class="paper paper-teal right-[16%] bottom-[16%] size-[180px]"
             style="--d: 8.5s"
           />
         </template>
