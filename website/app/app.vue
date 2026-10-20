@@ -15,7 +15,10 @@ const base = useRuntimeConfig().app.baseURL
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-    { name: 'theme-color', content: '#009994' }
+    { name: 'theme-color', content: '#009994' },
+    // Situs punya tema gelap sendiri; tanpa ini "Auto dark mode" Chrome Android ikut menggelapkan
+    // halaman terang secara paksa (teks jadi putih di atas kartu yang tetap terang).
+    { name: 'color-scheme', content: 'light dark' }
   ],
   link: [
     { rel: 'icon', href: `${base}favicon.ico`, sizes: '48x48' },
