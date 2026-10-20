@@ -336,7 +336,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
       <!-- Garis tegas di bawah hero, seperti halaman Nuxt UI. -->
       <div
         aria-hidden="true"
-        class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-emerald-500 dark:bg-emerald-400"
+        class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-emerald-500 to-transparent dark:via-emerald-400"
       />
       <div class="relative mx-auto grid max-w-[1200px] items-center gap-12 px-6 pt-16 pb-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:pt-24 lg:pb-24">
         <div class="flex min-w-0 flex-col items-start gap-6">
@@ -548,10 +548,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   >Ketik untuk memfilter…</span>
                 </div>
 
-                <!-- slash menu: -mb-12 (48px) melewati pb-8 kartu, jadi menu menjorok ±16px keluar dari bawah kartu -->
+                <!-- slash menu menjorok ±16px keluar dari bawah kartu luar: margin negatif = pb-8 panel (32px)
+                     + jarak panel ke tepi kartu (10px, atau 48px saat deretan chip tampil) + 16px. -->
                 <div
                   aria-hidden="true"
-                  class="mock-pop relative z-[3] -mt-2 -mb-12 w-[260px] max-w-full self-start rounded-xl border border-zinc-200 bg-white p-1.5 text-sm leading-[1.3] shadow-[0_20px_40px_-12px_rgba(24,24,27,0.25)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.7)]"
+                  class="mock-pop relative z-[3] -mt-2 -mb-[58px] w-[260px] sm:-mb-[96px] lg:-mb-[58px] xl:-mb-[96px] max-w-full self-start rounded-xl border border-zinc-200 bg-white p-1.5 text-sm leading-[1.3] shadow-[0_20px_40px_-12px_rgba(24,24,27,0.25)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.7)]"
                   :class="{ 'is-on': demo.menu }"
                 >
                   <div class="px-2.5 pt-1.5 pb-2 text-[11px] font-semibold tracking-[0.06em] text-zinc-500 dark:text-zinc-400">

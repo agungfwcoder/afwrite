@@ -97,6 +97,7 @@ const isActive = (item: { match: string }) => new RegExp(item.match).test(route.
         variant="link"
         highlight
         :navigation="navigation"
+        :ui="{ linkLeadingIcon: 'hidden' }"
       />
     </template>
   </UHeader>

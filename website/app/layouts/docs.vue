@@ -14,7 +14,7 @@ const navigation = inject<Ref<ContentNavigationItem[]>>('navigation')
             :navigation="navigation"
             variant="link"
             highlight
-            :ui="{ linkTrailingIcon: 'hidden' }"
+            :ui="{ linkLeadingIcon: 'hidden', linkTrailingIcon: 'hidden' }"
           />
         </UPageAside>
       </template>
