@@ -55,7 +55,7 @@ const isActive = (item: { match: string }) => new RegExp(item.match).test(route.
         {{ header.title }}
         <span
           v-if="header?.version"
-          class="rounded-full border border-accented px-2 py-0.5 font-mono text-[11px] font-medium text-muted"
+          class="rounded-full border border-sun/40 bg-sun/10 px-2 py-0.5 font-mono text-[11px] font-medium text-sun-ink dark:text-sun"
         >{{ header.version }}</span>
       </span>
     </template>

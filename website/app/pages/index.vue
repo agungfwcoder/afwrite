@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Landing page. Layout mengikuti halaman depan Nuxt UI: hero (teks + kartu editor bertab), panel showcase berisi
-// kartu-kartu demo fitur (masonry) dan tab "Coba langsung", lalu CTA dan footer. Warna: emerald + zinc.
+// kartu-kartu demo fitur (masonry) dan tab "Coba langsung", lalu CTA dan footer. Warna: emerald + zinc, dengan aksen kecil kuning logo (sun).
 // Teks SEO diambil dari content/index.md.
 import { useClipboard } from '@vueuse/core'
 import { BRAND, SLOGAN } from '~~/brand'
@@ -310,7 +310,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 <template>
   <div class="landing bg-white text-zinc-700 dark:bg-[#09090b] dark:text-zinc-200">
     <!-- HERO -->
-    <section class="relative overflow-hidden border-b border-emerald-500/30 dark:border-emerald-400/25">
+    <section class="relative overflow-hidden border-b border-emerald-500/50 dark:border-emerald-400/45">
       <div
         aria-hidden="true"
         class="hero-dots pointer-events-none absolute inset-0"
@@ -324,9 +324,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <NuxtLink
             to="/panduan/event-api#judul-slug"
             style="--reveal-delay: 0ms"
-            class="hero-in inline-flex items-center gap-1.5 self-start rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-500/15 dark:text-emerald-300"
+            class="hero-in inline-flex items-center gap-2 self-start rounded-md border border-emerald-500/30 bg-emerald-500/10 py-1 pr-2 pl-1 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-500/15 dark:text-emerald-300"
           >
-            Baru: judul &amp; slug untuk URL
+            <span class="rounded-[4px] bg-sun px-1.5 py-px text-[11px] font-bold text-zinc-950">Baru</span>
+            Judul &amp; slug untuk URL
             <svg
               class="size-3.5"
               v-bind="svgAttrs"
@@ -338,7 +339,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             style="--reveal-delay: 80ms"
             class="hero-in m-0 text-[clamp(44px,6vw,68px)] leading-[1.04] font-extrabold tracking-[-0.035em] text-zinc-950 dark:text-zinc-50"
           >
-            All fine.<br><span class="text-emerald-600 dark:text-emerald-400">Just write.</span>
+            All fine.<br><span class="text-emerald-600 dark:text-emerald-400">Just write</span><span class="text-sun">.</span>
           </h1>
           <p
             style="--reveal-delay: 160ms"
@@ -430,7 +431,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   @click="heroTab = -1"
                 >
                   <svg
-                    class="size-3.5 text-emerald-600 dark:text-emerald-400"
+                    class="size-3.5 text-sun-ink dark:text-sun"
                     v-bind="svgAttrs"
                     stroke-linejoin="round"
                     v-html="ICON.pencil"
@@ -1282,7 +1283,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           class="hero-fade pointer-events-none absolute inset-x-0 bottom-0 h-full"
         />
         <h2 class="section-title relative">
-          Siap mencoba?
+          Siap mencoba<span class="text-sun">?</span>
         </h2>
         <p class="relative m-0 max-w-[520px] text-[17px] leading-[1.65] text-zinc-600 dark:text-zinc-400">
           Pasang lewat npm atau CDN, tambahkan satu atribut x-data, dan editor siap dipakai di form Anda.
@@ -1382,11 +1383,17 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .landing .hero-fade {
-  background: linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.1));
+  background:
+    radial-gradient(28% 40% at 12% 100%, rgba(255, 187, 0, 0.1), transparent 70%),
+    radial-gradient(60% 55% at 50% 100%, rgba(16, 185, 129, 0.2), transparent 70%),
+    linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.16));
 }
 
 .dark .landing .hero-fade {
-  background: linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.13));
+  background:
+    radial-gradient(28% 40% at 12% 100%, rgba(255, 187, 0, 0.1), transparent 70%),
+    radial-gradient(60% 55% at 50% 100%, rgba(16, 185, 129, 0.32), transparent 70%),
+    linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.24));
 }
 
 /* Logo brand "Bekerja dengan": abu-abu, berwarna saat disorot. */
@@ -1685,7 +1692,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   height: 1em;
   margin-left: 2px;
   vertical-align: -0.12em;
-  background: #34d399;
+  background: #ffbb00;
   animation: afw-blink 1s steps(1) infinite;
 }
 @keyframes afw-blink {

@@ -19,7 +19,7 @@ export default defineAppConfig({
       slots: {
         root: 'relative border-0 pt-10 pb-0',
         wrapper: 'flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4',
-        headline: 'mb-3 text-[13px] font-normal text-muted flex items-center gap-2',
+        headline: 'mb-3 text-[13px] font-normal text-muted flex items-center gap-2 before:size-1.5 before:shrink-0 before:rounded-full before:bg-sun before:content-[\'\']',
         title: 'text-4xl sm:text-[44px] leading-[1.1] font-extrabold tracking-[-0.03em] text-highlighted',
         description: 'text-lg leading-[1.6] text-muted'
       },

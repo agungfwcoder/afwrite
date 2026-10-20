@@ -19,6 +19,15 @@
   --color-green-800: #016538;
   --color-green-900: #0A5331;
   --color-green-950: #052E16;
+
+  /* Kuning logo, dipakai sebagai aksen kecil. Untuk teks di mode terang pakai sun-ink (kontras cukup). */
+  --color-sun: #ffbb00;
+  --color-sun-ink: #9a6b00;
+}
+
+/* Seleksi teks memakai kuning logo. */
+::selection {
+  background: rgb(255 187 0 / 0.35);
 }
 
 :root {
