@@ -603,7 +603,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           </button>
         </div>
         <pre
-          class="m-0 overflow-x-auto p-6 font-mono text-sm leading-[1.85] text-zinc-700 dark:text-zinc-300"
+          class="m-0 overflow-x-auto p-4 sm:p-6 font-mono text-sm leading-[1.85] text-zinc-700 dark:text-zinc-300"
           role="tabpanel"
         ><template
           v-for="(line, n) in tabs[tab]!.lines"
@@ -614,7 +614,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           :class="tok[1]"
         >{{ tok[0] }}</span>
 </template></pre>
-        <div class="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 px-6 py-3 text-[13px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 px-4 py-3 sm:px-6 text-[13px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
           <span>Output: HTML bersih, siap disimpan.</span>
           <NuxtLink
             to="/memulai/demo"
@@ -639,13 +639,13 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             Semua alat ada saat dibutuhkan, tersembunyi saat tidak.
           </p>
         </div>
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-4">
           <div
             v-for="(f, i) in features"
             :key="f.title"
             data-reveal
             :style="{ '--reveal-delay': `${(i % 3) * 80}ms` }"
-            class="card flex flex-col gap-3.5 rounded-[14px] p-7"
+            class="card flex flex-col gap-3.5 rounded-[14px] p-5 sm:p-7"
           >
             <span
               class="icon-tile"
@@ -692,7 +692,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div
             data-reveal
             style="--reveal-delay: 0ms"
-            class="card flex min-w-0 flex-[2_1_560px] flex-wrap items-center gap-8 rounded-2xl p-8"
+            class="card flex min-w-0 flex-[2_1_560px] flex-wrap items-center gap-6 sm:gap-8 rounded-2xl p-5 sm:p-8"
           >
             <div class="flex flex-[1_1_260px] flex-col gap-3">
               <span
@@ -727,7 +727,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             to="/integrasi/laravel"
             data-reveal
             style="--reveal-delay: 80ms"
-            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-8"
+            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-5 sm:p-8"
           >
             <span
               class="icon-tile"
@@ -747,7 +747,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div
             data-reveal
             style="--reveal-delay: 0ms"
-            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-8"
+            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-5 sm:p-8"
           >
             <span
               class="icon-tile"
@@ -765,7 +765,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               Draf tersimpan di localStorage dan ditawarkan kembali saat halaman dibuka lagi.
             </div>
             <div class="mt-auto flex flex-wrap items-center gap-2 rounded-[10px] border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-[13px] text-amber-800 dark:text-amber-200">
-              <span class="flex-[1_1_120px]">Ada draf tersimpan.</span>
+              <span class="basis-full sm:flex-[1_1_120px] sm:basis-auto">Ada draf tersimpan.</span>
               <span class="rounded-md bg-amber-400 px-2.5 py-1 font-semibold text-stone-900">Pulihkan</span>
               <span class="rounded-md px-2.5 py-1 font-semibold">Buang</span>
             </div>
@@ -775,7 +775,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div
             data-reveal
             style="--reveal-delay: 80ms"
-            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-8"
+            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-5 sm:p-8"
           >
             <span
               class="icon-tile font-mono text-sm font-semibold"
@@ -797,7 +797,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div
             data-reveal
             style="--reveal-delay: 160ms"
-            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-8"
+            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-5 sm:p-8"
           >
             <span
               class="icon-tile"
@@ -824,7 +824,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div
             data-reveal
             style="--reveal-delay: 0ms"
-            class="card flex min-w-0 flex-[2_1_560px] flex-wrap items-center gap-8 rounded-2xl p-8"
+            class="card flex min-w-0 flex-[2_1_560px] flex-wrap items-center gap-6 sm:gap-8 rounded-2xl p-5 sm:p-8"
           >
             <div class="flex flex-[1_1_260px] flex-col gap-3">
               <span
