@@ -1593,13 +1593,14 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   }
 }
 
-/* Aksen kuning logo di pojok kanan atas hero. */
+/* Aksen kuning logo di pojok kanan atas hero. Ukuran tetap (bukan persen) agar tidak menjadi pita
+   tegak di layar sempit. */
 .landing .hero-sun {
-  background: radial-gradient(32% 45% at 92% 0%, rgba(255, 187, 0, 0.14), transparent 70%);
+  background: radial-gradient(min(420px, 85vw) min(320px, 60vw) at 92% 0%, rgba(255, 187, 0, 0.14), transparent 70%);
 }
 
 .dark .landing .hero-sun {
-  background: radial-gradient(32% 45% at 92% 0%, rgba(255, 187, 0, 0.12), transparent 70%);
+  background: radial-gradient(min(420px, 85vw) min(320px, 60vw) at 92% 0%, rgba(255, 187, 0, 0.12), transparent 70%);
 }
 
 /* Logo brand "Bekerja dengan": abu-abu, berwarna saat disorot. */
