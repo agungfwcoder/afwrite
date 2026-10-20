@@ -2,7 +2,7 @@
 // Landing page. Desain mengikuti referensi "Landing — afwrite" (warna utama emerald; mode gelap mengikuti nada referensi),
 // dengan padanan mode terang. Teks SEO diambil dari content/index.md.
 import { useClipboard } from '@vueuse/core'
-import { BRAND } from '~~/brand'
+import { BRAND, SLOGAN } from '~~/brand'
 
 const { data: page } = await useAsyncData('index', () => queryCollection('landing').path('/').first())
 if (!page.value) {
@@ -20,7 +20,7 @@ useSeoMeta({
   ogDescription: description
 })
 
-defineOgImage('Docs', { title: page.value.seo?.title || title, description, headline: BRAND })
+defineOgImage('Docs', { title: SLOGAN, description, headline: BRAND })
 
 const REPO = 'https://github.com/agungfwcoder/afwrite'
 const base = useRuntimeConfig().app.baseURL
