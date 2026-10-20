@@ -58,6 +58,10 @@ export default defineAppConfig({
           }
         }
       },
+      // Butir daftar: kotak kecil warna brand, seperti di catatan rilis.
+      ul: {
+        base: 'list-[square] marker:text-primary'
+      },
       pre: {
         slots: {
           header: 'rounded-t-lg',

@@ -80,8 +80,11 @@ html .afw-prose {
   --afw-quote-bar: #abefea;
 }
 
+/* Mode gelap situs (class .dark): harus lebih spesifik dari `.dark .afw:not(...)` di CSS library. */
 html .afw[data-afw-theme='dark'],
-html .afw-prose[data-afw-theme='dark'] {
+html .afw-prose[data-afw-theme='dark'],
+html.dark .afw:not([data-afw-theme='light']),
+html.dark .afw-prose:not([data-afw-theme='light']) {
   --afw-accent: #14ccc6;
   --afw-accent-soft: rgba(20, 204, 198, 0.16);
   --afw-link: #70e2dc;
