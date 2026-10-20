@@ -907,9 +907,9 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               </div>
               <span />
               <div class="flex flex-col gap-1.5 pt-2 pl-3">
-                <span class="h-2 w-full rounded-full bg-zinc-200 dark:bg-zinc-800" />
-                <span class="h-2 w-11/12 rounded-full bg-zinc-200 dark:bg-zinc-800" />
-                <span class="h-2 w-3/4 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+                <span class="h-2 w-full rounded-full bg-zinc-200 dark:bg-white/15" />
+                <span class="h-2 w-11/12 rounded-full bg-zinc-200 dark:bg-white/15" />
+                <span class="h-2 w-3/4 rounded-full bg-zinc-200 dark:bg-white/15" />
               </div>
             </div>
           </div>
