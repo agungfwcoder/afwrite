@@ -416,13 +416,14 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 class="brand-logo size-4"
               />
             </div>
+            <!-- Ponsel: tanpa pemisah, link turun ke baris sendiri (pemisah tidak tertinggal di ujung baris). -->
             <span
               aria-hidden="true"
-              class="mx-1 h-3.5 w-px bg-zinc-300 dark:bg-zinc-700"
+              class="mx-1 hidden h-3.5 w-px bg-zinc-300 sm:block dark:bg-zinc-700"
             />
             <a
               :href="REPO"
-              class="flex items-center gap-1.5 transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
+              class="flex w-full items-center gap-1.5 transition-colors hover:text-zinc-900 sm:w-auto dark:hover:text-zinc-100"
             >
               <UIcon
                 name="i-simple-icons-github"
