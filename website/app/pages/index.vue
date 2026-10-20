@@ -1274,6 +1274,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 /* Marquee "Bekerja bersama": empat salinan daftar (cukup lebar untuk layar desktop), digeser satu salinan (-25%)
    lalu berulang, sehingga sambungannya tidak terlihat. */
 .landing .marquee {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
   mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
 }
 .landing .marquee-track {
@@ -1285,8 +1286,8 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 @keyframes marquee {
   to { transform: translateX(-25%); }
 }
+/* Saat "kurangi gerakan" aktif (sering ikut menyala lewat mode hemat baterai di HP), tetap bergeser tapi lebih pelan. */
 @media (prefers-reduced-motion: reduce) {
-  .landing .marquee { overflow-x: auto; }
-  .landing .marquee-track { animation: none; }
+  .landing .marquee-track { animation-duration: 40s; }
 }
 </style>
