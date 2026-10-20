@@ -20,7 +20,7 @@ export default defineAppConfig({
     },
     contentSurround: {
       slots: {
-        link: 'rounded-xl px-5 py-6 hover:border-primary/50',
+        link: 'rounded-lg px-5 py-6 hover:border-primary/50',
         linkTitle: 'font-bold'
       }
     },
@@ -32,13 +32,13 @@ export default defineAppConfig({
       },
       callout: {
         slots: {
-          base: 'rounded-xl px-4 py-3.5 text-[13.5px]/[1.65]'
+          base: 'rounded-lg px-4 py-3.5 text-[13.5px]/[1.65]'
         }
       },
       // Ikon kartu duduk di atas kotak kertas miring (::before); kartu genap di card-group berwarna kuning.
       card: {
         slots: {
-          base: 'grid grid-cols-[2.25rem_minmax(0,1fr)] items-start [&>a]:absolute gap-x-3.5 p-4 sm:p-4 rounded-xl bg-muted/60 before:absolute before:top-4 before:left-4 before:size-9 before:-rotate-6 before:rounded-[5px] before:bg-brand-600 before:content-[\'\']',
+          base: 'grid grid-cols-[2.25rem_minmax(0,1fr)] items-start [&>a]:absolute gap-x-3.5 p-4 sm:p-4 rounded-lg bg-muted/60 before:absolute before:top-4 before:left-4 before:size-9 before:-rotate-6 before:rounded-[5px] before:bg-brand-600 before:content-[\'\']',
           icon: 'relative row-span-2 m-2 mb-0 size-5 text-white!',
           title: 'col-start-2 font-bold',
           description: 'col-start-2 text-[13px]/[1.5]'
@@ -58,20 +58,20 @@ export default defineAppConfig({
       },
       pre: {
         slots: {
-          header: 'rounded-t-xl',
-          base: 'rounded-xl'
+          header: 'rounded-t-lg',
+          base: 'rounded-lg'
         }
       },
       code: {
-        base: 'rounded-full px-[7px] py-px'
+        base: 'rounded-md px-1.5 py-px'
       },
       tr: {
-        base: '[&:first-child>th:first-child]:rounded-ss-xl [&:first-child>th:last-child]:rounded-se-xl [&:last-child>td:first-child]:rounded-es-xl [&:last-child>td:last-child]:rounded-ee-xl'
+        base: '[&:first-child>th:first-child]:rounded-ss-lg [&:first-child>th:last-child]:rounded-se-lg [&:last-child>td:first-child]:rounded-es-lg [&:last-child>td:last-child]:rounded-ee-lg'
       },
       table: {
         slots: {
-          root: 'rounded-xl',
-          base: 'rounded-xl'
+          root: 'rounded-lg',
+          base: 'rounded-lg'
         }
       }
     }
