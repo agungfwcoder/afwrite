@@ -140,6 +140,7 @@ function sendFeedback(helpful: boolean) {
     >
       <UContentToc
         highlight
+        highlight-variant="circuit"
         :title="toc?.title"
         :links="page.body?.toc?.links"
       >

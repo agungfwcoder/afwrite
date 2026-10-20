@@ -34,56 +34,6 @@ export default defineAppConfig({
         root: 'py-8'
       }
     },
-    contentNavigation: {
-      slots: {
-        list: 'isolate -mx-3 flex flex-col gap-0.5',
-        itemWithChildren: 'flex flex-col mb-5',
-        listWithChildren: 'ms-0 border-0 flex flex-col gap-0.5',
-        trigger: 'px-3 pb-2 text-xs font-semibold uppercase tracking-[0.06em] text-muted',
-        link: 'px-3 py-[7px] gap-2.5 text-sm before:rounded-lg',
-        linkLeadingIcon: 'size-4'
-      },
-      variants: {
-        active: {
-          false: { link: 'text-toned', linkLeadingIcon: 'text-toned' }
-        },
-        level: {
-          true: { item: 'ps-0 ms-0', itemWithChildren: 'ps-0 ms-0' }
-        }
-      },
-      compoundVariants: [{
-        color: 'primary',
-        variant: 'pill',
-        active: true,
-        class: {
-          link: 'font-semibold text-emerald-700 dark:text-emerald-100 before:bg-emerald-600/10 dark:before:bg-emerald-600/16 before:ring-1 before:ring-inset before:ring-emerald-400/30 dark:before:ring-emerald-400/28',
-          linkLeadingIcon: 'text-emerald-600 dark:text-emerald-300'
-        }
-      }]
-    },
-    contentToc: {
-      slots: {
-        trigger: 'text-xs font-semibold uppercase tracking-[0.06em] text-muted lg:text-muted',
-        link: 'text-[13px] py-[5px]',
-        list: 'ms-0 ps-3.5'
-      },
-      compoundVariants: [{
-        highlight: true,
-        highlightVariant: 'straight',
-        class: {
-          list: 'ms-0 ps-3.5 border-s border-default',
-          indicator: 'ms-0 w-0.5'
-        }
-      }]
-    },
-    pageLinks: {
-      slots: {
-        root: 'flex flex-col gap-2.5 p-4 rounded-xl border border-default bg-muted',
-        title: 'text-xs font-semibold uppercase tracking-[0.06em] text-muted',
-        link: 'text-[13px] gap-2',
-        linkLeadingIcon: 'size-3.5'
-      }
-    },
     contentSurround: {
       slots: {
         root: 'grid grid-cols-1 sm:grid-cols-2 gap-3',

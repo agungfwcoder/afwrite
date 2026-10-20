@@ -94,6 +94,7 @@ const isActive = (item: { match: string }) => new RegExp(item.match).test(route.
 
     <template #body>
       <UContentNavigation
+        variant="link"
         highlight
         :navigation="navigation"
       />

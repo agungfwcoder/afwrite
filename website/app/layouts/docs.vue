@@ -12,6 +12,8 @@ const navigation = inject<Ref<ContentNavigationItem[]>>('navigation')
           <UContentNavigation
             :collapsible="false"
             :navigation="navigation"
+            variant="link"
+            highlight
             :ui="{ linkTrailingIcon: 'hidden' }"
           />
         </UPageAside>
