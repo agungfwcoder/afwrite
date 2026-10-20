@@ -232,6 +232,28 @@ const variants = [
 const variant = ref(0)
 
 const browsers = ['Chrome', 'Firefox', 'Safari']
+
+// Pratinjau output di card "HTML atau JSON": isi yang sama dalam dua format.
+const outFormat = ref<'html' | 'json'>('html')
+const outputs: Record<'html' | 'json', Token[][]> = {
+  html: [
+    [['<h2>', T.tag], ['Judul'], ['</h2>', T.tag]],
+    [['<p>', T.tag], ['Halo '], ['<strong>', T.tag], ['dunia'], ['</strong>', T.tag], ['</p>', T.tag]]
+  ],
+  json: [
+    [['{ '], ['"type"', T.attr], [': '], ['"doc"', T.str], [', '], ['"content"', T.attr], [': [']],
+    [['  { '], ['"type"', T.attr], [': '], ['"heading"', T.str], [',']],
+    [['    '], ['"attrs"', T.attr], [': { '], ['"level"', T.attr], [': '], ['2', T.kw], [' },']],
+    [['    '], ['"content"', T.attr], [': [{ '], ['"type"', T.attr], [': '], ['"text"', T.str], [',']],
+    [['      '], ['"text"', T.attr], [': '], ['"Judul"', T.str], [' }] },']],
+    [['  { '], ['"type"', T.attr], [': '], ['"paragraph"', T.str], [', '], ['"content"', T.attr], [': [']],
+    [['    { '], ['"type"', T.attr], [': '], ['"text"', T.str], [', '], ['"text"', T.attr], [': '], ['"Halo "', T.str], [' },']],
+    [['    { '], ['"type"', T.attr], [': '], ['"text"', T.str], [', '], ['"text"', T.attr], [': '], ['"dunia"', T.str], [',']],
+    [['      '], ['"marks"', T.attr], [': [{ '], ['"type"', T.attr], [': '], ['"bold"', T.str], [' }] }']],
+    [['  ] }']],
+    [['] }']]
+  ]
+}
 const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Browser · WebKit', 'Feature test Laravel']
 </script>
 
@@ -699,12 +721,12 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           </h2>
         </div>
 
-        <div class="flex flex-wrap gap-4">
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <!-- Engine -->
           <div
             data-reveal
             style="--reveal-delay: 0ms"
-            class="card flex min-w-0 flex-[2_1_560px] flex-wrap items-center gap-6 sm:gap-8 rounded-2xl p-5 sm:p-8"
+            class="card flex min-w-0 flex-wrap items-center gap-6 sm:gap-8 rounded-2xl p-5 sm:p-8 lg:col-span-2"
           >
             <div class="flex flex-[1_1_260px] flex-col gap-3">
               <span
@@ -739,7 +761,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             to="/integrasi/laravel"
             data-reveal
             style="--reveal-delay: 80ms"
-            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-5 sm:p-8"
+            class="card flex min-w-0 flex-col gap-3 rounded-2xl p-5 sm:p-8"
           >
             <span
               class="icon-tile"
@@ -759,7 +781,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div
             data-reveal
             style="--reveal-delay: 0ms"
-            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-5 sm:p-8"
+            class="card flex min-w-0 flex-col gap-3 rounded-2xl p-5 sm:p-8"
           >
             <span
               class="icon-tile"
@@ -783,33 +805,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             </div>
           </div>
 
-          <!-- HTML / JSON -->
-          <div
-            data-reveal
-            style="--reveal-delay: 80ms"
-            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-5 sm:p-8"
-          >
-            <span
-              class="icon-tile font-mono text-sm font-semibold"
-              :class="TONE.sky"
-            >{ }</span>
-            <div class="bento-title">
-              HTML atau JSON
-            </div>
-            <div class="bento-text">
-              Simpan sebagai HTML bersih atau JSON dokumen ProseMirror. Keduanya bisa dimuat ulang dengan aman.
-            </div>
-            <div class="mt-auto flex rounded-[10px] border border-zinc-200 bg-white p-1 text-[13px] font-semibold dark:border-zinc-800 dark:bg-[#09090b]">
-              <span class="flex-1 rounded-[7px] bg-zinc-200 p-1.5 text-center text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50">HTML</span>
-              <span class="flex-1 rounded-[7px] p-1.5 text-center text-zinc-500 dark:text-zinc-400">JSON</span>
-            </div>
-          </div>
-
           <!-- Bahasa -->
           <div
             data-reveal
-            style="--reveal-delay: 160ms"
-            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-5 sm:p-8"
+            style="--reveal-delay: 80ms"
+            class="card flex min-w-0 flex-col gap-3 rounded-2xl p-5 sm:p-8"
           >
             <span
               class="icon-tile"
@@ -832,11 +832,66 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             </div>
           </div>
 
+          <!-- HTML / JSON: card tinggi (2 baris di desktop) dengan pratinjau output -->
+          <div
+            data-reveal
+            style="--reveal-delay: 160ms"
+            class="card flex min-w-0 flex-col gap-3 rounded-2xl p-5 sm:p-8 lg:row-span-2"
+          >
+            <span
+              class="icon-tile font-mono text-sm font-semibold"
+              :class="TONE.sky"
+            >{ }</span>
+            <div class="bento-title">
+              HTML atau JSON
+            </div>
+            <div class="bento-text">
+              Simpan sebagai HTML bersih atau JSON dokumen ProseMirror. Keduanya bisa dimuat ulang dengan aman.
+            </div>
+            <div class="mt-auto flex flex-col gap-3 pt-2">
+              <div
+                role="tablist"
+                class="flex rounded-[10px] border border-zinc-200 bg-white p-1 text-[13px] font-semibold dark:border-zinc-800 dark:bg-[#09090b]"
+              >
+                <button
+                  v-for="f in (['html', 'json'] as const)"
+                  :key="f"
+                  type="button"
+                  role="tab"
+                  :aria-selected="outFormat === f"
+                  class="flex-1 cursor-pointer rounded-[7px] p-1.5 text-center uppercase transition-colors"
+                  :class="outFormat === f ? 'bg-zinc-200 text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50' : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'"
+                  @click="outFormat = f"
+                >
+                  {{ f }}
+                </button>
+              </div>
+              <pre
+                role="tabpanel"
+                class="m-0 h-[236px] overflow-auto [scrollbar-width:thin] rounded-[10px] border border-zinc-200 bg-white p-3.5 font-mono text-[12px] leading-[1.7] text-zinc-700 dark:border-zinc-800 dark:bg-[#09090b] dark:text-zinc-300"
+              ><template
+                v-for="(line, n) in outputs[outFormat]"
+                :key="n"
+              ><span
+                v-for="(tok, k) in line"
+                :key="k"
+                :class="tok[1]"
+              >{{ tok[0] }}</span>
+</template></pre>
+              <NuxtLink
+                to="/panduan/json"
+                class="self-start text-[13px] font-semibold text-emerald-700 hover:underline dark:text-emerald-300"
+              >
+                Panduan JSON →
+              </NuxtLink>
+            </div>
+          </div>
+
           <!-- Teruji -->
           <div
             data-reveal
             style="--reveal-delay: 0ms"
-            class="card flex min-w-0 flex-[2_1_560px] flex-wrap items-center gap-6 sm:gap-8 rounded-2xl p-5 sm:p-8"
+            class="card flex min-w-0 flex-wrap items-center gap-6 sm:gap-8 rounded-2xl p-5 sm:p-8 lg:col-span-2"
           >
             <div class="flex flex-[1_1_260px] flex-col gap-3">
               <span
