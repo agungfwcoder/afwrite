@@ -344,6 +344,15 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         aria-hidden="true"
         class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-emerald-500 to-transparent dark:via-emerald-400"
       />
+      <!-- Horizon: pendar yang membesar-meredup + gelombang yang memancar dari garis bawah. -->
+      <div
+        aria-hidden="true"
+        class="hero-horizon pointer-events-none absolute inset-x-0 bottom-0 h-56"
+      >
+        <span class="hero-wave" />
+        <span class="hero-wave" />
+        <span class="hero-wave" />
+      </div>
       <div class="relative mx-auto grid max-w-(--ui-container) items-center gap-12 px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:pt-24 lg:pb-24">
         <div class="flex min-w-0 flex-col items-start gap-6">
           <NuxtLink
@@ -681,7 +690,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           :class="{ 'sc-clamp': !showAll }"
         >
           <!-- Slash menu -->
-          <div class="sc-card">
+          <div class="sc-card sc-card-bleed">
             <div>
               <div class="sc-title">
                 Slash menu &amp; tombol +
@@ -1440,15 +1449,15 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
 /* Latar hero & CTA: titik-titik halus + pendar emerald dari bawah. */
 .landing .hero-dots {
-  background-image: radial-gradient(rgba(24, 24, 27, 0.14) 1px, transparent 1px);
-  background-size: 22px 22px;
+  background-image: radial-gradient(rgba(24, 24, 27, 0.16) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
   /* Memudar di bagian atas (dekat header), penuh di bawah. */
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 55%);
   mask-image: linear-gradient(to bottom, transparent, #000 55%);
 }
 
 .dark .landing .hero-dots {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1.5px, transparent 1.5px);
 }
 
 .landing .hero-fade {
@@ -1457,6 +1466,80 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
 .dark .landing .hero-fade {
   background: linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.16));
+}
+
+/* Horizon hero: pendar yang membesar & meredup bergantian, ditambah tiga gelombang lengkung yang
+   memancar dari garis bawah lalu memudar. */
+.landing .hero-horizon {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 15%, #000 85%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 15%, #000 85%, transparent);
+}
+
+.landing .hero-horizon::before {
+  content: '';
+  position: absolute;
+  bottom: -90px;
+  left: 50%;
+  width: 90%;
+  height: 180px;
+  margin-left: -45%;
+  background: radial-gradient(50% 50% at 50% 100%, rgba(16, 185, 129, 0.42), transparent 75%);
+  transform-origin: 50% 100%;
+  animation: hero-breathe 7s ease-in-out infinite;
+}
+
+.dark .landing .hero-horizon::before {
+  background: radial-gradient(50% 50% at 50% 100%, rgba(52, 211, 153, 0.34), transparent 75%);
+}
+
+/* Gelombang: elips berpusat di garis horizon, hanya tepinya yang bercahaya. */
+.landing .hero-wave {
+  position: absolute;
+  bottom: -110px;
+  left: 50%;
+  width: 70%;
+  height: 220px;
+  margin-left: -35%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, transparent 86%, rgba(16, 185, 129, 0.35) 95%, transparent 100%);
+  opacity: 0;
+  transform-origin: 50% 50%;
+  animation: hero-wave 9s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+}
+
+.dark .landing .hero-wave {
+  background: radial-gradient(closest-side, transparent 86%, rgba(52, 211, 153, 0.32) 95%, transparent 100%);
+}
+
+.landing .hero-wave:nth-child(2) {
+  animation-delay: 3s;
+}
+
+.landing .hero-wave:nth-child(3) {
+  animation-delay: 6s;
+}
+
+@keyframes hero-breathe {
+  0%,
+  100% { opacity: 0.55; transform: scale(0.85, 0.8); }
+  50% { opacity: 1; transform: scale(1.12, 1.15); }
+}
+
+@keyframes hero-wave {
+  0% { opacity: 0; transform: scale(0.3); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing .hero-horizon::before {
+    animation: none;
+  }
+
+  .landing .hero-wave {
+    display: none;
+  }
 }
 
 /* Aksen kuning logo di pojok kanan atas hero. */
@@ -1701,6 +1784,19 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 .dark .landing .sc-inset {
   border-color: #27272a;
   background: #09090b;
+}
+
+/* Panel terakhir menembus tepi bawah kartu dan terpotong olehnya (seperti landing Livewire). */
+.landing .sc-card-bleed {
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.landing .sc-card-bleed > .sc-inset:last-child {
+  margin-bottom: -1px;
+  padding-bottom: 6px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .landing .sc-field {
