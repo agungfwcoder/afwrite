@@ -225,11 +225,13 @@ html .afw-prose[data-afw-theme='dark'] {
 }
 
 /* Butir daftar: kotak kecil sewarna chip bagiannya. */
-.afw-changelog > ul {
+.afw-changelog > ul,
+.afw-changelog .ch-card > ul {
   list-style-type: square;
 }
 
-.afw-changelog > ul > li::marker {
+.afw-changelog > ul > li::marker,
+.afw-changelog .ch-card > ul > li::marker {
   color: var(--color-brand-500);
 }
 
@@ -239,4 +241,70 @@ html .afw-prose[data-afw-theme='dark'] {
 
 .afw-changelog > h3:has(.ch-fix) + ul > li::marker {
   color: var(--ui-text-dimmed);
+}
+
+/* Kartu di catatan rilis: ringkasan versi, termin, dan grid termin awal. */
+.afw-changelog .ch-card {
+  margin: 1.25rem 0;
+  padding: 18px 22px;
+  border: 1px solid var(--ui-border);
+  border-radius: 8px;
+  background: var(--ui-bg-muted);
+}
+
+.afw-changelog .ch-card > :first-child {
+  margin-top: 0;
+}
+
+.afw-changelog .ch-card > :last-child {
+  margin-bottom: 0;
+}
+
+.afw-changelog .ch-intro > p:not(:first-child) {
+  font-size: 14px;
+  color: var(--ui-text-muted);
+}
+
+.afw-changelog .ch-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-sun-ink);
+}
+
+.dark .afw-changelog .ch-label {
+  color: var(--color-sun);
+}
+
+.afw-changelog .ch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: -0.5rem 0 1.25rem;
+}
+
+.afw-changelog .ch-mini {
+  margin: 0;
+  padding: 14px 16px;
+}
+
+.afw-changelog .ch-mini > p {
+  margin: 0;
+}
+
+.afw-changelog .ch-mini > p + p {
+  margin-top: 6px;
+}
+
+.afw-changelog .ch-mini strong {
+  font-size: 15px;
+  color: var(--ui-text-highlighted);
+}
+
+.afw-changelog .ch-mini > p:last-child {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ui-text-muted);
 }
