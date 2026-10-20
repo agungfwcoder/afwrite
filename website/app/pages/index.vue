@@ -130,11 +130,53 @@ const tabs: { name: string, dot: string, lines: Token[][] }[] = [
 ]
 const tab = ref(0)
 
+// Mockup editor "hidup": judul diketik, teks diblok & ditebalkan, slash menu dipilih, berulang.
+// Keadaan awal (SSR / tanpa JS / kurangi gerakan) = tampilan statis desain.
+const DEMO_TITLE = 'Catatan untuk tim redaksi'
+const demo = reactive({ running: false, title: DEMO_TITLE, caret: '' as '' | 'title' | 'slash', selected: true, bubble: true, bold: true, slash: true, menu: true, active: 0 })
+let demoStopped = false
+const wait = (ms: number) => new Promise<void>((resolve, reject) => setTimeout(() => (demoStopped ? reject(new Error('stop')) : resolve()), ms))
+
+async function playDemo() {
+  Object.assign(demo, { running: true, title: '', caret: 'title', selected: false, bubble: false, bold: false, slash: false, menu: false, active: 0 })
+  for (;;) {
+    await wait(500)
+    for (const char of DEMO_TITLE) {
+      demo.title += char
+      await wait(char === ' ' ? 90 : 55)
+    }
+    await wait(600)
+    demo.caret = ''
+    demo.selected = true
+    await wait(650)
+    demo.bubble = true
+    await wait(700)
+    demo.bold = true
+    await wait(900)
+    Object.assign(demo, { bubble: false, selected: false, slash: true, caret: 'slash' })
+    await wait(400)
+    demo.menu = true
+    for (const index of [1, 2, 3, 2]) {
+      await wait(650)
+      demo.active = index
+    }
+    await wait(1400)
+    Object.assign(demo, { menu: false, slash: false, caret: 'title', bold: false, active: 0 })
+    await wait(500)
+    while (demo.title) {
+      demo.title = demo.title.slice(0, -1)
+      await wait(22)
+    }
+  }
+}
+
 // Animasi reveal: elemen [data-reveal] di bawah layar disembunyikan lalu muncul saat di-scroll.
 // Yang sudah terlihat saat halaman dibuka dibiarkan (tanpa kedip); hero memakai animasi CSS.
 let observer: IntersectionObserver | null = null
 onMounted(() => {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  playDemo().catch(() => {})
+  if (!('IntersectionObserver' in window)) return
   observer = new IntersectionObserver((entries) => {
     for (const entry of entries) {
       if (!entry.isIntersecting) continue
@@ -152,7 +194,10 @@ onMounted(() => {
     observer.observe(el)
   }
 })
-onBeforeUnmount(() => observer?.disconnect())
+onBeforeUnmount(() => {
+  observer?.disconnect()
+  demoStopped = true
+})
 
 const browsers = ['Chrome', 'Firefox', 'Safari']
 const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Browser · WebKit', 'Feature test Laravel']
@@ -274,22 +319,34 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 Tulisan baru
               </div>
               <div class="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-300">
-                <span class="size-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />Draf tersimpan
+                <span class="mock-pulse size-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />Draf tersimpan
               </div>
             </div>
 
             <div class="relative flex flex-col gap-4 px-6 pt-10 pb-12 text-base sm:px-10 leading-[1.7] text-zinc-700 dark:text-zinc-300">
-              <div class="text-[30px] leading-tight font-extrabold tracking-[-0.02em] text-zinc-950 dark:text-zinc-50">
-                Catatan untuk tim redaksi
+              <!-- Teks penuh (tak terlihat) menahan ukuran, teks yang sedang diketik ditumpuk di atasnya. -->
+              <div class="relative text-[30px] leading-tight font-extrabold tracking-[-0.02em] text-zinc-950 dark:text-zinc-50">
+                <span :class="{ invisible: demo.running }">{{ DEMO_TITLE }}</span>
+                <span
+                  v-if="demo.running"
+                  class="absolute inset-0"
+                >{{ demo.title }}<span
+                  v-if="demo.caret === 'title'"
+                  class="mock-caret"
+                /></span>
               </div>
 
               <div class="relative">
                 <!-- bubble toolbar -->
                 <div
                   aria-hidden="true"
-                  class="absolute -top-12 left-24 z-[2] flex items-center gap-0.5 rounded-[10px] border border-zinc-700 bg-zinc-900 p-1 shadow-[0_12px_28px_-8px_rgba(0,0,0,0.6)]"
+                  class="mock-pop absolute -top-12 left-24 z-[2] flex items-center gap-0.5 rounded-[10px] border border-zinc-700 bg-zinc-900 p-1 shadow-[0_12px_28px_-8px_rgba(0,0,0,0.6)]"
+                  :class="{ 'is-on': demo.bubble }"
                 >
-                  <span class="bubble-btn bg-indigo-500/20 text-sm font-extrabold text-indigo-200">B</span>
+                  <span
+                    class="bubble-btn text-sm font-extrabold transition-colors duration-200"
+                    :class="demo.bold ? 'bg-indigo-500/20 text-indigo-200' : 'text-zinc-300'"
+                  >B</span>
                   <span class="bubble-btn font-serif text-[15px] text-zinc-300 italic">i</span>
                   <span class="bubble-btn text-zinc-300"><svg
                     class="size-[15px]"
@@ -313,7 +370,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                     v-html="ICON.quote"
                   /></span>
                 </div>
-                Menulis seharusnya terasa <span class="rounded-[3px] bg-indigo-500/25 px-0.5 py-px font-bold text-zinc-950 dark:bg-indigo-500/35 dark:text-zinc-50">tenang dan fokus</span>. Toolbar hanya muncul ketika Anda memblok teks, lalu menghilang lagi.
+                Menulis seharusnya terasa <span
+                  class="mock-sel rounded-[3px] px-0.5 py-px"
+                  :class="{ 'is-on': demo.selected, 'font-bold text-zinc-950 dark:text-zinc-50': demo.bold }"
+                >tenang dan fokus</span>. Toolbar hanya muncul ketika Anda memblok teks, lalu menghilang lagi.
               </div>
 
               <div class="border-l-[3px] border-indigo-600 pl-4 text-zinc-500 dark:text-zinc-400">
@@ -327,13 +387,23 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   stroke-width="2.5"
                   v-html="ICON.plus"
                 /></span>
-                <span class="text-zinc-950 dark:text-zinc-50">/</span><span class="-ml-2.5 text-zinc-400 dark:text-zinc-500">Ketik untuk memfilter…</span>
+                <span
+                  class="text-zinc-950 dark:text-zinc-50"
+                  :class="{ invisible: !demo.slash }"
+                >/<span
+                  v-if="demo.caret === 'slash'"
+                  class="mock-caret"
+                /></span><span
+                  class="-ml-2.5 text-zinc-400 transition-opacity duration-200 dark:text-zinc-500"
+                  :class="{ 'opacity-0': !demo.slash }"
+                >Ketik untuk memfilter…</span>
               </div>
 
               <!-- slash menu -->
               <div
                 aria-hidden="true"
-                class="-mt-2 w-[260px] max-w-full self-start rounded-xl border border-zinc-200 bg-white p-1.5 text-sm leading-[1.3] shadow-[0_20px_40px_-12px_rgba(24,24,27,0.25)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.7)]"
+                class="mock-pop -mt-2 w-[260px] max-w-full self-start rounded-xl border border-zinc-200 bg-white p-1.5 text-sm leading-[1.3] shadow-[0_20px_40px_-12px_rgba(24,24,27,0.25)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.7)]"
+                :class="{ 'is-on': demo.menu }"
               >
                 <div class="px-2.5 pt-1.5 pb-2 text-[11px] font-semibold tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
                   BLOK
@@ -346,12 +416,12 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                     { icon: 'code', label: 'Blok kode', key: '```' }
                   ]"
                   :key="item.label"
-                  class="flex items-center gap-2.5 rounded-lg px-2.5 py-2"
-                  :class="i === 0 ? 'bg-indigo-500/15 text-zinc-950 dark:bg-indigo-500/20 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'"
+                  class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150"
+                  :class="i === demo.active ? 'bg-indigo-500/15 text-zinc-950 dark:bg-indigo-500/20 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'"
                 >
                   <span
                     class="flex size-7 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800"
-                    :class="i === 0 ? 'text-indigo-600 dark:text-indigo-300' : 'text-zinc-500 dark:text-zinc-400'"
+                    :class="i === demo.active ? 'text-indigo-600 dark:text-indigo-300' : 'text-zinc-500 dark:text-zinc-400'"
                   ><svg
                     class="size-[15px]"
                     v-bind="svgAttrs"
@@ -1050,6 +1120,59 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 @media (prefers-reduced-motion: reduce) {
   .landing .hero-in {
+    animation: none;
+  }
+}
+
+/* Mockup editor: kursor, seleksi, munculnya bubble/menu, titik draf. */
+.landing .mock-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.12em;
+  background: #818cf8;
+  animation: afw-blink 1s steps(1) infinite;
+}
+@keyframes afw-blink {
+  50% {
+    opacity: 0;
+  }
+}
+.landing .mock-sel {
+  background-image: linear-gradient(rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.3));
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  transition: background-size 0.55s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.landing .mock-sel.is-on {
+  background-size: 100% 100%;
+}
+.landing .mock-pop {
+  opacity: 0;
+  transform: translateY(6px) scale(0.96);
+  transform-origin: 30% 100%;
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.landing .mock-pop.is-on {
+  opacity: 1;
+  transform: none;
+}
+.landing .mock-pulse {
+  animation: afw-pulse 2.4s ease-out infinite;
+}
+@keyframes afw-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 6px rgba(52, 211, 153, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing .mock-caret,
+  .landing .mock-pulse {
     animation: none;
   }
 }
