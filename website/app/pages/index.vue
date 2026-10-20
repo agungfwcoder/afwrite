@@ -344,7 +344,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         aria-hidden="true"
         class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-emerald-500 to-transparent dark:via-emerald-400"
       />
-      <!-- Horizon: pendar yang membesar-meredup + gelombang yang memancar dari garis bawah. -->
+      <!-- Horizon: cahaya di garis bawah yang membesar & meredup bergelombang. -->
       <div
         aria-hidden="true"
         class="hero-horizon pointer-events-none absolute inset-x-0 bottom-0 h-56"
@@ -1468,72 +1468,94 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   background: linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.16));
 }
 
-/* Horizon hero: pendar yang membesar & meredup bergantian, ditambah tiga gelombang lengkung yang
-   memancar dari garis bawah lalu memudar. */
+/* Horizon hero: cahaya di sepanjang garis bawah (tepi kiri sampai kanan layar) yang membesar lalu
+   meredup. Pendar dasar bernapas, gelombang pendar menyapu ke kanan dan ke kiri, dan garisnya
+   sendiri ikut menyala. */
 .landing .hero-horizon {
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 15%, #000 85%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 15%, #000 85%, transparent);
 }
 
+/* Pendar dasar selebar layar. */
 .landing .hero-horizon::before {
   content: '';
   position: absolute;
-  bottom: -90px;
-  left: 50%;
-  width: 90%;
-  height: 180px;
-  margin-left: -45%;
-  background: radial-gradient(50% 50% at 50% 100%, rgba(16, 185, 129, 0.42), transparent 75%);
+  inset: auto 0 0;
+  height: 70px;
+  background: linear-gradient(to top, rgba(16, 185, 129, 0.22), transparent);
   transform-origin: 50% 100%;
-  animation: hero-breathe 7s ease-in-out infinite;
+  animation: hero-breathe 6s ease-in-out infinite;
 }
 
 .dark .landing .hero-horizon::before {
-  background: radial-gradient(50% 50% at 50% 100%, rgba(52, 211, 153, 0.34), transparent 75%);
+  background: linear-gradient(to top, rgba(52, 211, 153, 0.18), transparent);
 }
 
-/* Gelombang: elips berpusat di garis horizon, hanya tepinya yang bercahaya. */
+/* Garis horizon yang menyala. */
+.landing .hero-horizon::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: linear-gradient(to right, rgba(16, 185, 129, 0.35), rgba(16, 185, 129, 0.95) 50%, rgba(16, 185, 129, 0.35));
+  animation: hero-core 6s ease-in-out infinite;
+}
+
+.dark .landing .hero-horizon::after {
+  background: linear-gradient(to right, rgba(52, 211, 153, 0.4), rgba(209, 250, 229, 0.95) 50%, rgba(52, 211, 153, 0.4));
+}
+
+/* Gelombang: pendar elips pipih yang menyapu sepanjang garis, bergantian ke kanan dan ke kiri,
+   sambil membesar lalu meredup. Lebar 45%: geser -100% (luar kiri) sampai 222% (luar kanan). */
 .landing .hero-wave {
   position: absolute;
-  bottom: -110px;
-  left: 50%;
-  width: 70%;
-  height: 220px;
-  margin-left: -35%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, transparent 86%, rgba(16, 185, 129, 0.35) 95%, transparent 100%);
-  opacity: 0;
-  transform-origin: 50% 50%;
-  animation: hero-wave 9s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+  bottom: -70px;
+  left: 0;
+  width: 45%;
+  height: 140px;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(16, 185, 129, 0.36), rgba(16, 185, 129, 0.1) 50%, transparent 72%);
+  animation: hero-sweep-right 9s ease-in-out infinite;
 }
 
 .dark .landing .hero-wave {
-  background: radial-gradient(closest-side, transparent 86%, rgba(52, 211, 153, 0.32) 95%, transparent 100%);
+  background: radial-gradient(50% 50% at 50% 50%, rgba(52, 211, 153, 0.32), rgba(52, 211, 153, 0.08) 50%, transparent 72%);
 }
 
 .landing .hero-wave:nth-child(2) {
-  animation-delay: 3s;
+  animation-name: hero-sweep-left;
 }
 
 .landing .hero-wave:nth-child(3) {
-  animation-delay: 6s;
+  animation-duration: 12s;
+  animation-delay: -6s;
 }
 
 @keyframes hero-breathe {
   0%,
-  100% { opacity: 0.55; transform: scale(0.85, 0.8); }
-  50% { opacity: 1; transform: scale(1.12, 1.15); }
+  100% { opacity: 0.5; transform: scaleY(0.7); }
+  50% { opacity: 1; transform: scaleY(1.25); }
 }
 
-@keyframes hero-wave {
-  0% { opacity: 0; transform: scale(0.3); }
-  15% { opacity: 1; }
-  100% { opacity: 0; transform: scale(1.6); }
+@keyframes hero-sweep-right {
+  0% { opacity: 0; transform: translateX(-100%) scale(0.7, 0.5); }
+  50% { opacity: 1; transform: translateX(61%) scale(1.25, 1.3); }
+  100% { opacity: 0; transform: translateX(222%) scale(0.7, 0.5); }
+}
+
+@keyframes hero-sweep-left {
+  0% { opacity: 0; transform: translateX(222%) scale(0.7, 0.5); }
+  50% { opacity: 1; transform: translateX(61%) scale(1.25, 1.3); }
+  100% { opacity: 0; transform: translateX(-100%) scale(0.7, 0.5); }
+}
+
+@keyframes hero-core {
+  0%,
+  100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing .hero-horizon::before {
+  .landing .hero-horizon::before,
+  .landing .hero-horizon::after {
     animation: none;
   }
 
