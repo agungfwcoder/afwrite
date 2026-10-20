@@ -74,6 +74,8 @@ const isActive = (item: { match: string }) => new RegExp(item.match).test(route.
         v-if="header?.search"
         :collapsed="false"
         label="Cari dokumentasi…"
+        variant="soft"
+        color="neutral"
         class="hidden lg:flex w-70"
       />
       <UContentSearchButton

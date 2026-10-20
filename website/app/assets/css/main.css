@@ -32,6 +32,8 @@
 
 :root {
   --ui-container: var(--container-8xl);
+  /* Sudut lebih bulat seperti situs Nuxt UI (bawaan komponen 0.25rem). */
+  --ui-radius: 0.5rem;
 }
 
 /* Mode gelap mengikuti referensi desain (zinc-950 + kartu #111113). */
