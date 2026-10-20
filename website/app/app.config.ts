@@ -47,12 +47,14 @@ export default defineAppConfig({
       cardGroup: {
         base: 'gap-3 [&>*:nth-child(even)]:before:rotate-[5deg] [&>*:nth-child(even)]:before:bg-sun [&>*:nth-child(even)_.iconify]:text-stone-900!'
       },
-      // Nomor langkah: kotak kertas kuning/teal bergantian di atas garis putus-putus.
+      // Nomor langkah (semua level judul): kotak kertas kuning/teal bergantian di atas garis putus-putus.
       steps: {
         base: 'border-dashed',
         variants: {
           level: {
-            3: '[&>h3]:before:size-7 [&>h3]:before:-rotate-6 [&>h3]:before:rounded-[4px] [&>h3]:before:bg-sun [&>h3]:before:font-mono [&>h3]:before:font-extrabold [&>h3]:before:text-stone-900 [&>h3:nth-of-type(even)]:before:rotate-[5deg] [&>h3:nth-of-type(even)]:before:bg-brand-600 [&>h3:nth-of-type(even)]:before:text-white'
+            2: '[&>h2]:before:size-8 [&>h2]:before:-rotate-6 [&>h2]:before:rounded-[4px] [&>h2]:before:bg-sun [&>h2]:before:font-mono [&>h2]:before:font-extrabold [&>h2]:before:text-stone-900 [&>h2:nth-of-type(even)]:before:rotate-[5deg] [&>h2:nth-of-type(even)]:before:bg-brand-600 [&>h2:nth-of-type(even)]:before:text-white',
+            3: '[&>h3]:before:size-7 [&>h3]:before:-rotate-6 [&>h3]:before:rounded-[4px] [&>h3]:before:bg-sun [&>h3]:before:font-mono [&>h3]:before:font-extrabold [&>h3]:before:text-stone-900 [&>h3:nth-of-type(even)]:before:rotate-[5deg] [&>h3:nth-of-type(even)]:before:bg-brand-600 [&>h3:nth-of-type(even)]:before:text-white',
+            4: '[&>h4]:before:size-7 [&>h4]:before:-rotate-6 [&>h4]:before:rounded-[4px] [&>h4]:before:bg-sun [&>h4]:before:font-mono [&>h4]:before:font-extrabold [&>h4]:before:text-stone-900 [&>h4:nth-of-type(even)]:before:rotate-[5deg] [&>h4:nth-of-type(even)]:before:bg-brand-600 [&>h4:nth-of-type(even)]:before:text-white'
           }
         }
       },
