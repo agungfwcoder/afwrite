@@ -31,6 +31,7 @@ useSeoMeta({
 const REPO = 'https://github.com/agungfwcoder/afwrite'
 const base = useRuntimeConfig().app.baseURL
 const INSTALL = 'npm i github:agungfwcoder/afwrite'
+const STACK = ['Alpine.js', 'Laravel', 'Livewire', 'Bootstrap 5', 'Tailwind CSS']
 
 const { copy, copied } = useClipboard()
 
@@ -527,18 +528,29 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
       </div>
     </section>
 
-    <!-- BEKERJA BERSAMA -->
+    <!-- BEKERJA BERSAMA: satu baris, nama-nama bergeser tanpa henti (marquee) -->
     <section class="border-b border-zinc-100 dark:border-zinc-900">
       <div
         data-reveal
-        class="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-x-10 gap-y-3 px-6 py-8 text-sm"
+        class="mx-auto flex max-w-[1200px] items-center gap-6 px-6 py-8 text-sm sm:gap-10"
       >
-        <span class="text-xs font-semibold tracking-[0.08em] text-zinc-500 dark:text-zinc-400">BEKERJA BERSAMA</span>
-        <span
-          v-for="name in ['Alpine.js', 'Laravel', 'Livewire', 'Bootstrap 5', 'Tailwind CSS']"
-          :key="name"
-          class="text-base font-bold text-zinc-600 dark:text-zinc-300"
-        >{{ name }}</span>
+        <span class="shrink-0 text-xs font-semibold tracking-[0.08em] whitespace-nowrap text-zinc-500 dark:text-zinc-400">BEKERJA BERSAMA</span>
+        <div class="marquee min-w-0 flex-1 overflow-hidden">
+          <div class="marquee-track flex w-max">
+            <div
+              v-for="n in 4"
+              :key="n"
+              class="flex shrink-0 items-center gap-10 pr-10"
+              :aria-hidden="n > 1 ? 'true' : undefined"
+            >
+              <span
+                v-for="name in STACK"
+                :key="name"
+                class="text-base font-bold whitespace-nowrap text-zinc-600 dark:text-zinc-300"
+              >{{ name }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1258,5 +1270,23 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   .landing .mock-pulse {
     animation: none;
   }
+}
+/* Marquee "Bekerja bersama": empat salinan daftar (cukup lebar untuk layar desktop), digeser satu salinan (-25%)
+   lalu berulang, sehingga sambungannya tidak terlihat. */
+.landing .marquee {
+  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+}
+.landing .marquee-track {
+  animation: marquee 20s linear infinite;
+}
+.landing .marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to { transform: translateX(-25%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing .marquee { overflow-x: auto; }
+  .landing .marquee-track { animation: none; }
 }
 </style>
