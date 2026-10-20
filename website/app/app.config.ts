@@ -1,12 +1,12 @@
 import { BRAND } from '../brand'
 import pkg from '../../package.json'
 
-// Gaya halaman dokumentasi mengikuti referensi "Docs — Instalasi" (mode gelap zinc-950 + aksen indigo),
+// Gaya halaman dokumentasi mengikuti referensi "Docs — Instalasi" (mode gelap zinc-950 + aksen emerald),
 // dengan padanan mode terang.
 export default defineAppConfig({
   ui: {
     colors: {
-      primary: 'indigo',
+      primary: 'emerald',
       neutral: 'zinc'
     },
     footer: {
@@ -56,8 +56,8 @@ export default defineAppConfig({
         variant: 'pill',
         active: true,
         class: {
-          link: 'font-semibold text-indigo-700 dark:text-indigo-100 before:bg-indigo-600/10 dark:before:bg-indigo-600/16 before:ring-1 before:ring-inset before:ring-indigo-400/30 dark:before:ring-indigo-400/28',
-          linkLeadingIcon: 'text-indigo-600 dark:text-indigo-300'
+          link: 'font-semibold text-emerald-700 dark:text-emerald-100 before:bg-emerald-600/10 dark:before:bg-emerald-600/16 before:ring-1 before:ring-inset before:ring-emerald-400/30 dark:before:ring-emerald-400/28',
+          linkLeadingIcon: 'text-emerald-600 dark:text-emerald-300'
         }
       }]
     },
@@ -87,7 +87,7 @@ export default defineAppConfig({
     contentSurround: {
       slots: {
         root: 'grid grid-cols-1 sm:grid-cols-2 gap-3',
-        link: 'group flex flex-col gap-1 p-5 rounded-xl border border-default bg-muted hover:border-indigo-600 hover:bg-elevated outline-primary/25 focus-visible:outline-3 transition-colors',
+        link: 'group flex flex-col gap-1 p-5 rounded-xl border border-default bg-muted hover:border-emerald-600 hover:bg-elevated outline-primary/25 focus-visible:outline-3 transition-colors',
         linkLeading: 'flex items-center gap-1.5 p-0 mb-0 rounded-none bg-transparent group-hover:bg-transparent ring-0 text-[13px] text-muted',
         linkLeadingIcon: 'size-3.5 shrink-0 text-muted',
         linkTitle: 'font-bold text-base text-highlighted truncate',
@@ -115,7 +115,7 @@ export default defineAppConfig({
         }
       },
       a: {
-        base: 'text-indigo-600 dark:text-indigo-300 hover:text-indigo-500 dark:hover:text-indigo-200 underline underline-offset-3 decoration-current/40 border-0 font-normal'
+        base: 'text-emerald-600 dark:text-emerald-300 hover:text-emerald-500 dark:hover:text-emerald-200 underline underline-offset-3 decoration-current/40 border-0 font-normal'
       },
       code: {
         variants: {
@@ -143,7 +143,7 @@ export default defineAppConfig({
       },
       card: {
         slots: {
-          base: 'grid grid-cols-[20px_1fr] gap-x-3.5 gap-y-0.5 p-[18px] sm:p-[18px] [&>a]:contents rounded-xl bg-muted hover:border-indigo-600 hover:bg-elevated',
+          base: 'grid grid-cols-[20px_1fr] gap-x-3.5 gap-y-0.5 p-[18px] sm:p-[18px] [&>a]:contents rounded-xl bg-muted hover:border-emerald-600 hover:bg-elevated',
           icon: 'col-start-1 row-start-1 row-span-2 size-5 mt-0.5 mb-0',
           title: 'col-start-2 row-start-1 font-bold',
           description: 'col-start-2 row-start-2 text-sm leading-normal'
@@ -157,7 +157,7 @@ export default defineAppConfig({
       steps: {
         variants: {
           level: {
-            3: '[&>h3]:before:size-8 [&>h3]:before:bg-indigo-600 [&>h3]:before:text-white [&>h3]:before:font-bold [&>h3]:before:-ms-[50.5px] [&>h3]:before:-mt-0.5 [&>h3]:before:ring-default'
+            3: '[&>h3]:before:size-8 [&>h3]:before:bg-emerald-600 [&>h3]:before:text-white [&>h3]:before:font-bold [&>h3]:before:-ms-[50.5px] [&>h3]:before:-mt-0.5 [&>h3]:before:ring-default'
           }
         }
       },

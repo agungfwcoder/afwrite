@@ -46,7 +46,7 @@ const isActive = (item: { match: string }) => new RegExp(item.match).test(route.
         v-else-if="header?.title"
         class="flex items-center gap-2.5"
       >
-        <span class="flex size-7 items-center justify-center rounded-lg bg-indigo-600">
+        <span class="flex size-7 items-center justify-center rounded-lg bg-emerald-600">
           <svg
             aria-hidden="true"
             class="size-4"
