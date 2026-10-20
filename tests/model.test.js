@@ -11,6 +11,7 @@ describe('toJSON', () => {
       type: 'doc',
       content: [{
         type: 'paragraph',
+        attrs: { textAlign: null },
         content: [
           text('Halo '),
           text('dunia ', { type: 'bold' }),
@@ -31,10 +32,10 @@ describe('toJSON', () => {
       '<figure data-embed="youtube"><iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"></iframe></figure>',
     );
     const item = (...content) => ({ type: 'listItem', content });
-    const paragraph = (value) => ({ type: 'paragraph', content: [text(value)] });
+    const paragraph = (value) => ({ type: 'paragraph', attrs: { textAlign: null }, content: [text(value)] });
     expect(doc.content).toEqual([
-      { type: 'heading', attrs: { level: 2 }, content: [text('J')] },
-      { type: 'heading', attrs: { level: 3 }, content: [text('S')] },
+      { type: 'heading', attrs: { textAlign: null, level: 2 }, content: [text('J')] },
+      { type: 'heading', attrs: { textAlign: null, level: 3 }, content: [text('S')] },
       { type: 'blockquote', content: [text('a'), { type: 'hardBreak' }, text('b')] },
       { type: 'bulletList', content: [
         item(paragraph('satu'), { type: 'orderedList', attrs: { start: 1, type: null }, content: [item(paragraph('a'))] }),
@@ -42,7 +43,7 @@ describe('toJSON', () => {
       ] },
       { type: 'codeBlock', attrs: { language: null }, content: [text('x = 1\ny = 2')] },
       { type: 'horizontalRule' },
-      { type: 'image', attrs: { src: 'https://a.com/x.png', alt: 'Foto', size: 'wide', uploading: null }, content: [text('Ket tebal')] },
+      { type: 'image', attrs: { src: 'https://a.com/x.png', alt: 'Foto', size: 'wide', mediaId: null, uploading: null }, content: [text('Ket tebal')] },
       { type: 'embed', attrs: { provider: 'youtube', id: 'dQw4w9WgXcQ', size: null } },
     ]);
   });
@@ -77,7 +78,7 @@ describe('toJSON', () => {
 
   test('HTML berbahaya disanitasi dulu', () => {
     expect(toJSON('<p onclick="x()">a<script>b</script></p><img src="javascript:x">').content).toEqual([
-      { type: 'paragraph', content: [text('a')] },
+      { type: 'paragraph', attrs: { textAlign: null }, content: [text('a')] },
     ]);
   });
 });

@@ -91,4 +91,27 @@ class WyswygTest extends TestCase
         $html = '<h2>Judul</h2><p>Teks <b>tebal</b> <a href="https://a.com">link</a></p><figure data-size="wide"><img src="/x.png" alt="Foto"><figcaption>Ket</figcaption></figure><pre><code>a = 1</code></pre><hr>';
         $this->assertSame($html, WyswygHtml::clean($html));
     }
+
+    public function test_clean_mempertahankan_format_tambahan_dan_media_id(): void
+    {
+        $html = '<h2 class="afw-align-center">Judul</h2><p class="afw-align-justify"><u>garis</u> <s>coret</s> <span style="color: #e11d48">merah</span> <mark style="background-color: #fef08a">stabilo</mark> <mark>polos</mark></p><figure><img src="/x.png" alt="" data-media-id="42"></figure>';
+
+        // HTMLPurifier menulis style tanpa spasi + titik koma; editor menormalkannya lagi saat dimuat.
+        $this->assertSame(
+            '<h2 class="afw-align-center">Judul</h2><p class="afw-align-justify"><u>garis</u> <s>coret</s> <span style="color:#e11d48;">merah</span> <mark style="background-color:#fef08a;">stabilo</mark> <mark>polos</mark></p><figure><img src="/x.png" alt="" data-media-id="42"></figure>',
+            WyswygHtml::clean($html),
+        );
+    }
+
+    public function test_clean_membuang_atribut_format_berbahaya(): void
+    {
+        $html = WyswygHtml::clean('<p class="lain afw-align-center" style="color:red"><span style="color:#e11d48;position:fixed;background:url(x)">a</span></p><img src="/x.png" data-media-id="1 onerror=alert(1)">');
+
+        $this->assertStringContainsString('<p class="afw-align-center">', $html);
+        $this->assertStringContainsString('<span style="color:#e11d48;">a</span>', $html);
+        $this->assertStringNotContainsString('position', $html);
+        $this->assertStringNotContainsString('url(', $html);
+        $this->assertStringNotContainsString('data-media-id', $html);
+        $this->assertStringNotContainsString('onerror', $html);
+    }
 }

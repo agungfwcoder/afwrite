@@ -1,4 +1,6 @@
 // Ikon SVG inline (bentuk mengikuti Lucide, lisensi ISC).
+import { commandAvailable } from './core/commands.js';
+
 const svg = (body) =>
   `<svg class="afw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 
@@ -22,6 +24,14 @@ export const ICONS = {
   external: svg('<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'),
   unlink: svg('<path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"/><line x1="8" x2="8" y1="2" y2="5"/><line x1="2" x2="5" y1="8" y2="8"/><line x1="16" x2="16" y1="19" y2="22"/><line x1="19" x2="22" y1="16" y2="16"/>'),
   bold: svg('<path d="M6 12h9a4 4 0 0 1 0 8H6V4h8a4 4 0 0 1 0 8"/>'),
+  underline: svg('<path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" x2="20" y1="20" y2="20"/>'),
+  strike: svg('<path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" x2="20" y1="12" y2="12"/>'),
+  color: svg('<path d="M4 20h16"/><path d="m6 16 6-12 6 12"/><path d="M8 12h8"/>'),
+  highlight: svg('<path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/>'),
+  alignLeft: svg('<path d="M21 5H3"/><path d="M15 12H3"/><path d="M17 19H3"/>'),
+  alignCenter: svg('<path d="M21 5H3"/><path d="M17 12H7"/><path d="M19 19H5"/>'),
+  alignRight: svg('<path d="M21 5H3"/><path d="M21 12H9"/><path d="M21 19H7"/>'),
+  alignJustify: svg('<path d="M3 5h18"/><path d="M3 12h18"/><path d="M3 19h18"/>'),
   italic: svg('<line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/>'),
   link: svg('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'),
   h2: svg('<path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="M21 18h-4c0-4 4-3 4-6 0-1.5-2-2.5-4-1"/>'),
@@ -43,17 +53,23 @@ const mod = isMac ? '⌘' : 'Ctrl+';
 const alt = isMac ? '⌥' : 'Alt+';
 const shift = isMac ? '⇧' : 'Shift+';
 
-// Bubble toolbar (muncul saat teks diblok).
+// Bubble toolbar (muncul saat teks diblok). Tombol format tambahan (garis bawah, warna, perataan)
+// hanya tampil jika formatnya aktif (opsi formats); di mode artikel bubble tetap ringkas ala Medium.
 export const BUBBLE = [
   [
     { command: 'bold', shortcut: `${mod}B` },
     { command: 'italic', shortcut: `${mod}I` },
+    { command: 'underline', shortcut: `${mod}U` },
     { command: 'link', shortcut: `${mod}K` },
   ],
   [
     { command: 'h2', shortcut: `${mod}${alt}2` },
     { command: 'h3', shortcut: `${mod}${alt}3` },
     { command: 'quote', shortcut: `${mod}${shift}9` },
+  ],
+  [
+    { command: 'color', shortcut: '' },
+    { command: 'align', shortcut: '' },
   ],
 ];
 
@@ -62,6 +78,8 @@ export const TOOLBAR = [
   [
     { command: 'bold', shortcut: `${mod}B` },
     { command: 'italic', shortcut: `${mod}I` },
+    { command: 'underline', shortcut: `${mod}U` },
+    { command: 'strike', shortcut: `${mod}${shift}X` },
     { command: 'link', shortcut: `${mod}K` },
   ],
   [
@@ -69,6 +87,10 @@ export const TOOLBAR = [
     { command: 'h3', shortcut: `${mod}${alt}3` },
     { command: 'quote', shortcut: `${mod}${shift}9` },
     { command: 'codeblock', shortcut: `${mod}${alt}C` },
+  ],
+  [
+    { command: 'color', shortcut: '' },
+    { command: 'align', shortcut: '' },
   ],
   [
     { command: 'ul', shortcut: `${mod}${shift}8` },
@@ -79,6 +101,19 @@ export const TOOLBAR = [
     { command: 'redo', shortcut: `${mod}${shift}Z` },
   ],
 ];
+
+// Isi palet perataan (tombol 'align').
+export const ALIGN_ITEMS = [
+  { command: 'alignLeft', shortcut: `${mod}${shift}L` },
+  { command: 'alignCenter', shortcut: `${mod}${shift}E` },
+  { command: 'alignRight', shortcut: `${mod}${shift}R` },
+  { command: 'alignJustify', shortcut: `${mod}${shift}J` },
+];
+
+// Buang tombol yang formatnya tidak aktif (opsi formats); grup yang jadi kosong ikut dibuang.
+export function withFormats(groups, formats) {
+  return groups.map((group) => group.filter((item) => commandAvailable(formats, item.command))).filter((group) => group.length);
+}
 
 export const headingItem = (level) => ({ command: `h${level}`, shortcut: `${mod}${alt}${level}` });
 const isHeading = (item) => /^h[2-6]$/.test(item.command);

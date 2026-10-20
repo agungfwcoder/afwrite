@@ -26,6 +26,8 @@ class WyswygUploadController extends Controller
 
         $path = $request->file('image')->store('wyswyg', 'public');
 
+        // Jika gambar dicatat di media library, kembalikan juga ID-nya: 'mediaId' => $media->id.
+        // Editor menyimpannya sebagai <img data-media-id="...">.
         return response()->json(['url' => Storage::disk('public')->url($path)]);
     }
 }

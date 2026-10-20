@@ -138,8 +138,8 @@ await page.screenshot({ path: `${SHOTS}/16-kode.png`, clip: { x: 0, y: 100, widt
 await set('<h2>Judul</h2><p>Halo <b>dunia</b></p>');
 const json = await page.evaluate(() => Alpine.$data(document.querySelector('.afw')).getJSON());
 check('getJSON', JSON.stringify(json) === JSON.stringify({ type: 'doc', content: [
-  { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Judul' }] },
-  { type: 'paragraph', content: [{ type: 'text', text: 'Halo ' }, { type: 'text', marks: [{ type: 'bold' }], text: 'dunia' }] },
+  { type: 'heading', attrs: { textAlign: null, level: 2 }, content: [{ type: 'text', text: 'Judul' }] },
+  { type: 'paragraph', attrs: { textAlign: null }, content: [{ type: 'text', text: 'Halo ' }, { type: 'text', marks: [{ type: 'bold' }], text: 'dunia' }] },
 ] }), JSON.stringify(json));
 await page.evaluate(() => Alpine.$data(document.querySelector('.afw')).setJSON({
   type: 'doc',

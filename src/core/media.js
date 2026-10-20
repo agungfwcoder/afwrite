@@ -135,7 +135,20 @@ const readAsDataUrl = (file) =>
     reader.readAsDataURL(file);
   });
 
-// Sisipkan file gambar. `upload(file)` -> Promise<url> dari opsi pengguna;
+// Hasil upload: string URL, atau { url, mediaId?, alt? } (mediaId = ID media library aplikasi,
+// hanya angka; ditulis sebagai data-media-id). Nilai tidak valid -> null.
+export function normalizeUpload(result) {
+  const data = typeof result === 'string' ? { url: result } : result && typeof result === 'object' ? result : {};
+  const url = typeof data.url === 'string' ? data.url : '';
+  const mediaId = data.mediaId ?? data.media_id;
+  return {
+    url,
+    mediaId: /^\d{1,20}$/.test(String(mediaId ?? '')) ? String(mediaId) : null,
+    alt: typeof data.alt === 'string' ? data.alt.trim() : '',
+  };
+}
+
+// Sisipkan file gambar. `upload(file)` -> Promise<url | { url, mediaId, alt }> dari opsi pengguna;
 // tanpa itu, gambar disimpan sebagai data URL (base64) di dalam HTML.
 export async function insertImageFiles(editor, files) {
   const { upload, maxImageSize } = editor.options;
@@ -160,9 +173,10 @@ export async function insertImageFiles(editor, files) {
     editor.tiptap.commands.insertMediaBlock({ type: 'image', attrs: { src: preview, alt: '', uploading: id } });
 
     try {
-      const url = upload ? await upload(file) : await readAsDataUrl(file);
+      const { url, mediaId, alt } = normalizeUpload(upload ? await upload(file) : await readAsDataUrl(file));
       if (!url) throw new Error('URL hasil upload kosong');
-      updateUploading(editor, id, (tr, pos, node) => tr.setNodeMarkup(pos, null, { ...node.attrs, src: url, uploading: null }));
+      updateUploading(editor, id, (tr, pos, node) =>
+        tr.setNodeMarkup(pos, null, { ...node.attrs, src: url, mediaId, alt: node.attrs.alt || alt, uploading: null }));
     } catch (err) {
       updateUploading(editor, id, (tr, pos, node) => tr.delete(pos, pos + node.nodeSize));
       editor.emit('error', { message: format(t.errorUpload, { name: file.name }), error: err });

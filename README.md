@@ -50,6 +50,10 @@ Alpine.plugin(afwrite);
 Alpine.start();
 ```
 
+Livewire 3/4 sudah membawa dan menjalankan Alpine sendiri: jangan impor `alpinejs` atau memanggil
+`Alpine.start()`. Cukup `import 'afwrite'` dan `import 'afwrite/style.css'`; plugin terdaftar
+otomatis saat event `alpine:init`.
+
 ## Pemakaian
 
 ```html
@@ -85,11 +89,15 @@ Dengan `x-model`:
 | `stats` | `true` | Jumlah kata & waktu baca |
 | `dragHandle` | `true` | Pegangan ⋮⋮ di kiri blok: seret untuk memindah, klik untuk memilih |
 | `readonly` | `false` | Mode baca saja |
-| `upload` | `null` | `async (file) => url`. Tanpa ini gambar disimpan sebagai base64 |
+| `upload` | `null` | `async (file) => url` atau `{ url, mediaId, alt }` (`mediaId` ditulis sebagai `data-media-id`). Tanpa ini gambar disimpan sebagai base64 |
 | `maxImageSize` | `5 MB` | Batas ukuran gambar (byte); `0` = tanpa batas |
 | `allowDataImages` | `true` | Izinkan `<img src="data:image/…">` di output |
 | `headings` | `[2, 3]` | Level judul yang dipakai (2–6), mis. `[2, 3, 4, 5, 6]`. Tombol toolbar, slash menu, shortcut, dan markdown mengikuti; level lain diturunkan ke level aktif terdekat |
 | `title` | `false` | Mode artikel ala Medium: teks paling atas judul `<h1>` (di atasnya hanya boleh gambar/video/pemisah); tombol judul kecil (level kedua) di baris tepat setelahnya membuat subjudul `<p class="afw-subtitle">` |
+| `formats` | semua | Format tambahan: `'underline'`, `'strike'`, `'color'`, `'highlight'`, `'align'`. Mode artikel: tidak ada (tetap polos). `false` = tanpa |
+| `colors`, `highlights` | palet bawaan | Palet warna teks & stabilo (hex); warna di luar palet dibuang |
+| `extensions` | `[]` | Extension Tiptap tambahan (node/mark milik aplikasi) |
+| `sanitize` | `null` | Whitelist untuk extension di atas: `{ allowTags, allowAttributes, allowClasses }` |
 | `markdown` | `true` | Shortcut markdown |
 | `slash` | `true` | Slash menu |
 | `pasteAsPlainText` | `false` | Buang semua format saat paste |
@@ -118,7 +126,7 @@ Dipanggil dari markup di dalam komponen atau lewat `Alpine.$data(el)`:
 |---|---|
 | `getHTML()` / `setHTML(html)` | Ambil / ganti isi (selalu disanitasi) |
 | `getJSON()` / `setJSON(doc)` | Isi sebagai JSON dokumen ProseMirror |
-| `getMeta()` | Pratinjau ala Medium: `{ image, title, subtitle, slug }` dari gambar pertama, teks pertama, dan teks kedua |
+| `getMeta()` | Pratinjau ala Medium: `{ image, title, subtitle, slug }` dari gambar pertama (dengan `mediaId`), teks pertama, dan teks kedua |
 | `exec(perintah, ...arg)` | Jalankan perintah, lihat tabel perintah |
 | `isActive(perintah)` | Format aktif di posisi kursor |
 | `setReadOnly(bool)` | Ubah mode baca saja |
@@ -141,6 +149,9 @@ Dikirim dari elemen editor dan *bubbling*, jadi bisa ditangkap di parent:
 | Perintah | Shortcut | Markdown |
 |---|---|---|
 | `bold` / `italic` | Ctrl/⌘ + B / I | `**teks**` / `*teks*` |
+| `underline` / `strike` | Ctrl/⌘ + U / Ctrl/⌘ + Shift + X | |
+| `color` / `highlight` | palet di toolbar & bubble; `exec('color', '#e11d48')` | |
+| `alignLeft` … `alignJustify` | Ctrl/⌘ + Shift + L / E / R / J; `exec('align', 'center')` | |
 | `link` | Ctrl/⌘ + K | tempel URL di atas teks terseleksi |
 | `h2` … `h6` | Ctrl/⌘ + Alt + 2 … 6 | `## ` … `###### ` (level harus aktif di `headings`) |
 | `paragraph` | Ctrl/⌘ + Alt + 0 | |
@@ -178,8 +189,9 @@ Elemen `#editor` perlu dibungkus elemen berclass `afw` agar style berlaku.
 
 | API `Editor` | Keterangan |
 |---|---|
-| `exec(nama, ...arg)`, `isActive(nama)`, `state()` | Perintah & status format |
+| `exec(nama, ...arg)`, `isActive(nama)`, `state()`, `formatValues()` | Perintah & status format (`formatValues()`: `{ color, highlight, align }` di posisi kursor) |
 | `getHTML()`, `setHTML(html, { resetHistory })`, `getJSON()`, `setJSON(doc)`, `getText()`, `clear()`, `isEmpty()` | Isi |
+| `normalizeHTML(html)` | HTML seperti hasil `getHTML()` setelah `setHTML(html)`, tanpa mengubah isi; untuk membandingkan konten dari luar |
 | `insertHTML(html)`, `insertText(teks)`, `paste({ html, text, files })`, `insertImages(files)` | Sisipkan |
 | `undo()`, `redo()`, `canUndo()`, `canRedo()` | Riwayat |
 | `restoreDraft()`, `discardDraft()`, `clearDraft()`, `draft` | Autosave |
@@ -240,7 +252,9 @@ Pakai class `afw-prose` agar tipografi sama dengan di editor:
 <article class="afw-prose">{!! $post->body !!}</article>
 ```
 
-Tema gelap: `data-afw-theme="dark"` (atau `"auto"`) pada `.afw` maupun `.afw-prose`.
+Tema gelap: `data-afw-theme="dark"` (atau `"auto"`) pada `.afw` maupun `.afw-prose`, atau class
+`.dark` pada ancestor (Tailwind, Flux, Nuxt UI) yang langsung berlaku tanpa reload;
+`data-afw-theme="light"` untuk tetap terang di dalam `.dark`.
 Media ukuran penuh di `.afw-prose` melebar keluar sebesar `--afw-prose-bleed` (default `0`).
 
 ## Kustomisasi tampilan
@@ -260,9 +274,12 @@ Semua warna, font, dan ukuran memakai variabel CSS `--afw-*`:
 
 Semua HTML yang masuk (paste, drop, `setHTML`) dan keluar (`getHTML`) melewati whitelist:
 
-- Tag: `p h1 (mode artikel) h2–h6 (sesuai headings) blockquote ul ol li b i a code br pre figure img figcaption iframe hr`
-- Atribut: `a[href]` (http/https/mailto/tel/relatif), `img[src alt]` (src divalidasi; data URL
-  hanya PNG/JPG/GIF/WebP/AVIF), `figure[data-size data-embed]`, iframe hanya YouTube/Vimeo
+- Tag: `p h1 (mode artikel) h2–h6 (sesuai headings) blockquote ul ol li b i a code br pre figure img figcaption iframe hr`,
+  plus `u s span mark` jika format tambahan aktif
+- Format tambahan: `span[style=color]` & `mark[style=background-color]` hanya warna dari palet (hex),
+  `class="afw-align-center|right|justify"` pada `p` & `h2`–`h6`
+- Atribut: `a[href]` (http/https/mailto/tel/relatif), `img[src alt data-media-id]` (src divalidasi; data URL
+  hanya PNG/JPG/GIF/WebP/AVIF; `data-media-id` hanya angka), `figure[data-size data-embed]`, iframe hanya YouTube/Vimeo
   dengan `src` yang dibangun ulang dari ID video.
 
 > **Penting:** sanitasi di browser tidak menggantikan sanitasi di server. Request bisa dikirim

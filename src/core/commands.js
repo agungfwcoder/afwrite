@@ -7,6 +7,7 @@
 
 import { insertImageFiles, pickImageFiles } from './media.js';
 import { parseEmbed } from './embed.js';
+import { ALIGNS, normalizeColor } from './formats.js';
 import { titleIndex } from './schema.js';
 import { normalizeUrl } from './url.js';
 
@@ -50,16 +51,85 @@ const heading = (level) => ({
         .setNode('subtitle')
         .run();
     }
+    // Perataan ikut dipertahankan saat paragraf <-> judul.
     return blockType(ed) === 'subtitle'
       ? tt(ed).commands.setNode('heading', { level })
-      : toggleBlock('heading', { level })(ed);
+      : toggleBlock('heading', { level, ...keepAlign(ed) })(ed);
   },
   active: (ed) => tt(ed).isActive('heading', { level }) || (blockType(ed) === 'subtitle' && level === subtitleLevel(ed)),
 });
 
+// ----- Format tambahan (opsi formats) -----
+
+// Perintah -> format yang dibutuhkan (salah satu). Tanpa format itu tombolnya tidak ditampilkan.
+export const COMMAND_FORMATS = {
+  underline: ['underline'],
+  strike: ['strike'],
+  color: ['color', 'highlight'], // tombol palet: warna teks dan/atau stabilo
+  highlight: ['highlight'],
+  align: ['align'],
+  alignLeft: ['align'],
+  alignCenter: ['align'],
+  alignRight: ['align'],
+  alignJustify: ['align'],
+};
+export const commandAvailable = (formats, name) => !COMMAND_FORMATS[name] || COMMAND_FORMATS[name].some((f) => formats.includes(f));
+const hasFormat = (ed, name) => ed.options.formats.includes(name);
+
+const ALIGN_TYPES = ['paragraph', 'heading'];
+const keepAlign = (ed) => (hasFormat(ed, 'align') ? { textAlign: currentAlign(ed) } : {});
+
+// Perataan blok tingkat teratas di posisi kursor: 'center' | 'right' | 'justify', atau null (kiri).
+export function currentAlign(ed) {
+  const $pos = $from(ed);
+  const node = $pos.depth >= 1 ? $pos.node(1) : $pos.nodeAfter; // seleksi seluruh dokumen: blok pertama
+  return node && ALIGN_TYPES.includes(node.type.name) ? node.attrs.textAlign || null : null;
+}
+
+// Ratakan semua paragraf & judul tingkat teratas dalam seleksi (isi list dan kutipan tidak).
+function setAlign(ed, value) {
+  if (!hasFormat(ed, 'align')) return false;
+  const align = ALIGNS.includes(value) ? value : null;
+  const { state, view } = tt(ed);
+  const { from, to } = state.selection;
+  const tr = state.tr;
+  // Hanya blok tingkat teratas: tidak masuk ke dalam list / kutipan.
+  state.doc.nodesBetween(from, to, (node, pos) => {
+    if (ALIGN_TYPES.includes(node.type.name) && node.attrs.textAlign !== align) {
+      tr.setNodeMarkup(pos, null, { ...node.attrs, textAlign: align });
+    }
+    return false;
+  });
+  if (tr.docChanged) view.dispatch(tr);
+  return true;
+}
+
+const alignCommand = (value) => ({
+  run: (ed) => setAlign(ed, value),
+  active: (ed) => currentAlign(ed) === (value === 'left' ? null : value),
+});
+
+const toggleFormat = (name) => ({
+  run: (ed) => hasFormat(ed, name) && tt(ed).commands.toggleMark(name),
+  active: (ed) => hasFormat(ed, name) && tt(ed).isActive(name),
+});
+
+// Warna dari palet (opsi colors / highlights). Tanpa nilai (atau null) = hapus warna.
+const colorCommand = (name, palette) => ({
+  run(ed, value) {
+    if (!hasFormat(ed, name)) return false;
+    const color = normalizeColor(value);
+    if (!color) return tt(ed).chain().extendMarkRange(name).unsetMark(name).run();
+    if (!ed.options[palette].includes(color)) return false;
+    return tt(ed).commands.setMark(name, { color });
+  },
+  active: (ed) => hasFormat(ed, name) && tt(ed).isActive(name),
+});
+
 // Perintah yang tidak berlaku di judul / subjudul artikel (tombolnya tampil redup).
-const SUBTITLE_DISABLED = ['bold', 'italic', 'ul', 'ol', 'codeblock', 'indent', 'outdent'];
+const SUBTITLE_DISABLED = ['bold', 'italic', 'ul', 'ol', 'codeblock', 'indent', 'outdent', ...Object.keys(COMMAND_FORMATS)];
 export function isCommandDisabled(ed, name) {
+  if (!commandAvailable(ed.options.formats, name)) return true;
   const type = blockType(ed);
   // Dari judul hanya bisa menyisipkan blok non-teks; blok itu dipasang di atas judul.
   if (type === 'title') return !['undo', 'redo', 'image', 'embed', 'hr'].includes(name);
@@ -76,6 +146,28 @@ export const COMMANDS = {
     run: (ed) => tt(ed).commands.toggleMark('italic'),
     active: (ed) => tt(ed).isActive('italic'),
   },
+  underline: toggleFormat('underline'),
+  strike: toggleFormat('strike'),
+  // exec('color', '#e11d48') / exec('highlight', '#fef08a'); tanpa nilai = hapus.
+  // Tombol 'color' di UI membuka palet; statusnya aktif jika teks berwarna atau berstabilo.
+  color: {
+    ...colorCommand('color', 'colors'),
+    active: (ed) => (hasFormat(ed, 'color') && tt(ed).isActive('color')) || (hasFormat(ed, 'highlight') && tt(ed).isActive('highlight')),
+  },
+  highlight: colorCommand('highlight', 'highlights'),
+  // exec('align', 'center'); tanpa nilai = ganti bergiliran kiri -> tengah -> kanan -> rata kanan-kiri.
+  align: {
+    run(ed, value) {
+      if (value !== undefined) return setAlign(ed, value);
+      const order = [null, ...ALIGNS];
+      return setAlign(ed, order[(order.indexOf(currentAlign(ed)) + 1) % order.length]);
+    },
+    active: (ed) => currentAlign(ed) !== null,
+  },
+  alignLeft: alignCommand('left'),
+  alignCenter: alignCommand('center'),
+  alignRight: alignCommand('right'),
+  alignJustify: alignCommand('justify'),
   h2: heading(2),
   h3: heading(3),
   h4: heading(4),
@@ -102,7 +194,7 @@ export const COMMANDS = {
     // Kembalikan blok menjadi paragraf biasa (termasuk keluar dari list).
     run(ed) {
       if (inList(ed)) tt(ed).commands.liftListItem('listItem');
-      else if (blockType(ed) !== 'title') tt(ed).commands.setNode('paragraph');
+      else if (blockType(ed) !== 'title') tt(ed).commands.setNode('paragraph', keepAlign(ed));
     },
     active: (ed) => blockType(ed) === 'paragraph' && !inList(ed),
   },

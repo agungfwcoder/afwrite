@@ -3,10 +3,16 @@
 // Dipakai untuk: konten hasil paste/drop, setHTML(), dan output getHTML().
 // Hasilnya hanya berisi tag yang dikenal editor. Atribut yang tersisa hanya:
 //   <a href>                       URL divalidasi (http/https/mailto/tel/relatif)
-//   <img src alt>                  src divalidasi; data:image hanya png/jpg/gif/webp/avif
+//   <img src alt data-media-id>    src divalidasi; data:image hanya png/jpg/gif/webp/avif;
+//                                  data-media-id hanya angka (ID media library aplikasi)
 //   <figure data-size data-embed>  data-size: wide | full
 //   <iframe ...>                   hanya YouTube/Vimeo, src dibangun ulang dari ID video
 //   <pre><code>                    blok kode: teks polos, spasi & baris baru dipertahankan
+// Format tambahan (opsi formats, lihat formats.js):
+//   <u> <s>                        garis bawah, coret
+//   <span style="color: #rrggbb">  warna teks, hanya dari palet `colors`
+//   <mark style="background-color: #rrggbb">  stabilo; warna di luar palet `highlights` -> <mark> polos
+//   <p|h2-h6 class="afw-align-*">  perataan; juga dibaca dari ql-align-*, style text-align, align
 // Contoh:
 //
 //   sanitize('<div style="color:red">Hai <script>x()</script><span style="font-weight:700">kamu</span></div>')
@@ -17,12 +23,21 @@
 // bisa dikirim tanpa melewati editor.
 
 import { createEmbedIframe, normalizeImageSrc, parseEmbed } from './embed.js';
+import { alignOf, DEFAULT_COLORS, DEFAULT_HIGHLIGHTS, normalizeColor, normalizeFormats, normalizePalette, styleValue } from './formats.js';
 import { normalizeUrl } from './url.js';
 
 export const BLOCK_TAGS = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'FIGURE', 'HR', 'PRE']);
 const MEDIA_TAGS = new Set(['FIGURE', 'HR']);
 const FIGURE_SIZES = ['wide', 'full'];
-export const INLINE_TAGS = new Set(['B', 'I', 'A', 'CODE', 'BR']);
+export const INLINE_TAGS = new Set(['B', 'I', 'A', 'CODE', 'BR', 'U', 'S', 'SPAN', 'MARK']);
+const MARK_TAGS = ['B', 'I', 'A', 'CODE', 'U', 'S', 'SPAN', 'MARK'];
+// Tag sumber garis bawah / coret -> [tag hasil, nama format].
+const DECORATION_TAGS = { U: ['U', 'underline'], INS: ['U', 'underline'], S: ['S', 'strike'], STRIKE: ['S', 'strike'], DEL: ['S', 'strike'] };
+const ALIGNABLE = new Set(['P', 'H2', 'H3', 'H4', 'H5', 'H6']);
+const MEDIA_ID = /^\d{1,20}$/;
+// Atribut yang tidak pernah boleh lewat opsi allowAttributes.
+const FORBIDDEN_ATTR = /^(on|style$|class$|srcdoc$|formaction$|xmlns|xlink)/i;
+const URL_ATTRS = new Set(['href', 'src', 'cite', 'action', 'poster']);
 const TEXT_BLOCKS = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'LI']);
 const LISTS = new Set(['UL', 'OL']);
 
@@ -56,7 +71,32 @@ const CONTAINER_TAGS = new Set([
 //   title (false)           mode artikel: <h1> pertama (boleh setelah gambar/video/pemisah) = judul,
 //                           <p class="afw-subtitle"> tepat setelahnya = subjudul; <h1> lain
 //                           diturunkan seperti biasa
+//   formats (semua, [] di mode artikel)  format tambahan yang dipertahankan, lihat formats.js
+//   colors, highlights      palet warna teks & stabilo (bawaan DEFAULT_COLORS / DEFAULT_HIGHLIGHTS)
+//   allowTags               tag inline tambahan untuk ekstensi sendiri, mis. ['sup', 'sub']
+//   allowAttributes         atribut tambahan per tag ('*' = semua tag), mis. { a: ['target', 'rel'] };
+//                           on*, style, dan class tidak pernah lolos; href/src divalidasi
+//   allowClasses            class tambahan yang dipertahankan, mis. ['callout']
 let options = {};
+
+// Tag yang tidak bisa dijadikan tag tambahan: tag inti editor dan tag berbahaya.
+const RESERVED_TAGS = new Set(['IMG', 'IFRAME', 'FRAME', 'FIGURE', 'FIGCAPTION', 'PRE', 'HR', 'INS', 'DEL', 'STRIKE', 'FONT']);
+const isTagName = (name) => /^[a-z][a-z0-9-]*$/i.test(name);
+
+function normalizeAllow(opts) {
+  const tags = new Set((opts.allowTags || []).filter(isTagName).map((t) => t.toUpperCase())
+    .filter((t) => !DROP_TAGS.has(t) && !RESERVED_TAGS.has(t) && !BLOCK_TAGS.has(t) && !INLINE_TAGS.has(t) && !TAG_MAP[t] && !CONTAINER_TAGS.has(t)));
+  const attributes = {};
+  Object.entries(opts.allowAttributes || {}).forEach(([tag, names]) => {
+    if (tag !== '*' && !isTagName(tag)) return;
+    const valid = (Array.isArray(names) ? names : []).filter((n) => /^[a-z][a-z0-9_:-]*$/i.test(n) && !FORBIDDEN_ATTR.test(n));
+    if (valid.length) attributes[tag === '*' ? '*' : tag.toUpperCase()] = valid.map((n) => n.toLowerCase());
+  });
+  const classes = new Set((opts.allowClasses || []).filter((c) => /^[a-z_-][a-z0-9_-]*$/i.test(c) && !/^afw-/.test(c)));
+  return { tags, attributes, classes };
+}
+
+const hasFormat = (name) => options.formats.includes(name);
 
 // [4, 2, 2, 9] -> [2, 4]. Hanya level 2-6; kosong/tidak valid -> [2, 3].
 export function normalizeHeadings(levels) {
@@ -83,6 +123,10 @@ export function sanitizeToElement(html, opts = {}) {
   options = { allowDataImages: true, ...opts };
   options.headings = normalizeHeadings(opts.headings);
   options.title = !!opts.title;
+  options.formats = normalizeFormats(opts.formats, options.title);
+  options.colors = normalizePalette(opts.colors, DEFAULT_COLORS);
+  options.highlights = normalizePalette(opts.highlights, DEFAULT_HIGHLIGHTS);
+  options.allow = normalizeAllow(opts);
 
   // DOMParser menghasilkan dokumen "mati": script tidak jalan, gambar tidak dimuat.
   const source = new DOMParser().parseFromString(String(html), 'text/html');
@@ -119,7 +163,7 @@ function fixTitle(root) {
   const subtitle = title.nextElementSibling;
   if (subtitle?.classList.contains('afw-subtitle')) {
     subtitle.querySelectorAll('br').forEach((br) => br.replaceWith(' '));
-    subtitle.querySelectorAll('b, i, code').forEach(unwrap);
+    subtitle.querySelectorAll('b, i, code, u, s, span, mark').forEach(unwrap);
   }
 }
 
@@ -161,25 +205,76 @@ function convert(node) {
   // Sel tabel: isi dipertahankan, dipisah spasi.
   if (tag === 'TD' || tag === 'TH') return [...children, document.createTextNode(' ')];
 
+  // Tag inline tambahan (opsi allowTags), untuk ekstensi milik aplikasi.
+  if (options.allow.tags.has(tag)) return wrapInline(tag, children, extraAttrs(node, tag));
+
+  if (DECORATION_TAGS[tag]) {
+    const [target, format] = DECORATION_TAGS[tag];
+    return styleFormats(hasFormat(format) ? wrapInline(target, children) : children, node, style);
+  }
+  if (tag === 'MARK') {
+    if (!hasFormat('highlight')) return children;
+    const color = paletteColor(styleValue(style, 'background-color') || node.getAttribute('data-color'), options.highlights);
+    return wrapInline('MARK', children, color ? { style: `background-color: ${color}` } : {});
+  }
+
   const target = tag === 'H1' && options.title ? 'H1' : /^H[1-6]$/.test(tag) ? headingTag(tag) : TAG_MAP[tag] || (CONTAINER_TAGS.has(tag) ? 'P' : null);
 
-  // Tag tak dikenal (span, font, u, ...): ambil isinya, tapi format dari style tetap dibaca.
-  if (!target) {
-    let out = children;
-    if (/font-style\s*:\s*italic/.test(style)) out = wrapInline('I', out);
-    if (/font-weight\s*:\s*(bold|bolder|[6-9]00)/.test(style)) out = wrapInline('B', out);
-    return out;
-  }
+  // Tag tak dikenal (span, font, ...): ambil isinya, tapi format dari style tetap dibaca.
+  if (!target) return styleFormats(children, node, style);
 
   if (target === 'BR') return [document.createElement('br')];
 
   if (target === 'A') {
     const href = normalizeUrl(node.getAttribute('href'));
-    return href ? wrapInline('A', children, { href }) : children;
+    return href ? wrapInline('A', children, { href, ...extraAttrs(node, 'A') }) : children;
   }
 
-  if (INLINE_TAGS.has(target)) return wrapInline(target, children);
-  return makeBlock(target, children);
+  if (INLINE_TAGS.has(target)) return wrapInline(target, children, extraAttrs(node, target));
+  return makeBlock(target, children, blockAttrs(node, target));
+}
+
+// Warna yang ada di palet (dalam format #rrggbb), selain itu null.
+function paletteColor(value, palette) {
+  const color = normalizeColor(value);
+  return color && palette.includes(color) ? color : null;
+}
+
+// Format dari style inline (umum di hasil paste Google Docs / Word).
+function styleFormats(nodes, node, style) {
+  let out = nodes;
+  if (/font-style\s*:\s*italic/.test(style)) out = wrapInline('I', out);
+  if (/font-weight\s*:\s*(bold|bolder|[6-9]00)/.test(style)) out = wrapInline('B', out);
+  const decoration = `${styleValue(style, 'text-decoration')} ${styleValue(style, 'text-decoration-line')}`;
+  if (hasFormat('underline') && /underline/.test(decoration)) out = wrapInline('U', out);
+  if (hasFormat('strike') && /line-through/.test(decoration)) out = wrapInline('S', out);
+  const color = hasFormat('color') && paletteColor(styleValue(style, 'color') || (node.tagName === 'FONT' ? node.getAttribute('color') : ''), options.colors);
+  if (color) out = wrapInline('SPAN', out, { style: `color: ${color}` });
+  const background = hasFormat('highlight') && paletteColor(styleValue(style, 'background-color'), options.highlights);
+  if (background) out = wrapInline('MARK', out, { style: `background-color: ${background}` });
+  return out;
+}
+
+// Atribut & class tambahan dari opsi allowAttributes / allowClasses.
+function extraAttrs(node, tag) {
+  const { attributes, classes } = options.allow;
+  const out = {};
+  [...(attributes[tag] || []), ...(attributes['*'] || [])].forEach((name) => {
+    if (!node.hasAttribute(name)) return;
+    const value = URL_ATTRS.has(name) ? normalizeUrl(node.getAttribute(name)) : node.getAttribute(name);
+    if (value !== null && value !== '') out[name] = value;
+  });
+  const kept = [...(node.classList || [])].filter((c) => classes.has(c));
+  if (kept.length) out.class = kept.join(' ');
+  return out;
+}
+
+// Atribut blok hasil: perataan (opsi formats: align) + atribut tambahan.
+function blockAttrs(node, target) {
+  const attrs = extraAttrs(node, target);
+  const align = ALIGNABLE.has(target) && hasFormat('align') ? alignOf(node) : null;
+  if (align) attrs.class = [`afw-align-${align}`, attrs.class].filter(Boolean).join(' ');
+  return attrs;
 }
 
 const isBlock = (node) => node.nodeType === Node.ELEMENT_NODE && BLOCK_TAGS.has(node.tagName);
@@ -203,7 +298,9 @@ function imageFigure(node) {
   });
   if (!src) return [];
   const alt = (node.getAttribute('alt') || '').trim();
-  return [el('FIGURE', {}, [el('IMG', { src, alt })])];
+  const mediaId = (node.getAttribute('data-media-id') || '').trim();
+  const attrs = { src, alt, ...(MEDIA_ID.test(mediaId) && { 'data-media-id': mediaId }), ...extraAttrs(node, 'IMG') };
+  return [el('FIGURE', {}, [el('IMG', attrs)])];
 }
 
 function embedFigure(embed) {
@@ -237,11 +334,11 @@ function el(tag, attrs = {}, children = []) {
 }
 
 // Kelompokkan node inline berurutan ke dalam `tag`; node blok dibiarkan.
-function wrapInlineRuns(nodes, tag) {
+function wrapInlineRuns(nodes, tag, attrs = {}) {
   const out = [];
   let run = [];
   const flush = () => {
-    if (run.length) out.push(el(tag, {}, run));
+    if (run.length) out.push(el(tag, attrs, run));
     run = [];
   };
   nodes.forEach((node) => {
@@ -338,7 +435,7 @@ function flattenToInline(nodes, { keepLists = false } = {}) {
   return out;
 }
 
-function makeBlock(tag, children) {
+function makeBlock(tag, children, attrs = {}) {
   switch (tag) {
     case 'P':
     case 'H1':
@@ -348,17 +445,17 @@ function makeBlock(tag, children) {
     case 'H5':
     case 'H6':
       // Blok di dalam paragraf/heading diangkat keluar.
-      return wrapInlineRuns(children, tag);
+      return wrapInlineRuns(children, tag, attrs);
 
     case 'BLOCKQUOTE':
-      return [el('BLOCKQUOTE', {}, flattenToInline(children))];
+      return [el('BLOCKQUOTE', attrs, flattenToInline(children))];
 
     case 'LI':
-      return [el('LI', {}, flattenToInline(children, { keepLists: true }))];
+      return [el('LI', attrs, flattenToInline(children, { keepLists: true }))];
 
     case 'UL':
     case 'OL': {
-      const list = el(tag);
+      const list = el(tag, attrs);
       let inlineRun = [];
       const flushInline = () => {
         if (inlineRun.some((n) => n.nodeType !== Node.TEXT_NODE || n.data.trim())) {
@@ -411,10 +508,12 @@ function unwrap(node) {
 }
 
 function unwrapRedundant(root) {
-  // <b> di dalam <b>, <a> di dalam <a>, dst.
-  ['B', 'I', 'A', 'CODE'].forEach((tag) => {
+  // <b> di dalam <b>, <a> di dalam <a>, dst. Warna/stabilo bertingkat dibiarkan: yang terdalam berlaku.
+  ['B', 'I', 'A', 'CODE', 'U', 'S'].forEach((tag) => {
     root.querySelectorAll(`${tag} ${tag}`).forEach(unwrap);
   });
+  // Link sudah bergaris bawah; <u> di dalamnya umumnya gaya link dari Google Docs/Word.
+  root.querySelectorAll('a u').forEach(unwrap);
   // Heading sudah tebal; <b> di dalamnya tidak bermakna (umum dari Google Docs).
   root.querySelectorAll(HEADINGS.split(', ').map((h) => `${h} b`).join(', ')).forEach(unwrap);
 }
@@ -466,7 +565,7 @@ function removeEmptyInline(root) {
   let changed = true;
   while (changed) {
     changed = false;
-    root.querySelectorAll('b, i, a, code').forEach((node) => {
+    root.querySelectorAll(inlineSelector()).forEach((node) => {
       if (!node.textContent && !node.querySelector('br')) {
         node.remove();
         changed = true;
@@ -515,15 +614,21 @@ function tidyMedia(root) {
   });
 }
 
+// Tag format inline (termasuk tag tambahan dari opsi allowTags).
+const inlineSelector = () => [...MARK_TAGS, ...options.allow.tags].join(', ');
+
+const sameAttributes = (a, b) =>
+  a.attributes.length === b.attributes.length && [...a.attributes].every((attr) => b.getAttribute(attr.name) === attr.value);
+
 function mergeAdjacent(root) {
-  root.querySelectorAll('b, i, code, a').forEach((node) => {
+  root.querySelectorAll(inlineSelector()).forEach((node) => {
     if (!root.contains(node)) return; // sudah digabung ke elemen sebelumnya
     let next = node.nextSibling;
     while (
       next &&
       next.nodeType === Node.ELEMENT_NODE &&
       next.tagName === node.tagName &&
-      next.getAttribute('href') === node.getAttribute('href')
+      sameAttributes(next, node)
     ) {
       node.append(...next.childNodes);
       next.remove();

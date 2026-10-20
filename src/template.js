@@ -8,12 +8,13 @@ const buttonGroup = (list, extraClass = '') => `
       <template x-for="item in group" :key="item.command">
         <button type="button" class="afw-btn ${extraClass}"
                 :class="{ 'afw-is-active': isActive(item.command) }"
-                :title="\`\${t(item.command)} (\${item.shortcut})\`"
+                :title="item.shortcut ? \`\${t(item.command)} (\${item.shortcut})\` : t(item.command)"
                 :aria-label="t(item.command)"
                 :aria-pressed="isActive(item.command)"
+                :aria-haspopup="hasPop(item.command) ? 'true' : null"
                 :aria-disabled="isDisabled(item.command)"
                 @mousedown.prevent
-                @click="exec(item.command)"
+                @click="onItem(item.command, $event)"
                 x-html="icon(item.command)"></button>
       </template>
     </div>
@@ -122,6 +123,41 @@ export const TEMPLATE = `
             @mousedown.prevent @click="editAlt()" x-html="icon('alt')"></button>
     <button type="button" class="afw-btn afw-btn-inverse" :title="t('removeMedia') + ' (Backspace)'" :aria-label="t('removeMedia')"
             @mousedown.prevent @click="removeMedia()" x-html="icon('trash')"></button>
+  </div>
+</div>
+
+<!-- Palet warna & perataan (dibuka dari tombol 'color' / 'align' di toolbar atau bubble) -->
+<div class="afw-bubble afw-pop" x-ref="pop"
+     :class="{ 'afw-is-open': pop.open, 'afw-is-ready': pop.ready }"
+     :style="\`left: \${pop.x}px; top: \${pop.y}px\`"
+     role="toolbar" :aria-label="t(pop.kind || 'color')"
+     @keydown.escape.prevent.stop="closePop(true)">
+  <div class="afw-bubble-row" :class="{ 'afw-is-hidden': pop.kind !== 'align' }">
+    <template x-for="item in alignItems" :key="item.command">
+      <button type="button" class="afw-btn afw-btn-inverse"
+              :class="{ 'afw-is-active': isActive(item.command) }"
+              :title="\`\${t(item.command)} (\${item.shortcut})\`" :aria-label="t(item.command)"
+              :aria-pressed="isActive(item.command)"
+              @mousedown.prevent @click="applyPop(item.command)"
+              x-html="icon(item.command)"></button>
+    </template>
+  </div>
+  <div class="afw-pop-colors" :class="{ 'afw-is-hidden': pop.kind !== 'color' }">
+    <template x-for="row in paletteRows" :key="row.command">
+      <div class="afw-pop-row">
+        <span class="afw-pop-label" x-text="t(row.label)"></span>
+        <button type="button" class="afw-swatch afw-swatch-none"
+                :class="{ 'afw-is-active': !values[row.command] }"
+                :title="t(row.none)" :aria-label="t(row.none)" :aria-pressed="!values[row.command]"
+                @mousedown.prevent @click="applyPop(row.command, null)"></button>
+        <template x-for="color in row.colors" :key="color">
+          <button type="button" class="afw-swatch" :class="\`afw-swatch-\${row.command}\` + (values[row.command] === color ? ' afw-is-active' : '')"
+                  :style="\`--afw-swatch: \${color}\`"
+                  :title="color" :aria-label="\`\${t(row.label)} \${color}\`" :aria-pressed="values[row.command] === color"
+                  @mousedown.prevent @click="applyPop(row.command, color)"></button>
+        </template>
+      </div>
+    </template>
   </div>
 </div>
 

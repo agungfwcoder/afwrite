@@ -11,6 +11,7 @@
 //   </div>
 //
 // Opsi UI: toolbar (true), bubble (true), stats (true), dragHandle (true), name (nama input hidden),
+// toolbarItems / bubbleItems (susunan tombol sendiri; tombol format yang tidak aktif disaring),
 // format ('html' | 'json': isi input hidden), titleName (nama input hidden berisi judul).
 // Autosave: opsi autosave: 'kunci-unik'. Draf dihapus otomatis saat form dikirim.
 // Opsi lain diteruskan ke Editor (lang, placeholder, upload, readonly, markdown, ...).
@@ -28,8 +29,9 @@ import { Editor } from './core/editor.js';
 import { parseEmbed } from './core/embed.js';
 import { normalizeUrl } from './core/url.js';
 import { format as formatText, getStrings } from './i18n.js';
+import { normalizeFormats } from './core/formats.js';
 import { normalizeHeadings } from './core/sanitize.js';
-import { BUBBLE, ICONS, TOOLBAR, withHeadings } from './icons.js';
+import { ALIGN_ITEMS, BUBBLE, ICONS, TOOLBAR, withFormats, withHeadings } from './icons.js';
 import { TEMPLATE } from './template.js';
 
 const GAP = 10;
@@ -41,6 +43,9 @@ const MEDIA_SIZES = [
   { value: 'wide', label: 'sizeWide', icon: 'sizeWide' },
   { value: 'full', label: 'sizeFull', icon: 'sizeFull' },
 ];
+// Tombol yang membuka palet (bukan langsung menjalankan perintah).
+const POPOVERS = ['color', 'align'];
+const EMPTY_VALUES = { color: null, highlight: null, align: null };
 let uidCounter = 0;
 const isCoarsePointer = () => typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
 
@@ -56,6 +61,14 @@ export function wysiwygComponent(options = {}) {
   const strings = getStrings(options.lang, options.strings);
   // Susunan tombol bawaan mengikuti level judul aktif (bubble: paling banyak 2 level).
   const headings = normalizeHeadings(options.headings);
+  // Format tambahan (garis bawah, warna, perataan): tidak ada di mode artikel kecuali diminta.
+  const formats = normalizeFormats(options.formats, !!options.title);
+  let popTrigger = null; // tombol yang membuka palet
+  let popSelection = ''; // posisi seleksi saat palet dibuka
+  const selectionKey = () => {
+    const { from, to } = editor.tiptap.state.selection;
+    return `${from}:${to}`;
+  };
 
   return {
     html: '',
@@ -68,8 +81,14 @@ export function wysiwygComponent(options = {}) {
     name: options.name || '',
     format: options.format === 'json' ? 'json' : 'html',
     draft: null,
-    toolbar: options.toolbarItems || withHeadings(TOOLBAR, headings),
-    bubbleItems: options.bubbleItems || withHeadings(BUBBLE, headings, 2),
+    toolbar: withFormats(options.toolbarItems || withHeadings(TOOLBAR, headings), formats),
+    bubbleItems: withFormats(options.bubbleItems || withHeadings(BUBBLE, headings, 2), formats),
+    alignItems: ALIGN_ITEMS,
+    // Baris palet warna (diisi setelah editor dibuat, mengikuti opsi colors / highlights).
+    paletteRows: [],
+    // Nilai format di posisi kursor (warna, stabilo, perataan), untuk palet & ikon perataan.
+    values: { ...EMPTY_VALUES },
+    pop: { open: false, ready: false, kind: '', x: 0, y: 0 },
     showToolbar: options.toolbar ?? true,
     showBubble: options.bubble ?? true,
     showStats: options.stats ?? true,
@@ -111,6 +130,10 @@ export function wysiwygComponent(options = {}) {
 
       editor = new Editor(el, editorOptions);
       this.meta = editor.getMeta();
+      this.paletteRows = [
+        { command: 'color', label: 'textColor', none: 'defaultColor', colors: editor.options.colors },
+        { command: 'highlight', label: 'highlight', none: 'noHighlight', colors: editor.options.highlights },
+      ].filter((row) => formats.includes(row.command) && row.colors.length);
 
       editor.on('change', (html) => {
         this.html = html;
@@ -137,6 +160,7 @@ export function wysiwygComponent(options = {}) {
       editor.on('state', (state) => {
         this.active = state;
         this.disabled = editor.disabledState();
+        this.values = editor.formatValues();
       });
       editor.on('selection', (info) => this.onSelection(info));
       editor.on('slash', (state) => this.onSlash(state));
@@ -155,11 +179,25 @@ export function wysiwygComponent(options = {}) {
       // Drag blok selesai (drop atau dibatalkan) di mana pun: browser bisa tidak mengirim dragend
       // ke pegangan yang sudah disembunyikan saat isi editor berubah.
       const finishDrag = () => this.dragging && this.endBlockDrag();
+      // Klik di luar palet atau Esc (fokus tetap di editor selama palet terbuka) menutupnya.
+      const outsidePop = (e) => {
+        if (this.pop.open && !this.$refs.pop?.contains(e.target) && !popTrigger?.contains(e.target)) this.closePop();
+      };
+      const escapePop = (e) => {
+        if (e.key !== 'Escape' || !this.pop.open) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.closePop();
+      };
+      root.addEventListener('keydown', escapePop, true);
       document.addEventListener('drop', finishDrag, true);
       document.addEventListener('dragend', finishDrag, true);
+      document.addEventListener('mousedown', outsidePop, true);
       cleanup = () => {
         document.removeEventListener('drop', finishDrag, true);
         document.removeEventListener('dragend', finishDrag, true);
+        document.removeEventListener('mousedown', outsidePop, true);
+        root.removeEventListener('keydown', escapePop, true);
       };
 
       // Draf autosave tidak diperlukan lagi setelah form dikirim.
@@ -169,9 +207,14 @@ export function wysiwygComponent(options = {}) {
       });
       this.readOnly = editor.readOnly;
 
-      // Nilai dari luar (x-model / x-modelable) -> isi editor.
+      // Nilai dari luar (x-model / x-modelable / $wire.entangle) -> isi editor. Dibandingkan setelah
+      // dinormalisasi: HTML yang sama isinya tapi beda penulisan (mis. hasil sanitasi server) tidak
+      // memuat ulang editor, sehingga kursor tidak melompat.
       this.$watch('html', (value) => {
-        if (editor && (value || '') !== editor.getHTML()) editor.setHTML(value || '');
+        if (!editor) return;
+        const html = value || '';
+        const current = editor.getHTML();
+        if (html !== current && editor.normalizeHTML(html) !== current) editor.setHTML(html);
       });
 
       this.$nextTick(() => {
@@ -181,6 +224,7 @@ export function wysiwygComponent(options = {}) {
     },
 
     destroy() {
+      clearTimeout(toastTimer);
       cleanup?.();
       editor?.destroy();
       editor = null;
@@ -197,6 +241,8 @@ export function wysiwygComponent(options = {}) {
     },
 
     icon(name) {
+      // Tombol perataan menampilkan perataan di posisi kursor.
+      if (name === 'align') return ICONS[`align${capitalize(this.values.align || 'left')}`];
       // Hanya dua level judul: tampil sebagai T besar dan t kecil.
       if (headings.length === 2 && /^h[2-6]$/.test(name) && headings.includes(Number(name[1]))) {
         return ICONS[Number(name[1]) === headings[0] ? 'headingLarge' : 'headingSmall'];
@@ -224,6 +270,52 @@ export function wysiwygComponent(options = {}) {
 
     setJSON(doc) {
       editor?.setJSON(doc);
+    },
+
+    // ---------- Palet warna & perataan ----------
+
+    hasPop(name) {
+      return POPOVERS.includes(name);
+    },
+
+    // Klik tombol toolbar/bubble: tombol palet membuka palet, lainnya langsung dijalankan.
+    onItem(name, event) {
+      if (!this.hasPop(name)) {
+        this.closePop();
+        return this.exec(name);
+      }
+      if (this.pop.open && this.pop.kind === name) return this.closePop();
+      this.openPop(name, event?.currentTarget);
+    },
+
+    openPop(kind, trigger) {
+      if (this.readOnly || !editor || !trigger) return;
+      if (!editor.hasFocus()) editor.focus();
+      popTrigger = trigger;
+      popSelection = selectionKey();
+      Object.assign(this.pop, { open: true, ready: false, kind });
+      this.$nextTick(() => {
+        // Dari bubble (di atas seleksi): palet di atasnya; dari toolbar: di bawah tombol.
+        const inBubble = !!trigger.closest('.afw-bubble');
+        const prefer = inBubble && !isCoarsePointer() ? 'above' : 'below';
+        const pos = this.place(this.$refs.pop, trigger.getBoundingClientRect(), { prefer, gap: 6 });
+        this.pop.x = pos.x;
+        this.pop.y = pos.y;
+        this.pop.ready = true;
+      });
+    },
+
+    closePop(refocus = false) {
+      if (!this.pop.open) return;
+      this.pop.open = false;
+      this.pop.ready = false;
+      if (refocus) popTrigger?.focus();
+      popTrigger = null;
+    },
+
+    applyPop(name, value) {
+      editor?.exec(name, value);
+      this.closePop();
     },
 
     // ---------- Draf autosave ----------
@@ -323,6 +415,8 @@ export function wysiwygComponent(options = {}) {
     // ---------- Bubble ----------
 
     onSelection(info) {
+      // Seleksi pindah (klik di teks lain, dll.) atau editor kehilangan fokus: palet ditutup.
+      if (this.pop.open && (!info.inside || selectionKey() !== popSelection)) this.closePop();
       // Sedang mengisi input (URL/alt): fokus ada di input, seleksi editor diabaikan.
       if (this.bubble.open && this.bubble.mode === 'input') return;
       if (this.readOnly) return;
@@ -577,6 +671,8 @@ export function wysiwygComponent(options = {}) {
     },
   };
 }
+
+const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
 // Posisi kiri tombol di celah kiri konten: tepat sebelum tepi kiri blok (lebar tombol 24px).
 function gutterX(blockRect, rootRect) {

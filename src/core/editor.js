@@ -19,15 +19,16 @@
 //
 // Instance Tiptap tersedia di editor.tiptap untuk pemakaian lanjutan.
 
-import { createDocument, Editor as TiptapEditor, Extension } from '@tiptap/core';
+import { createDocument, Editor as TiptapEditor, Extension, getHTMLFromFragment } from '@tiptap/core';
 import { Dropcursor, Gapcursor, UndoRedo } from '@tiptap/extensions';
 import { Fragment, Slice } from '@tiptap/pm/model';
 import { EditorState, NodeSelection, Plugin, Selection, TextSelection } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { getStrings } from '../i18n.js';
 import { BLOCKS, filterBlocks } from './blocks.js';
-import { COMMANDS, isCommandDisabled } from './commands.js';
+import { COMMANDS, commandAvailable, currentAlign, isCommandDisabled } from './commands.js';
 import { parseEmbed } from './embed.js';
+import { DEFAULT_COLORS, DEFAULT_HIGHLIGHTS, normalizeFormats, normalizePalette } from './formats.js';
 import { markdownRules } from './markdown.js';
 import { insertImageFiles, insertMediaBlock, isMediaNode, mediaKind, SIZES } from './media.js';
 import { fromJSON, toJSON } from './model.js';
@@ -50,6 +51,14 @@ const DEFAULTS = {
   blocks: BLOCKS, // isi slash menu (judul hanya untuk level di `headings`)
   headings: [2, 3], // level judul yang dipakai (2-6)
   title: false, // mode artikel ala Medium: baris pertama judul <h1>, subjudul lewat tombol judul kecil
+  // Format tambahan: underline, strike, color, highlight, align. Bawaan semua, kecuali di mode artikel
+  // (tetap polos ala Medium). false = tidak ada, array = pilihan sendiri. Lihat formats.js.
+  formats: null,
+  colors: DEFAULT_COLORS, // palet warna teks
+  highlights: DEFAULT_HIGHLIGHTS, // palet stabilo
+  extensions: [], // extension Tiptap tambahan (node/mark milik aplikasi), dipasang setelah bawaan
+  // Whitelist tambahan untuk extension di atas: { allowTags, allowAttributes, allowClasses }, lihat sanitize.js
+  sanitize: null,
   upload: null, // async (file) => url gambar; tanpa ini gambar disimpan sebagai data URL (base64)
   maxImageSize: 5 * 1024 * 1024, // byte; 0 = tanpa batas
   allowDataImages: true, // izinkan <img src="data:image/..."> di output
@@ -63,6 +72,12 @@ const SHORTCUTS = [
   { code: 'KeyB', command: 'bold' },
   { code: 'KeyI', command: 'italic' },
   { code: 'KeyK', command: 'link' },
+  { code: 'KeyU', command: 'underline' },
+  { code: 'KeyX', shift: true, command: 'strike' },
+  { code: 'KeyL', shift: true, command: 'alignLeft' },
+  { code: 'KeyE', shift: true, command: 'alignCenter' },
+  { code: 'KeyR', shift: true, command: 'alignRight' },
+  { code: 'KeyJ', shift: true, command: 'alignJustify' },
   { code: 'Digit0', alt: true, command: 'paragraph' },
   { code: 'Digit2', alt: true, command: 'h2' },
   { code: 'Digit3', alt: true, command: 'h3' },
@@ -77,6 +92,16 @@ const SHORTCUTS = [
 
 const CODE_INDENT = '  ';
 const isCaption = (node) => node.type.name === 'image' || node.type.name === 'embed';
+// Tanpa teks dan tanpa media (judul artikel yang kosong juga dianggap kosong).
+function hasContent(doc) {
+  let content = false;
+  doc.descendants((node) => {
+    if (content) return false;
+    if ((node.isText && node.text.trim()) || isMediaNode(node)) content = true;
+    return !content;
+  });
+  return content;
+}
 const isDocEmpty = (doc) => doc.childCount === 1 && doc.firstChild.type.name === 'paragraph' && doc.firstChild.content.size === 0;
 
 export class Editor {
@@ -86,6 +111,9 @@ export class Editor {
     this.el = el;
     this.options = { ...DEFAULTS, ...options };
     this.options.headings = normalizeHeadings(this.options.headings);
+    this.options.formats = normalizeFormats(this.options.formats, !!this.options.title);
+    this.options.colors = normalizePalette(this.options.colors, DEFAULT_COLORS);
+    this.options.highlights = normalizePalette(this.options.highlights, DEFAULT_HIGHLIGHTS);
     this.strings = getStrings(this.options.lang, this.options.strings);
     this.readOnly = false;
     this.listeners = {};
@@ -138,13 +166,22 @@ export class Editor {
 
   // Tanpa teks dan tanpa media (judul artikel yang kosong juga dianggap kosong).
   isEmpty() {
-    let content = false;
-    this.tiptap.state.doc.descendants((node) => {
-      if (content) return false;
-      if ((node.isText && node.text.trim()) || isMediaNode(node)) content = true;
-      return !content;
-    });
-    return !content;
+    return !hasContent(this.tiptap.state.doc);
+  }
+
+  // HTML seperti yang akan dihasilkan getHTML() setelah setHTML(html), tanpa mengubah isi editor.
+  // Dipakai untuk membandingkan konten dari luar (mis. hasil sanitasi server) dengan isi saat ini.
+  normalizeHTML(html) {
+    const doc = this._parse(sanitize(html, this._sanitizeOptions()));
+    if (!hasContent(doc)) return '';
+    return sanitize(getHTMLFromFragment(doc.content, this.tiptap.schema), this._sanitizeOptions());
+  }
+
+  // Nilai format di posisi kursor: { color, highlight, align } (null = tidak ada / rata kiri).
+  formatValues() {
+    if (!this.hasFocus()) return { color: null, highlight: null, align: null };
+    const attr = (name) => (this.options.formats.includes(name) ? this.tiptap.getAttributes(name).color || null : null);
+    return { color: attr('color'), highlight: attr('highlight'), align: currentAlign(this) };
   }
 
   // Output selalu lewat sanitize(): tag whitelist, tanpa atribut, tanpa paragraf kosong.
@@ -279,7 +316,7 @@ export class Editor {
 
   // Data pratinjau artikel ala Medium: gambar pertama, teks pertama (judul), dan teks kedua
   // (subjudul). Di mode artikel judul/subjudul diambil dari blok judul jika terisi.
-  //   { image: { src, alt, caption } | null, title: string, subtitle: string, slug: string }
+  //   { image: { src, alt, caption, mediaId } | null, title: string, subtitle: string, slug: string }
   // slug = slugify(title), hanya pratinjau: slug final tetap dibuat server.
   getMeta() {
     const texts = [];
@@ -287,7 +324,7 @@ export class Editor {
     this.tiptap.state.doc.descendants((node) => {
       if (node.type.name === 'image') {
         if (!image && node.attrs.src && !node.attrs.uploading) {
-          image = { src: node.attrs.src, alt: node.attrs.alt, caption: node.textContent.trim() };
+          image = { src: node.attrs.src, alt: node.attrs.alt, caption: node.textContent.trim(), mediaId: node.attrs.mediaId };
         }
         return false;
       }
@@ -305,11 +342,11 @@ export class Editor {
   // ----- JSON (format dokumen ProseMirror/Tiptap) -----
 
   getJSON() {
-    return toJSON(this.getHTML(), this._sanitizeOptions());
+    return toJSON(this.getHTML(), { ...this._sanitizeOptions(), schema: this.tiptap.schema });
   }
 
   setJSON(doc, options) {
-    this.setHTML(fromJSON(doc, this._sanitizeOptions()), options);
+    this.setHTML(fromJSON(doc, { ...this._sanitizeOptions(), schema: this.tiptap.schema }), options);
   }
 
   // ----- Autosave draf -----
@@ -652,11 +689,13 @@ export class Editor {
           captionPlaceholder: this.strings.captionPlaceholder,
           headings: options.headings,
           title: options.title,
+          formats: options.formats,
         }),
         behavior,
         UndoRedo.configure({ depth: options.historyLimit, newGroupDelay: 1000 }),
         Gapcursor,
         Dropcursor.configure({ color: false, class: 'afw-dropcursor' }),
+        ...(Array.isArray(options.extensions) ? options.extensions : []),
       ],
       content: this._initialHTML(content),
       injectCSS: false,
@@ -885,7 +924,8 @@ export class Editor {
   }
 
   _sanitizeOptions() {
-    return { allowDataImages: this.options.allowDataImages, headings: this.options.headings, title: this.options.title };
+    const { allowDataImages, headings, title, formats, colors, highlights, sanitize: allow } = this.options;
+    return { ...allow, allowDataImages, headings, title, formats, colors, highlights };
   }
 
   // Item slash menu: judul hanya untuk level yang aktif.
@@ -1154,7 +1194,8 @@ export class Editor {
     const shortcut = SHORTCUTS.find(
       (s) => s.code === e.code && !!s.alt === e.altKey && !!s.shift === e.shiftKey,
     );
-    if (!shortcut) return false;
+    // Shortcut format yang tidak aktif (mis. Ctrl+U di mode artikel) dibiarkan ke browser.
+    if (!shortcut || !commandAvailable(this.options.formats, shortcut.command)) return false;
     this.exec(shortcut.command);
     return true;
   }

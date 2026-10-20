@@ -68,10 +68,14 @@
   box-shadow: var(--afw-shadow), 0 0 0 4px var(--afw-accent-soft);
 }
 
-/* ---------- Dark mode: data-afw-theme="dark" atau "auto" ---------- */
+/* ---------- Dark mode: data-afw-theme="dark" atau "auto", atau class .dark di ancestor ----------
+   Class .dark (Tailwind, Flux, Nuxt UI) pada <html> langsung berlaku tanpa reload. Pakai
+   data-afw-theme="light" untuk tetap terang di dalam .dark. */
 
 .afw[data-afw-theme='dark'],
-.afw-prose[data-afw-theme='dark'] {
+.afw-prose[data-afw-theme='dark'],
+.dark .afw:not([data-afw-theme='light']),
+.dark .afw-prose:not([data-afw-theme='light']) {
   --afw-bg: #18181b;
   --afw-surface: #27272a;
   --afw-border: #3f3f46;
@@ -443,6 +447,46 @@
 }
 
 
+
+/* ---------- Format tambahan: garis bawah, coret, warna, stabilo, perataan ---------- */
+
+.afw .afw-content u,
+.afw-prose u {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.afw .afw-content s,
+.afw-prose s {
+  text-decoration: line-through;
+}
+
+/* Warna latar dari style inline; teks tetap gelap agar terbaca juga di dark mode. */
+.afw .afw-content mark,
+.afw-prose mark {
+  padding: 0.05em 0.15em;
+  color: #18181b;
+  background-color: #fef08a;
+  border-radius: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.afw .afw-content .afw-align-center,
+.afw-prose .afw-align-center {
+  text-align: center;
+}
+
+.afw .afw-content .afw-align-right,
+.afw-prose .afw-align-right {
+  text-align: right;
+}
+
+.afw .afw-content .afw-align-justify,
+.afw-prose .afw-align-justify {
+  text-align: justify;
+}
 
 /* ---------- Blok kode ---------- */
 
@@ -975,6 +1019,77 @@
 .afw .afw-link-preview-icon .afw-icon {
   width: 14px;
   height: 14px;
+}
+
+/* ---------- Palet warna & perataan ---------- */
+
+/* Lebar mengikuti isi (bukan sisa ruang di posisinya), agar ukuran yang diukur saat menempatkan
+   palet sama dengan ukuran setelah dipindah. */
+.afw .afw-pop {
+  z-index: 21;
+  width: max-content;
+  max-width: calc(100vw - 16px);
+}
+
+.afw .afw-pop-colors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 6px;
+}
+
+.afw .afw-pop-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.afw .afw-pop-label {
+  min-width: 72px;
+  font-size: 0.75rem;
+  color: var(--afw-float-muted);
+  white-space: nowrap;
+}
+
+.afw .afw-swatch {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  background: var(--afw-swatch, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  box-shadow: none;
+  cursor: pointer;
+  transition: transform 0.08s ease;
+}
+
+.afw .afw-swatch:hover {
+  transform: scale(1.12);
+}
+
+.afw .afw-swatch:focus-visible {
+  outline: 2px solid var(--afw-float-active);
+  outline-offset: 2px;
+}
+
+.afw .afw-swatch.afw-is-active {
+  box-shadow: 0 0 0 2px var(--afw-float-bg), 0 0 0 4px var(--afw-float-text);
+}
+
+/* "Tanpa warna": lingkaran kosong dengan garis miring. */
+.afw .afw-swatch-none::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  right: 3px;
+  height: 1.5px;
+  background: var(--afw-float-muted);
+  transform: rotate(-45deg);
 }
 
 /* ---------- Slash menu ---------- */

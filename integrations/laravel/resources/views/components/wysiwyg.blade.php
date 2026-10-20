@@ -5,6 +5,8 @@
     <x-wysiwyg name="body" :headings="[2, 3, 4, 5, 6]" />   level judul yang dipakai (bawaan [2, 3])
     <x-wysiwyg name="body" :title="true" />                 mode artikel: judul <h1> + subjudul
     <x-wysiwyg name="body" title-name="title" />           judul (teks pertama) ikut dikirim sebagai input "title"
+    <x-wysiwyg name="body" :formats="['underline', 'align']" />  format tambahan yang dipakai (bawaan semua,
+                                                            kecuali mode artikel); :formats="false" = tanpa
 
     Konten awal disanitasi di server (WyswygHtml::clean) sebelum dicetak: HTML mentah di halaman
     akan dijalankan browser (mis. <img onerror>) sebelum editor sempat menyaringnya.
@@ -22,6 +24,7 @@
     'headings' => null,
     'title' => false,
     'titleName' => null,
+    'formats' => null,
 ])
 
 @php
@@ -36,6 +39,7 @@
         'headings' => $headings,
         'title' => $title ? true : null,
         'titleName' => $titleName,
+        'formats' => $formats,
     ], fn ($option) => $option !== null);
 
     $upload = $uploadUrl ? 'window.wyswygUpload('.\Illuminate\Support\Js::from($uploadUrl).')' : 'null';

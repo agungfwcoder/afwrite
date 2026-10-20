@@ -19,15 +19,16 @@ const schemas = {};
 const getDocSchema = (title = false) =>
   (schemas[title] ||= getSchema(createExtensions({ headings: [2, 3, 4, 5, 6], title })));
 
-// Opsi: headings (level judul yang dipakai, bawaan [2, 3]), title (mode artikel), allowDataImages.
+// Opsi: headings (level judul yang dipakai, bawaan [2, 3]), title (mode artikel), allowDataImages,
+// opsi sanitize lain (formats, colors, ...), dan schema (schema editor, mis. dengan ekstensi tambahan).
 export function toJSON(html, options = {}) {
   const clean = sanitize(html, { ...options, headings: normalizeHeadings(options.headings) });
   if (!clean) return { type: 'doc', content: [] };
-  return createDocument(withTitle(clean, !!options.title), getDocSchema(!!options.title)).toJSON();
+  return createDocument(withTitle(clean, !!options.title), options.schema || getDocSchema(!!options.title)).toJSON();
 }
 
 export function fromJSON(doc, options = {}) {
-  const s = getDocSchema(!!options.title);
+  const s = options.schema || getDocSchema(!!options.title);
   const cleaned = cleanNode(doc, s);
   if (!cleaned || cleaned.type !== 'doc' || !cleaned.content?.length) return '';
   try {

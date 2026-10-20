@@ -4,6 +4,8 @@
 //            orderedList <ol>, listItem <li>, codeBlock <pre><code>, horizontalRule <hr>,
 //            image <figure><img><figcaption>, embed <figure data-embed><iframe><figcaption>
 //   inline : bold <b>, italic <i>, code <code>, link <a href>, hardBreak <br>
+//   format tambahan (opsi formats): underline <u>, strike <s>, color <span style="color">,
+//            highlight <mark>, atribut textAlign pada paragraph & heading (class afw-align-*)
 //
 // Mode artikel (opsi title): dokumen = (image | embed | horizontalRule)* title subtitle? block+,
 // dengan title <h1> (teks polos) dan subtitle <p class="afw-subtitle"> (teks + link) yang hanya
@@ -13,7 +15,7 @@
 // Kutipan adalah blok teks (isinya inline + <br>), bukan wadah paragraf, agar output
 // tetap <blockquote>a<br>b</blockquote> seperti v1.
 
-import { Mark, Node } from '@tiptap/core';
+import { Extension, Mark, Node } from '@tiptap/core';
 import CodeBlock from '@tiptap/extension-code-block';
 import Document from '@tiptap/extension-document';
 import HardBreak from '@tiptap/extension-hard-break';
@@ -22,6 +24,7 @@ import { BulletList, ListItem, ListKeymap, OrderedList } from '@tiptap/extension
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { createEmbedIframe, normalizeImageSrc, parseEmbed } from './embed.js';
+import { alignOf, FORMATS, normalizeColor, styleValue } from './formats.js';
 import { FigureView } from './media.js';
 import { normalizeUrl } from './url.js';
 
@@ -66,6 +69,57 @@ const Link = Mark.create({
     },
   }],
   renderHTML: ({ HTMLAttributes }) => ['a', { href: HTMLAttributes.href }, 0],
+});
+
+const Underline = Mark.create({
+  name: 'underline',
+  parseHTML: () => [{ tag: 'u' }],
+  renderHTML: () => ['u', 0],
+});
+
+const Strike = Mark.create({
+  name: 'strike',
+  parseHTML: () => [{ tag: 's' }],
+  renderHTML: () => ['s', 0],
+});
+
+// Warna disimpan sebagai #rrggbb; nilainya sudah dibatasi ke palet oleh sanitize().
+const TextColor = Mark.create({
+  name: 'color',
+  addAttributes: () => ({ color: { default: null, rendered: false } }),
+  parseHTML: () => [{
+    tag: 'span',
+    getAttrs: (el) => {
+      const color = normalizeColor(styleValue(el.getAttribute('style'), 'color'));
+      return color ? { color } : false;
+    },
+  }],
+  renderHTML: ({ mark }) => ['span', { style: `color: ${mark.attrs.color}` }, 0],
+});
+
+const Highlight = Mark.create({
+  name: 'highlight',
+  addAttributes: () => ({ color: { default: null, rendered: false } }),
+  parseHTML: () => [{
+    tag: 'mark',
+    getAttrs: (el) => ({ color: normalizeColor(styleValue(el.getAttribute('style'), 'background-color')) }),
+  }],
+  renderHTML: ({ mark }) => ['mark', mark.attrs.color ? { style: `background-color: ${mark.attrs.color}` } : {}, 0],
+});
+
+// Perataan paragraf & judul: class afw-align-center | right | justify (rata kiri = tanpa class).
+const TextAlign = Extension.create({
+  name: 'textAlign',
+  addGlobalAttributes: () => [{
+    types: ['paragraph', 'heading'],
+    attributes: {
+      textAlign: {
+        default: null,
+        parseHTML: (el) => alignOf(el),
+        renderHTML: (attrs) => (attrs.textAlign ? { class: `afw-align-${attrs.textAlign}` } : {}),
+      },
+    },
+  }],
 });
 
 // ---------- Blok ----------
@@ -129,6 +183,8 @@ const Image = Node.create({
       src: { default: null },
       alt: { default: '' },
       size: sizeAttribute,
+      // ID media library aplikasi (data-media-id), mis. untuk memilih gambar utama.
+      mediaId: { default: null, rendered: false },
       // Id upload yang sedang berjalan (pratinjau blob:); tidak pernah ikut output.
       uploading: { default: null, rendered: false },
     };
@@ -140,12 +196,14 @@ const Image = Node.create({
       getAttrs: (el) => {
         const img = el.querySelector(':scope > img');
         const src = img && normalizeImageSrc(img.getAttribute('src'), { allowData: this.options.allowDataImages });
-        return src ? { src, alt: img.getAttribute('alt') || '' } : false;
+        const mediaId = img?.getAttribute('data-media-id');
+        return src ? { src, alt: img.getAttribute('alt') || '', mediaId: /^\d{1,20}$/.test(mediaId) ? mediaId : null } : false;
       },
     }];
   },
   renderHTML({ node, HTMLAttributes }) {
-    return ['figure', { 'data-size': HTMLAttributes['data-size'] }, ['img', { src: node.attrs.src, alt: node.attrs.alt }], ['figcaption', 0]];
+    const img = { src: node.attrs.src, alt: node.attrs.alt, 'data-media-id': node.attrs.mediaId };
+    return ['figure', { 'data-size': HTMLAttributes['data-size'] }, ['img', img], ['figcaption', 0]];
   },
   addNodeView() {
     return ({ node }) => new FigureView(node, this.options);
@@ -213,8 +271,10 @@ export function titlePos(doc) {
   return pos;
 }
 
-// Daftar extension. Opsi: allowDataImages (ikut opsi Editor), captionPlaceholder.
-export function createExtensions({ allowDataImages = true, captionPlaceholder = '', headings = [2, 3], title = false } = {}) {
+// Daftar extension. Opsi: allowDataImages (ikut opsi Editor), captionPlaceholder, headings, title,
+// formats (format tambahan yang aktif, lihat formats.js).
+export function createExtensions({ allowDataImages = true, captionPlaceholder = '', headings = [2, 3], title = false, formats = FORMATS } = {}) {
+  const extra = { underline: Underline, strike: Strike, color: TextColor, highlight: Highlight, align: TextAlign };
   return [
     ...(title ? [Document.extend({ content: `(${ABOVE_TITLE.join(' | ')})* title subtitle? block+` }), Title, Subtitle] : [Document]),
     Paragraph,
@@ -234,5 +294,6 @@ export function createExtensions({ allowDataImages = true, captionPlaceholder = 
     Italic,
     Code,
     Link,
+    ...FORMATS.filter((f) => formats.includes(f)).map((f) => extra[f]),
   ];
 }

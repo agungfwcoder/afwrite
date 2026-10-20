@@ -153,7 +153,7 @@ await set('<figure><img src="https://example.com/a.png" alt="A"><figcaption>Foto
 check('setHTML: gambar + judul dipertahankan', (await blocks()).join() === 'figure,h1,p.sub,p', (await blocks()).join());
 check('setHTML: kursor di judul, bukan keterangan gambar', !(await page.$('#art .afw-is-editing')));
 meta = await page.evaluate(() => Alpine.$data(document.getElementById('art')).getMeta());
-check('getMeta: gambar, judul, subjudul', JSON.stringify(meta) === JSON.stringify({ image: { src: 'https://example.com/a.png', alt: 'A', caption: 'Foto' }, title: 'J', subtitle: 'S', slug: 'j' }), JSON.stringify(meta));
+check('getMeta: gambar, judul, subjudul', JSON.stringify(meta) === JSON.stringify({ image: { src: 'https://example.com/a.png', alt: 'A', caption: 'Foto', mediaId: null }, title: 'J', subtitle: 'S', slug: 'j' }), JSON.stringify(meta));
 await set('<figure><img src="https://example.com/a.png" alt=""></figure><p>x</p>');
 check('gambar tanpa judul sesudahnya tetap isi biasa', (await blocks()).join() === 'h1,figure,p', (await blocks()).join());
 

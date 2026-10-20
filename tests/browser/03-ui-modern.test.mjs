@@ -69,9 +69,11 @@ check('bubble muncul saat teks diblok', await visible('.afw-bubble'));
 const pos = await page.evaluate(() => {
   const b = document.querySelector('.afw-bubble').getBoundingClientRect();
   const s = getSelection().getRangeAt(0).getBoundingClientRect();
-  return { bubbleBottom: b.bottom, selTop: s.top, bubbleCenter: b.left + b.width / 2, selCenter: s.left + s.width / 2 };
+  return { bubbleBottom: b.bottom, selTop: s.top, bubbleCenter: b.left + b.width / 2, selCenter: s.left + s.width / 2, bubbleLeft: b.left };
 });
-check('bubble di atas seleksi & di tengah', pos.bubbleBottom <= pos.selTop && Math.abs(pos.bubbleCenter - pos.selCenter) < 2, JSON.stringify(pos));
+// Di tengah seleksi, kecuali tergeser agar tidak keluar dari tepi kiri layar (8px).
+const centered = Math.abs(pos.bubbleCenter - pos.selCenter) < 2 || (pos.bubbleLeft < 12 && pos.bubbleCenter > pos.selCenter);
+check('bubble di atas seleksi & di tengah', pos.bubbleBottom <= pos.selTop && centered, JSON.stringify(pos));
 await page.screenshot({ path: `${SHOTS}/6-bubble.png`, clip: { x: 0, y: 100, width: 660, height: 420 } });
 
 await selectText('p:nth-child(2)', 0, 4);

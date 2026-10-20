@@ -36,16 +36,20 @@ class WyswygHtml
 
         $config->set('HTML.Allowed', implode(',', [
             // Semua level judul yang bisa diaktifkan editor (opsi `headings`); h1 & p.afw-subtitle
-            // dipakai mode artikel (opsi `title`).
-            'p[class]', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'ul', 'ol', 'li', 'b', 'i', 'code', 'br', 'pre', 'hr',
+            // dipakai mode artikel (opsi `title`). class pada p & h2-h6: perataan (afw-align-*).
+            'p[class]', 'h1', 'h2[class]', 'h3[class]', 'h4[class]', 'h5[class]', 'h6[class]',
+            'blockquote', 'ul', 'ol', 'li', 'b', 'i', 'code', 'br', 'pre', 'hr',
+            // Format tambahan (opsi `formats`): garis bawah, coret, warna teks, stabilo.
+            'u', 's', 'span[style]', 'mark[style]',
             'a[href]',
             'figure[data-size|data-embed]', 'figcaption',
-            'img[src|alt]',
+            'img[src|alt|data-media-id]',
             'iframe[src|title|allow|allowfullscreen|loading|referrerpolicy]',
         ]));
-        $config->set('CSS.AllowedProperties', []);
-        // Satu-satunya class yang boleh ada di konten: subjudul artikel.
-        $config->set('Attr.AllowedClasses', ['afw-subtitle']);
+        // Hanya warna teks (span) & stabilo (mark). Editor membatasi lagi ke paletnya saat konten dimuat.
+        $config->set('CSS.AllowedProperties', ['color', 'background-color']);
+        // Class yang boleh ada di konten: subjudul artikel dan perataan.
+        $config->set('Attr.AllowedClasses', ['afw-subtitle', 'afw-align-center', 'afw-align-right', 'afw-align-justify']);
         // Buang elemen kosong (mis. <iframe> yang src-nya ditolak, <figure> tanpa isi).
         $config->set('AutoFormat.RemoveEmpty', true);
         $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true, 'tel' => true, 'data' => true]);
@@ -56,10 +60,13 @@ class WyswygHtml
 
         // Elemen & atribut HTML5 yang belum dikenal HTMLPurifier.
         $config->set('HTML.DefinitionID', 'wyswyg');
-        $config->set('HTML.DefinitionRev', 1);
+        $config->set('HTML.DefinitionRev', 2);
         if ($def = $config->maybeGetRawHTMLDefinition()) {
             $def->addElement('figure', 'Block', 'Optional: (figcaption, Flow) | (Flow, figcaption) | Flow', 'Common');
             $def->addElement('figcaption', 'Inline', 'Flow', 'Common');
+            $def->addElement('mark', 'Inline', 'Inline', 'Common');
+            // ID media library aplikasi (mis. untuk memilih gambar utama dari isi artikel).
+            $def->addAttribute('img', 'data-media-id', 'Number');
             $def->addAttribute('figure', 'data-size', 'Enum#wide,full');
             $def->addAttribute('figure', 'data-embed', 'Enum#youtube,vimeo');
             $def->addAttribute('iframe', 'allow', 'Text');
