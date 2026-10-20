@@ -415,7 +415,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           style="--reveal-delay: 200ms"
           class="hero-in hero-in-mockup relative min-w-0"
         >
-          <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-white/90 shadow-[0_40px_80px_-24px_rgba(24,24,27,0.25)] backdrop-blur dark:border-zinc-800 dark:bg-[#111113]/90 dark:shadow-[0_40px_80px_-24px_rgba(0,0,0,0.75)]">
+          <div class="rounded-2xl border border-zinc-200 bg-white/90 shadow-[0_40px_80px_-24px_rgba(24,24,27,0.25)] backdrop-blur dark:border-zinc-800 dark:bg-[#111113]/90 dark:shadow-[0_40px_80px_-24px_rgba(0,0,0,0.75)]">
             <div class="flex items-center gap-1 overflow-x-auto border-b border-zinc-200 p-2 dark:border-zinc-800">
               <div
                 role="tablist"
@@ -541,10 +541,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   >Ketik untuk memfilter…</span>
                 </div>
 
-                <!-- slash menu -->
+                <!-- slash menu: -mb-12 (48px) melewati pb-8 kartu, jadi menu menjorok ±16px keluar dari bawah kartu -->
                 <div
                   aria-hidden="true"
-                  class="mock-pop -mt-2 w-[260px] max-w-full self-start rounded-xl border border-zinc-200 bg-white p-1.5 text-sm leading-[1.3] shadow-[0_20px_40px_-12px_rgba(24,24,27,0.25)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.7)]"
+                  class="mock-pop relative z-[3] -mt-2 -mb-12 w-[260px] max-w-full self-start rounded-xl border border-zinc-200 bg-white p-1.5 text-sm leading-[1.3] shadow-[0_20px_40px_-12px_rgba(24,24,27,0.25)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.7)]"
                   :class="{ 'is-on': demo.menu }"
                 >
                   <div class="px-2.5 pt-1.5 pb-2 text-[11px] font-semibold tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
