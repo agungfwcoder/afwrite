@@ -130,6 +130,30 @@ const tabs: { name: string, dot: string, lines: Token[][] }[] = [
 ]
 const tab = ref(0)
 
+// Animasi reveal: elemen [data-reveal] di bawah layar disembunyikan lalu muncul saat di-scroll.
+// Yang sudah terlihat saat halaman dibuka dibiarkan (tanpa kedip); hero memakai animasi CSS.
+let observer: IntersectionObserver | null = null
+onMounted(() => {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return
+  observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue
+      const el = entry.target as HTMLElement
+      el.classList.add('is-revealed')
+      observer?.unobserve(el)
+      // Setelah selesai, kembalikan transisi bawaan elemen (mis. hover kartu).
+      el.addEventListener('transitionend', () => el.classList.remove('reveal', 'is-revealed'), { once: true })
+    }
+  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 })
+
+  for (const el of document.querySelectorAll<HTMLElement>('.landing [data-reveal]')) {
+    if (el.getBoundingClientRect().top < window.innerHeight) continue
+    el.classList.add('reveal')
+    observer.observe(el)
+  }
+})
+onBeforeUnmount(() => observer?.disconnect())
+
 const browsers = ['Chrome', 'Firefox', 'Safari']
 const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Browser · WebKit', 'Feature test Laravel']
 </script>
@@ -146,7 +170,8 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         <div class="flex min-w-0 flex-[1_1_460px] flex-col gap-7">
           <NuxtLink
             to="/memulai/instalasi"
-            class="inline-flex items-center gap-2 self-start rounded-full border border-indigo-400/30 bg-indigo-600/10 py-1 pr-3 pl-1 text-[13px] font-medium text-indigo-700 transition-colors hover:bg-indigo-600/15 dark:text-indigo-200"
+            style="--reveal-delay: 0ms"
+            class="hero-in inline-flex items-center gap-2 self-start rounded-full border border-indigo-400/30 bg-indigo-600/10 py-1 pr-3 pl-1 text-[13px] font-medium text-indigo-700 transition-colors hover:bg-indigo-600/15 dark:text-indigo-200"
           >
             <span class="rounded-full bg-indigo-600 px-2 py-0.5 text-[11px] font-bold tracking-[0.04em] text-white">BARU</span>
             v2.1 · Pakai langsung dari CDN
@@ -157,14 +182,23 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             />
           </NuxtLink>
 
-          <h1 class="m-0 text-[clamp(44px,6vw,72px)] leading-[1.02] font-extrabold tracking-[-0.035em] text-zinc-950 dark:text-zinc-50">
+          <h1
+            style="--reveal-delay: 80ms"
+            class="hero-in m-0 text-[clamp(44px,6vw,72px)] leading-[1.02] font-extrabold tracking-[-0.035em] text-zinc-950 dark:text-zinc-50"
+          >
             Editor WYSIWYG yang <span class="text-indigo-600 dark:text-indigo-400">tidak mengganggu.</span>
           </h1>
-          <p class="m-0 max-w-[560px] text-lg leading-[1.65] text-zinc-600 dark:text-zinc-400">
+          <p
+            style="--reveal-delay: 160ms"
+            class="hero-in m-0 max-w-[560px] text-lg leading-[1.65] text-zinc-600 dark:text-zinc-400"
+          >
             Editor ala Medium untuk Alpine.js: bubble toolbar, slash command, shortcut markdown, gambar &amp; video. Engine Tiptap/ProseMirror membuat perilaku mengetik sama di semua browser, dan output HTML-nya selalu bersih.
           </p>
 
-          <div class="flex flex-wrap gap-3">
+          <div
+            style="--reveal-delay: 240ms"
+            class="hero-in flex flex-wrap gap-3"
+          >
             <NuxtLink
               to="/memulai"
               class="btn-primary"
@@ -190,7 +224,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             </NuxtLink>
           </div>
 
-          <div class="flex max-w-full items-center gap-3 self-start rounded-[10px] border border-zinc-200 bg-zinc-50 py-2.5 pr-2.5 pl-4 font-mono text-[13px] text-zinc-700 dark:border-zinc-800 dark:bg-[#111113] dark:text-zinc-300">
+          <div
+            style="--reveal-delay: 320ms"
+            class="hero-in flex max-w-full items-center gap-3 self-start rounded-[10px] border border-zinc-200 bg-zinc-50 py-2.5 pr-2.5 pl-4 font-mono text-[13px] text-zinc-700 dark:border-zinc-800 dark:bg-[#111113] dark:text-zinc-300"
+          >
             <span
               class="text-zinc-400 dark:text-zinc-500"
               aria-hidden="true"
@@ -213,7 +250,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         </div>
 
         <!-- Mockup editor -->
-        <div class="relative min-w-0 flex-[1_1_480px]">
+        <div
+          style="--reveal-delay: 200ms"
+          class="hero-in hero-in-mockup relative min-w-0 flex-[1_1_480px]"
+        >
           <div
             aria-hidden="true"
             class="mockup-ring pointer-events-none absolute -inset-px rounded-[17px]"
@@ -333,7 +373,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
     <!-- BEKERJA BERSAMA -->
     <section class="border-b border-zinc-100 dark:border-zinc-900">
-      <div class="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-x-10 gap-y-3 px-6 py-8 text-sm">
+      <div
+        data-reveal
+        class="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-x-10 gap-y-3 px-6 py-8 text-sm"
+      >
         <span class="text-xs font-semibold tracking-[0.08em] text-zinc-500 dark:text-zinc-400">BEKERJA BERSAMA</span>
         <span
           v-for="name in ['Alpine.js', 'Laravel', 'Livewire', 'Bootstrap 5', 'Tailwind CSS']"
@@ -345,7 +388,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
     <!-- MULAI CEPAT -->
     <section class="mx-auto flex max-w-[1200px] flex-wrap items-center gap-14 px-6 py-28">
-      <div class="flex min-w-0 flex-[1_1_380px] flex-col gap-8">
+      <div
+        data-reveal
+        class="flex min-w-0 flex-[1_1_380px] flex-col gap-8"
+      >
         <div class="flex flex-col gap-3">
           <span class="eyebrow">MULAI CEPAT</span>
           <h2 class="section-title">
@@ -374,7 +420,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         </ol>
       </div>
 
-      <div class="min-w-0 flex-[1_1_520px] overflow-hidden rounded-[14px] border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-[#111113]">
+      <div
+        data-reveal
+        style="--reveal-delay: 120ms"
+        class="min-w-0 flex-[1_1_520px] overflow-hidden rounded-[14px] border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-[#111113]"
+      >
         <div
           role="tablist"
           aria-label="Contoh kode"
@@ -421,7 +471,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
     <!-- FITUR -->
     <section class="border-t border-zinc-100 bg-zinc-50/60 dark:border-zinc-900 dark:bg-[#0c0c0e]">
       <div class="mx-auto flex max-w-[1200px] flex-col gap-14 px-6 py-28">
-        <div class="flex flex-col items-center gap-3 text-center">
+        <div
+          data-reveal
+          class="flex flex-col items-center gap-3 text-center"
+        >
           <span class="eyebrow">PENGALAMAN MENULIS</span>
           <h2 class="section-title">
             Menulis tanpa gangguan
@@ -432,8 +485,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         </div>
         <div class="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
           <div
-            v-for="f in features"
+            v-for="(f, i) in features"
             :key="f.title"
+            data-reveal
+            :style="{ '--reveal-delay': `${(i % 3) * 80}ms` }"
             class="card flex flex-col gap-3.5 rounded-[14px] p-7"
           >
             <span
@@ -466,7 +521,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
     <!-- UNTUK PRODUKSI -->
     <section class="border-t border-zinc-100 dark:border-zinc-900">
       <div class="mx-auto flex max-w-[1200px] flex-col gap-14 px-6 py-28">
-        <div class="flex flex-col items-center gap-3 text-center">
+        <div
+          data-reveal
+          class="flex flex-col items-center gap-3 text-center"
+        >
           <span class="eyebrow">UNTUK PRODUKSI</span>
           <h2 class="section-title">
             Siap untuk aplikasi sungguhan
@@ -475,7 +533,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
         <div class="flex flex-wrap gap-4">
           <!-- Engine -->
-          <div class="card flex min-w-0 flex-[2_1_560px] flex-wrap items-center gap-8 rounded-2xl p-8">
+          <div
+            data-reveal
+            style="--reveal-delay: 0ms"
+            class="card flex min-w-0 flex-[2_1_560px] flex-wrap items-center gap-8 rounded-2xl p-8"
+          >
             <div class="flex flex-[1_1_260px] flex-col gap-3">
               <span
                 class="icon-tile"
@@ -507,6 +569,8 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <!-- Laravel -->
           <NuxtLink
             to="/integrasi/laravel"
+            data-reveal
+            style="--reveal-delay: 80ms"
             class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-8"
           >
             <span
@@ -524,7 +588,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           </NuxtLink>
 
           <!-- Autosave -->
-          <div class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-8">
+          <div
+            data-reveal
+            style="--reveal-delay: 0ms"
+            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-8"
+          >
             <span
               class="icon-tile"
               :class="TONE.emerald"
@@ -548,7 +616,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           </div>
 
           <!-- HTML / JSON -->
-          <div class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-8">
+          <div
+            data-reveal
+            style="--reveal-delay: 80ms"
+            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-8"
+          >
             <span
               class="icon-tile font-mono text-sm font-semibold"
               :class="TONE.sky"
@@ -566,7 +638,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           </div>
 
           <!-- Bahasa -->
-          <div class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-8">
+          <div
+            data-reveal
+            style="--reveal-delay: 160ms"
+            class="card flex min-w-0 flex-[1_1_320px] flex-col gap-3 rounded-2xl p-8"
+          >
             <span
               class="icon-tile"
               :class="TONE.violet"
@@ -589,7 +665,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           </div>
 
           <!-- Teruji -->
-          <div class="card flex min-w-0 flex-[2_1_560px] flex-wrap items-center gap-8 rounded-2xl p-8">
+          <div
+            data-reveal
+            style="--reveal-delay: 0ms"
+            class="card flex min-w-0 flex-[2_1_560px] flex-wrap items-center gap-8 rounded-2xl p-8"
+          >
             <div class="flex flex-[1_1_260px] flex-col gap-3">
               <span
                 class="icon-tile"
@@ -623,7 +703,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
     <!-- CTA -->
     <section class="mx-auto max-w-[1200px] px-6 pb-28">
-      <div class="relative flex flex-col items-center gap-5 overflow-hidden rounded-3xl border border-indigo-400/30 bg-zinc-50 px-8 py-20 text-center dark:bg-[#111113]">
+      <div
+        data-reveal
+        class="relative flex flex-col items-center gap-5 overflow-hidden rounded-3xl border border-indigo-400/30 bg-zinc-50 px-8 py-20 text-center dark:bg-[#111113]"
+      >
         <div
           aria-hidden="true"
           class="afw-grid-bg pointer-events-none absolute inset-0 opacity-60"
@@ -933,5 +1016,41 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
 .dark .landing .text-link:hover {
   color: #c7d2fe;
+}
+
+/* Animasi reveal. Hero: CSS murni saat halaman dibuka. Bagian lain: kelas dari IntersectionObserver. */
+@keyframes afw-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+@keyframes afw-rise-mockup {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.98);
+  }
+}
+.landing .hero-in {
+  animation: afw-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms) both;
+}
+.landing .hero-in-mockup {
+  animation-name: afw-rise-mockup;
+  animation-duration: 1s;
+}
+.landing .reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.landing .reveal.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing .hero-in {
+    animation: none;
+  }
 }
 </style>
