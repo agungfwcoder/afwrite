@@ -1300,9 +1300,9 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           </button>
         </div>
 
-        <!-- COBA LANGSUNG -->
+        <!-- COBA LANGSUNG (syarat eksplisit: blok di atasnya bukan pasangan v-if/v-else) -->
         <div
-          v-else
+          v-if="showcase === 'coba'"
           class="mx-auto flex w-full max-w-[860px] flex-col gap-4 py-4 sm:py-8"
         >
           <div
