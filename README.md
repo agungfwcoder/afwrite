@@ -321,4 +321,4 @@ Dibangun di atas [Tiptap](https://tiptap.dev), [ProseMirror](https://prosemirror
 
 ## Lisensi
 
-[MIT](LICENSE) © 2026 agungfitrahwibowo
+[MIT](LICENSE) © 2026 agungfwcoder
