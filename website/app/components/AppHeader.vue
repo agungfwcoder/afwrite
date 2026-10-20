@@ -29,7 +29,22 @@ const { header } = useAppConfig()
         class="h-6 w-auto shrink-0"
       />
 
-      <span v-else-if="header?.title">
+      <span
+        v-else-if="header?.title"
+        class="flex items-center gap-2.5"
+      >
+        <span class="flex size-7 items-center justify-center rounded-lg bg-indigo-600">
+          <svg
+            aria-hidden="true"
+            class="size-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#fff"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+        </span>
         {{ header.title }}
       </span>
     </template>
@@ -41,7 +56,6 @@ const { header } = useAppConfig()
       <NuxtLink :to="header?.to || '/'">
         <AppLogo class="w-auto h-6 shrink-0" />
       </NuxtLink>
-
     </template>
 
     <template #right>

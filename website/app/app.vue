@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { id } from '@nuxt/ui/locale'
+
 const { seo } = useAppConfig()
+const route = useRoute()
 
 const { data: navigation } = await useAsyncData('navigation', () => queryCollectionNavigation('docs'))
 const { data: files } = useLazyAsyncData('search', () => queryCollectionSearchSections('docs'), {
@@ -40,7 +42,8 @@ provide('navigation', navigation)
       </NuxtLayout>
     </UMain>
 
-    <AppFooter />
+    <!-- Landing punya footer sendiri. -->
+    <AppFooter v-if="route.path !== '/'" />
 
     <ClientOnly>
       <LazyUContentSearch

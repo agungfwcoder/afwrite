@@ -26,7 +26,12 @@ export default defineAppConfig({
     },
     search: true,
     colorMode: true,
-    links: []
+    links: [{
+      'icon': 'i-simple-icons-github',
+      'to': 'https://github.com/agungfwcoder/afwrite',
+      'target': '_blank',
+      'aria-label': 'Repositori GitHub'
+    }]
   },
   footer: {
     credits: `${BRAND} • MIT • Dibangun dengan Tiptap, ProseMirror & Nuxt UI • © ${new Date().getFullYear()}`,
