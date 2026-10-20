@@ -441,22 +441,22 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <span
             aria-hidden="true"
             class="paper paper-teal -top-8 -right-5 size-[150px] sm:-top-12 sm:-right-9 sm:size-[230px]"
-            style="--r: 12deg; --d: 13s"
+            style="--r: 12deg; --d: 8s"
           />
           <span
             aria-hidden="true"
             class="paper paper-sun -top-4 right-20 size-[84px] sm:-top-5 sm:right-[70px] sm:size-[120px]"
-            style="--r: -6deg; --d: 9s"
+            style="--r: -6deg; --d: 5s"
           />
           <span
             aria-hidden="true"
             class="paper paper-sun -left-5 bottom-6 size-[130px] sm:-left-11 sm:bottom-2.5 sm:size-[190px]"
-            style="--r: -10deg; --d: 11s"
+            style="--r: -10deg; --d: 7s"
           />
           <span
             aria-hidden="true"
             class="paper paper-teal-soft -bottom-10 left-[38%] size-[100px] sm:-bottom-[54px] sm:size-[140px]"
-            style="--r: 18deg; --d: 15s"
+            style="--r: 18deg; --d: 9s"
           />
           <div class="glass-strong relative rounded-[20px] p-2 sm:rounded-[22px] sm:p-2.5">
             <div class="flex items-center gap-1 overflow-x-auto px-0.5 pb-2 sm:pb-2.5">
@@ -712,26 +712,32 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <span
             aria-hidden="true"
             class="paper paper-teal top-[70px] left-[60px] size-[210px]"
+            style="--d: 9s"
           />
           <span
             aria-hidden="true"
             class="paper paper-sun top-[36%] left-[33%] size-[170px]"
+            style="--d: 7s"
           />
           <span
             aria-hidden="true"
             class="paper paper-sun top-10 right-[22%] size-[150px]"
+            style="--d: 8s"
           />
           <span
             aria-hidden="true"
             class="paper paper-teal-soft top-[24%] right-[30px] size-[220px]"
+            style="--d: 10s"
           />
           <span
             aria-hidden="true"
             class="paper paper-sun bottom-[60px] left-[10%] size-[150px]"
+            style="--d: 6s"
           />
           <span
             aria-hidden="true"
             class="paper paper-teal right-[12%] bottom-10 size-[180px]"
+            style="--d: 8.5s"
           />
         </template>
         <!-- FITUR -->
@@ -1412,22 +1418,22 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         <span
           aria-hidden="true"
           class="paper paper-teal top-[18%] left-[6%] size-[120px] sm:size-[170px]"
-          style="--r: -14deg; --d: 12s"
+          style="--r: -14deg; --d: 7s"
         />
         <span
           aria-hidden="true"
           class="paper paper-sun bottom-[6%] left-[16%] size-[90px] sm:size-[110px]"
-          style="--r: 10deg; --d: 9s"
+          style="--r: 10deg; --d: 5s"
         />
         <span
           aria-hidden="true"
           class="paper paper-sun top-[6%] right-[8%] size-[110px] sm:size-[150px]"
-          style="--r: 16deg; --d: 14s"
+          style="--r: 16deg; --d: 8s"
         />
         <span
           aria-hidden="true"
           class="paper paper-teal-soft right-[18%] bottom-[10%] size-[120px]"
-          style="--r: -8deg; --d: 10s"
+          style="--r: -8deg; --d: 6s"
         />
         <div class="glass cta-panel relative flex flex-col items-center gap-5 overflow-hidden rounded-[22px] px-6 py-20 text-center sm:px-8">
           <!-- Cahaya yang bergerak sambil meredup dan menerang. -->
@@ -1958,7 +1964,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   background-color: rgba(8, 9, 10, 0.8);
 }
 
-/* --r: rotasi, --d: durasi melayang. Tanpa --d deklarasi animation tidak valid, jadi kertas diam. */
+/* --r: rotasi, --d: durasi melayang (tanpa --d deklarasi animation tidak valid, jadi kertas diam). */
 .landing .paper {
   position: absolute;
   border-radius: 16px;
@@ -1987,10 +1993,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   background: #2f9c96;
 }
 
+/* Naik-turun cukup jauh agar tetap terlihat di balik kaca buram. */
 @keyframes paper-float {
   0%,
-  100% { transform: rotate(var(--r, 0deg)) translateY(0); }
-  50% { transform: rotate(calc(var(--r, 0deg) + 4deg)) translateY(-10px); }
+  100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-24px) rotate(calc(var(--r, 0deg) + 6deg)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
