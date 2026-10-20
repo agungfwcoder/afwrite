@@ -329,10 +329,6 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
     <section class="hero relative overflow-hidden">
       <div
         aria-hidden="true"
-        class="hero-dots pointer-events-none absolute inset-0"
-      />
-      <div
-        aria-hidden="true"
         class="hero-fade pointer-events-none absolute inset-x-0 bottom-0 h-3/4"
       />
       <div
@@ -1525,19 +1521,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 <style>
 /* Tidak scoped: semua aturan diawali .landing agar tidak bocor ke halaman lain. */
 
-/* Latar hero & CTA: titik-titik halus + pendar brand dari bawah. */
-.landing .hero-dots {
-  background-image: radial-gradient(rgba(24, 24, 27, 0.16) 1.5px, transparent 1.5px);
-  background-size: 28px 28px;
-  /* Memudar di bagian atas (dekat header), penuh di bawah. */
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 55%);
-  mask-image: linear-gradient(to bottom, transparent, #000 55%);
-}
-
-.dark .landing .hero-dots {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1.5px, transparent 1.5px);
-}
-
+/* Latar hero: pendar brand dari bawah. */
 .landing .hero-fade {
   background: linear-gradient(to bottom, transparent, rgba(12, 180, 174, 0.14));
 }
