@@ -877,10 +877,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         <p class="relative m-0 max-w-[520px] text-[17px] leading-[1.65] text-zinc-600 dark:text-zinc-400">
           Pasang lewat npm atau CDN, tambahkan satu atribut x-data, dan editor siap dipakai di form Anda.
         </p>
-        <div class="relative mt-2 flex flex-wrap justify-center gap-3">
+        <div class="relative mt-2 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
           <NuxtLink
             to="/memulai/instalasi"
-            class="btn-primary"
+            class="btn-primary justify-center"
           >
             Instalasi
             <svg
@@ -891,7 +891,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           </NuxtLink>
           <NuxtLink
             to="/memulai/demo"
-            class="btn-ghost bg-white/60 dark:bg-[#09090b]/60"
+            class="btn-ghost justify-center bg-white/60 dark:bg-[#09090b]/60"
           >
             <svg
               class="size-4"
