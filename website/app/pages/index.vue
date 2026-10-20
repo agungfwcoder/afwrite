@@ -1363,6 +1363,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           aria-hidden="true"
           class="hero-fade pointer-events-none absolute inset-x-0 bottom-0 h-full"
         />
+        <!-- Cahaya yang meredup dan menerang bergantian (bawah & belakang judul). -->
+        <div
+          aria-hidden="true"
+          class="cta-glow pointer-events-none absolute inset-0"
+        />
         <h2 class="section-title relative">
           Siap mencoba<span class="text-sun">?</span>
         </h2>
@@ -1590,6 +1595,56 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
   .landing .hero-wave {
     display: none;
+  }
+}
+
+/* CTA: dua pendar brand yang bergantian meredup dan menerang. */
+.landing .cta-glow::before,
+.landing .cta-glow::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  animation: cta-pulse 6s ease-in-out infinite;
+}
+
+/* Pendar lebar dari tepi bawah. */
+.landing .cta-glow::before {
+  bottom: -55%;
+  width: 90%;
+  height: 100%;
+  background: radial-gradient(closest-side, rgba(12, 180, 174, 0.32), transparent);
+}
+
+/* Pendar lembut di belakang judul, berlawanan fase dengan pendar bawah. */
+.landing .cta-glow::after {
+  top: 8%;
+  width: 46%;
+  height: 55%;
+  background: radial-gradient(closest-side, rgba(12, 180, 174, 0.16), transparent);
+  animation-delay: -3s;
+}
+
+.dark .landing .cta-glow::before {
+  background: radial-gradient(closest-side, rgba(20, 204, 198, 0.26), transparent);
+}
+
+.dark .landing .cta-glow::after {
+  background: radial-gradient(closest-side, rgba(20, 204, 198, 0.12), transparent);
+}
+
+@keyframes cta-pulse {
+  0%,
+  100% { opacity: 0.35; transform: translateX(-50%) scale(0.92); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing .cta-glow::before,
+  .landing .cta-glow::after {
+    animation: none;
+    opacity: 0.7;
   }
 }
 
