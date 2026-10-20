@@ -97,7 +97,17 @@ export default defineNuxtConfig({
   },
 
   icon: {
-    provider: 'iconify'
+    provider: 'iconify',
+    // Ikon ikut dibundel agar tampil tanpa menunggu API Iconify (yang namanya dinamis didaftarkan manual).
+    clientBundle: {
+      scan: true,
+      icons: [
+        'simple-icons:alpinedotjs', 'simple-icons:laravel', 'simple-icons:livewire', 'simple-icons:bootstrap',
+        'simple-icons:tailwindcss', 'simple-icons:github', 'simple-icons:googlechrome', 'simple-icons:firefoxbrowser',
+        'simple-icons:safari', 'simple-icons:youtube', 'simple-icons:vimeo',
+        'vscode-icons:file-type-html', 'vscode-icons:file-type-js-official', 'vscode-icons:file-type-blade'
+      ]
+    }
   },
 
   llms: {

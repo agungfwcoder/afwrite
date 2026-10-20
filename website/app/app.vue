@@ -37,6 +37,16 @@ useSeoMeta({
 })
 
 provide('navigation', navigation)
+
+// Grup "Links" di modal pencarian (⌘K), seperti situs Nuxt UI.
+const searchLinks = [
+  { label: 'Memulai', description: 'Pasang dan pakai afwrite untuk pertama kali.', icon: 'i-lucide-play', to: '/memulai' },
+  { label: 'Panduan', description: 'Opsi, toolbar, perintah, gambar, event, dan API.', icon: 'i-lucide-book-open', to: '/panduan/opsi' },
+  { label: 'Integrasi', description: 'Komponen Blade, upload, sanitasi server, dan Livewire.', icon: 'i-lucide-plug', to: '/integrasi/laravel' },
+  { label: 'Coba langsung', description: 'Editor sungguhan di halaman depan.', icon: 'i-lucide-square-pen', to: '/#coba' },
+  { label: 'Catatan rilis', description: 'Perubahan di setiap versi.', icon: 'i-lucide-rocket', to: '/lainnya/changelog' },
+  { label: 'GitHub', description: 'Kode sumber, isu, dan laporan keamanan.', icon: 'i-simple-icons-github', to: 'https://github.com/agungfwcoder/afwrite', target: '_blank' }
+]
 </script>
 
 <template>
@@ -58,6 +68,7 @@ provide('navigation', navigation)
       <LazyUContentSearch
         :files="files"
         :navigation="navigation"
+        :links="searchLinks"
       />
     </ClientOnly>
   </UApp>

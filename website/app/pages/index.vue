@@ -71,13 +71,13 @@ const ICON = {
 
 // Token pewarnaan kode: [teks, kelas warna]; baris = array token.
 type Token = [string, string?]
-const T = { tag: 'text-pink-600 dark:text-pink-400', attr: 'text-emerald-600 dark:text-emerald-300', str: 'text-emerald-700 dark:text-emerald-300', kw: 'text-violet-600 dark:text-violet-300', dim: 'text-zinc-400 dark:text-zinc-500' }
+const T = { tag: 'text-pink-600 dark:text-pink-400', attr: 'text-emerald-600 dark:text-emerald-300', str: 'text-emerald-700 dark:text-emerald-300', kw: 'italic text-violet-600 dark:text-violet-300', dim: 'text-zinc-400 dark:text-zinc-500' }
 
 // Kartu hero: tab "Editor" (mockup animasi) dan contoh kode.
-const tabs: { name: string, dot: string, lines: Token[][] }[] = [
+const tabs: { name: string, icon: string, lines: Token[][] }[] = [
   {
     name: 'form.html',
-    dot: 'bg-orange-400',
+    icon: 'i-vscode-icons-file-type-html',
     lines: [
       [['<form', T.tag], [' '], ['method', T.attr], ['='], ['"post"', T.str], ['>', T.tag]],
       [['  <div', T.tag], [' '], ['x-data', T.attr], ['='], ['"wysiwyg({ name: \'body\' })"', T.str], ['>', T.tag]],
@@ -89,7 +89,7 @@ const tabs: { name: string, dot: string, lines: Token[][] }[] = [
   },
   {
     name: 'app.js',
-    dot: 'bg-yellow-400',
+    icon: 'i-vscode-icons-file-type-js-official',
     lines: [
       [['import', T.kw], [' Alpine '], ['from', T.kw], [' '], ['\'alpinejs\'', T.str]],
       [['import', T.kw], [' afwrite '], ['from', T.kw], [' '], ['\'afwrite\'', T.str]],
@@ -101,7 +101,7 @@ const tabs: { name: string, dot: string, lines: Token[][] }[] = [
   },
   {
     name: 'edit.blade.php',
-    dot: 'bg-red-400',
+    icon: 'i-vscode-icons-file-type-blade',
     lines: [
       [['<form', T.tag], [' '], ['method', T.attr], ['='], ['"post"', T.str], ['>', T.tag]],
       [['  @csrf', T.kw]],
@@ -113,6 +113,16 @@ const tabs: { name: string, dot: string, lines: Token[][] }[] = [
   }
 ]
 const heroTab = ref(-1) // -1 = Editor
+
+// Deretan chip blok di bawah kartu hero (seperti deretan tema di halaman Nuxt UI).
+const chips = [
+  { icon: 'headingLarge', label: 'Judul', cls: 'bg-emerald-500/12 text-emerald-600 ring-emerald-500/25 dark:text-emerald-300' },
+  { icon: 'list', label: 'Daftar berpoin', cls: 'bg-sky-500/12 text-sky-600 ring-sky-500/25 dark:text-sky-300' },
+  { icon: 'quote', label: 'Kutipan', cls: 'bg-violet-500/12 text-violet-600 ring-violet-500/25 dark:text-violet-300' },
+  { icon: 'code', label: 'Blok kode', cls: 'bg-rose-500/12 text-rose-600 ring-rose-500/25 dark:text-rose-300' },
+  { icon: 'image', label: 'Gambar', cls: 'bg-amber-500/12 text-amber-600 ring-amber-500/25 dark:text-amber-300' },
+  { icon: 'video', label: 'Video', cls: 'bg-red-500/12 text-red-600 ring-red-500/25 dark:text-red-300' }
+] as const
 
 // Logo brand di baris "Bekerja dengan".
 const works = [
@@ -310,7 +320,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 <template>
   <div class="landing bg-white text-zinc-700 dark:bg-[#09090b] dark:text-zinc-200">
     <!-- HERO -->
-    <section class="relative overflow-hidden border-b border-emerald-500/50 dark:border-emerald-400/45">
+    <section class="hero relative overflow-hidden">
       <div
         aria-hidden="true"
         class="hero-dots pointer-events-none absolute inset-0"
@@ -319,17 +329,25 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         aria-hidden="true"
         class="hero-fade pointer-events-none absolute inset-x-0 bottom-0 h-3/4"
       />
-      <div class="relative mx-auto grid max-w-[1200px] items-center gap-12 px-6 pt-20 pb-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:pt-28 lg:pb-24">
-        <div class="flex min-w-0 flex-col gap-6">
+      <div
+        aria-hidden="true"
+        class="hero-sun pointer-events-none absolute inset-0"
+      />
+      <!-- Garis tegas di bawah hero, seperti halaman Nuxt UI. -->
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-emerald-500 dark:bg-emerald-400"
+      />
+      <div class="relative mx-auto grid max-w-[1200px] items-center gap-12 px-6 pt-16 pb-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:pt-24 lg:pb-24">
+        <div class="flex min-w-0 flex-col items-start gap-6">
           <NuxtLink
             to="/panduan/event-api#judul-slug"
             style="--reveal-delay: 0ms"
-            class="hero-in inline-flex items-center gap-2 self-start rounded-md border border-emerald-500/30 bg-emerald-500/10 py-1 pr-2 pl-1 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-500/15 dark:text-emerald-300"
+            class="hero-in inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-500/15 dark:text-emerald-400"
           >
-            <span class="rounded-[4px] bg-sun px-1.5 py-px text-[11px] font-bold text-zinc-950">Baru</span>
-            Judul &amp; slug untuk URL
+            Baru di v2: judul &amp; slug
             <svg
-              class="size-3.5"
+              class="size-4"
               v-bind="svgAttrs"
               v-html="ICON.arrow"
             />
@@ -337,15 +355,15 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
           <h1
             style="--reveal-delay: 80ms"
-            class="hero-in m-0 text-[clamp(44px,6vw,68px)] leading-[1.04] font-extrabold tracking-[-0.035em] text-zinc-950 dark:text-zinc-50"
+            class="hero-in m-0 text-[clamp(44px,5.6vw,64px)] leading-[1.06] font-semibold tracking-[-0.03em] text-zinc-950 dark:text-zinc-50"
           >
             All fine.<br><span class="text-emerald-600 dark:text-emerald-400">Just write</span><span class="text-sun">.</span>
           </h1>
           <p
             style="--reveal-delay: 160ms"
-            class="hero-in m-0 max-w-[540px] text-lg leading-[1.65] text-zinc-600 dark:text-zinc-400"
+            class="hero-in m-0 max-w-[560px] text-lg leading-[1.6] text-zinc-600 dark:text-zinc-400"
           >
-            Editor ala Medium untuk Alpine.js: bubble toolbar, slash command, shortcut markdown, gambar &amp; video. Engine Tiptap/ProseMirror membuat perilaku mengetik sama di semua browser, dan output HTML-nya selalu bersih.
+            Editor ala Medium untuk Alpine.js dan Laravel. Bubble toolbar, slash command, shortcut markdown, gambar &amp; video, dengan output HTML yang selalu bersih.
           </p>
 
           <div
@@ -354,36 +372,25 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           >
             <NuxtLink
               to="/memulai"
-              class="btn-primary"
+              class="btn-solid"
             >
               Mulai
-              <svg
-                class="size-4"
-                v-bind="svgAttrs"
-                v-html="ICON.arrow"
-              />
             </NuxtLink>
             <a
               href="#coba"
-              class="btn-ghost"
+              class="btn-soft"
               @click="showcase = 'coba'"
             >
-              <svg
-                class="size-4"
-                v-bind="svgAttrs"
-                stroke-linejoin="round"
-                v-html="ICON.play"
-              />
               Coba editornya
             </a>
           </div>
 
           <div
             style="--reveal-delay: 320ms"
-            class="hero-in flex flex-wrap items-center gap-x-4 gap-y-3 text-[13px] text-zinc-500 dark:text-zinc-400"
+            class="hero-in flex flex-wrap items-center gap-x-3 gap-y-3 text-[13px] text-zinc-500 dark:text-zinc-400"
           >
             <span>Bekerja dengan</span>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2.5">
               <UIcon
                 v-for="w in works"
                 :key="w.name"
@@ -391,12 +398,12 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 :title="w.name"
                 :aria-label="w.name"
                 role="img"
-                class="brand-logo size-[18px]"
+                class="brand-logo size-4"
               />
             </div>
             <span
               aria-hidden="true"
-              class="h-4 w-px bg-zinc-300 dark:bg-zinc-700"
+              class="mx-1 h-3.5 w-px bg-zinc-300 dark:bg-zinc-700"
             />
             <a
               :href="REPO"
@@ -410,13 +417,13 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           </div>
         </div>
 
-        <!-- Kartu editor bertab -->
+        <!-- Kartu editor bertab (gaya kartu kode Nuxt UI) -->
         <div
           style="--reveal-delay: 200ms"
           class="hero-in hero-in-mockup relative min-w-0"
         >
-          <div class="rounded-2xl border border-zinc-200 bg-white/90 shadow-[0_40px_80px_-24px_rgba(24,24,27,0.25)] backdrop-blur dark:border-zinc-800 dark:bg-[#111113]/90 dark:shadow-[0_40px_80px_-24px_rgba(0,0,0,0.75)]">
-            <div class="flex items-center gap-1 overflow-x-auto border-b border-zinc-200 p-2 dark:border-zinc-800">
+          <div class="rounded-2xl border border-zinc-200/80 bg-zinc-100/70 p-2 backdrop-blur sm:p-2.5 dark:border-white/[0.06] dark:bg-white/[0.035]">
+            <div class="flex items-center gap-1 overflow-x-auto px-0.5 pb-2 sm:pb-2.5">
               <div
                 role="tablist"
                 aria-label="Contoh"
@@ -447,9 +454,9 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   :class="{ 'is-active': heroTab === i }"
                   @click="heroTab = i"
                 >
-                  <span
-                    class="size-2 rounded-[2px]"
-                    :class="t.dot"
+                  <UIcon
+                    :name="t.icon"
+                    class="size-3.5"
                   />{{ t.name }}
                 </button>
               </div>
@@ -458,11 +465,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               </div>
             </div>
 
-            <div class="relative">
+            <div class="relative rounded-xl border border-zinc-200 bg-white shadow-[0_24px_60px_-28px_rgba(24,24,27,0.3)] dark:border-white/[0.06] dark:bg-[#0b0b0d] dark:shadow-[0_24px_60px_-28px_rgba(0,0,0,0.8)]">
               <!-- Mockup editor. Selalu ikut alur (hanya disembunyikan) agar tinggi kartu mengikuti isinya
                    dan tidak berubah saat tab kode dibuka; animasinya juga tetap jalan. -->
               <div
-                class="relative flex flex-col gap-4 px-6 pt-12 pb-8 text-base leading-[1.7] text-zinc-700 sm:px-10 dark:text-zinc-300"
+                class="relative flex flex-col gap-4 px-6 pt-10 pb-8 text-base leading-[1.7] text-zinc-700 sm:px-10 dark:text-zinc-300"
                 :class="{ invisible: heroTab >= 0 }"
                 :aria-hidden="heroTab >= 0 ? 'true' : undefined"
               >
@@ -583,16 +590,33 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               <pre
                 v-if="heroTab >= 0"
                 role="tabpanel"
-                class="absolute inset-0 m-0 overflow-auto p-5 font-mono text-[13px] leading-[1.85] text-zinc-700 sm:p-6 dark:text-zinc-300"
+                class="absolute inset-0 m-0 overflow-auto px-5 py-5 font-mono text-[13.5px] leading-[1.8] text-zinc-700 sm:px-6 dark:text-zinc-300"
               ><template
                 v-for="(line, n) in tabs[heroTab]!.lines"
                 :key="n"
-              ><span :class="T.dim">{{ String(n + 1).padStart(2, ' ') }}</span>  <span
+              ><span
                 v-for="(tok, k) in line"
                 :key="k"
                 :class="tok[1]"
               >{{ tok[0] }}</span>
 </template></pre>
+            </div>
+
+            <!-- Chip blok. Rata kanan agar tidak tertimpa slash menu yang menjorok keluar di kiri;
+                 disembunyikan di ponsel dan di lg (kartu terlalu sempit sehingga tetap tertimpa). -->
+            <div class="hidden flex-wrap justify-end gap-1.5 px-0.5 pt-2.5 sm:flex lg:hidden xl:flex">
+              <span
+                v-for="c in chips"
+                :key="c.label"
+                :title="c.label"
+                class="flex size-7 items-center justify-center rounded-full ring-1 ring-inset"
+                :class="c.cls"
+              ><svg
+                class="size-3.5"
+                v-bind="svgAttrs"
+                stroke-linejoin="round"
+                v-html="ICON[c.icon]"
+              /></span>
             </div>
           </div>
         </div>
@@ -1374,8 +1398,9 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 .landing .hero-dots {
   background-image: radial-gradient(rgba(24, 24, 27, 0.14) 1px, transparent 1px);
   background-size: 22px 22px;
-  -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 95%);
-  mask-image: linear-gradient(to bottom, #000 30%, transparent 95%);
+  /* Memudar di bagian atas (dekat header), penuh di bawah. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 55%);
+  mask-image: linear-gradient(to bottom, transparent, #000 55%);
 }
 
 .dark .landing .hero-dots {
@@ -1383,17 +1408,20 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .landing .hero-fade {
-  background:
-    radial-gradient(28% 40% at 12% 100%, rgba(255, 187, 0, 0.1), transparent 70%),
-    radial-gradient(60% 55% at 50% 100%, rgba(16, 185, 129, 0.2), transparent 70%),
-    linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.16));
+  background: linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.14));
 }
 
 .dark .landing .hero-fade {
-  background:
-    radial-gradient(28% 40% at 12% 100%, rgba(255, 187, 0, 0.1), transparent 70%),
-    radial-gradient(60% 55% at 50% 100%, rgba(16, 185, 129, 0.32), transparent 70%),
-    linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.24));
+  background: linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.16));
+}
+
+/* Aksen kuning logo di pojok kanan atas hero. */
+.landing .hero-sun {
+  background: radial-gradient(32% 45% at 92% 0%, rgba(255, 187, 0, 0.14), transparent 70%);
+}
+
+.dark .landing .hero-sun {
+  background: radial-gradient(32% 45% at 92% 0%, rgba(255, 187, 0, 0.12), transparent 70%);
 }
 
 /* Logo brand "Bekerja dengan": abu-abu, berwarna saat disorot. */
@@ -1419,10 +1447,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   flex-shrink: 0;
   align-items: center;
   gap: 6px;
-  height: 28px;
+  height: 30px;
   padding: 0 10px;
-  border-radius: 7px;
-  font-size: 12px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 500;
   color: #71717a;
   cursor: pointer;
@@ -1434,8 +1462,9 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .landing .hero-tab.is-active {
-  background: #f4f4f5;
+  background: #fff;
   color: #09090b;
+  box-shadow: 0 1px 2px rgba(24, 24, 27, 0.08);
 }
 
 .dark .landing .hero-tab {
@@ -1447,8 +1476,49 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 .dark .landing .hero-tab.is-active {
-  background: #27272a;
+  background: rgba(255, 255, 255, 0.08);
   color: #fafafa;
+  box-shadow: none;
+}
+
+/* Tombol hero (bentuk mengikuti Nuxt UI: solid + soft, tanpa ikon). */
+.landing .btn-solid,
+.landing .btn-soft {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.landing .btn-solid {
+  background: #059669;
+  color: #fff;
+}
+
+.landing .btn-solid:hover {
+  background: #10b981;
+}
+
+.landing .btn-soft {
+  background: rgba(24, 24, 27, 0.06);
+  color: #18181b;
+}
+
+.landing .btn-soft:hover {
+  background: rgba(24, 24, 27, 0.1);
+}
+
+.dark .landing .btn-soft {
+  background: rgba(255, 255, 255, 0.07);
+  color: #f4f4f5;
+}
+
+.dark .landing .btn-soft:hover {
+  background: rgba(255, 255, 255, 0.11);
 }
 
 .landing .btn-primary {
