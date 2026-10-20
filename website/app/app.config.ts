@@ -180,7 +180,7 @@ export default defineAppConfig({
   },
   header: {
     title: BRAND,
-    version: `v${pkg.version}`,
+    version: `v${pkg.version.split('.')[0]}`, // hanya versi mayor; perubahan kecil = checkpoint (lihat CHANGELOG)
     to: '/',
     logo: {
       alt: '',

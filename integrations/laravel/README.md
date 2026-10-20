@@ -15,7 +15,7 @@ Diuji dengan Laravel 13 + `ezyang/htmlpurifier` (`php artisan test --filter=Wysw
 ## 1. Pasang
 
 ```bash
-npm install github:agungfwcoder/afwrite#v2.2.0 alpinejs
+npm install github:agungfwcoder/afwrite#semver:^2 alpinejs
 composer require ezyang/htmlpurifier
 php artisan storage:link
 ```

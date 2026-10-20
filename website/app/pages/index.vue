@@ -220,7 +220,7 @@ const variants = [
     name: 'Lengkap',
     hint: 'Toolbar atas, bubble, slash menu, dan statistik kata.',
     options: {},
-    content: '<h2>Catatan rapat</h2><p>Coba shortcut markdown: ketik <code>## </code> untuk judul, <code>- </code> untuk daftar, atau <code>**tebal**</code>.</p><ul><li><p>Rilis v2.2 minggu ini</p></li><li><p>Siapkan contoh Laravel</p></li></ul><p>Tempel link YouTube di baris kosong untuk menyisipkan video.</p>'
+    content: '<h2>Catatan rapat</h2><p>Coba shortcut markdown: ketik <code>## </code> untuk judul, <code>- </code> untuk daftar, atau <code>**tebal**</code>.</p><ul><li><p>Rilis v2 minggu ini</p></li><li><p>Siapkan contoh Laravel</p></li></ul><p>Tempel link YouTube di baris kosong untuk menyisipkan video.</p>'
   },
   {
     name: 'Minimal',
@@ -273,7 +273,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             class="hero-in inline-flex items-center gap-2 self-start rounded-full border border-emerald-400/30 bg-emerald-600/10 py-1 pr-3 pl-1 text-[13px] font-medium text-emerald-700 transition-colors hover:bg-emerald-600/15 dark:text-emerald-200"
           >
             <span class="rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-bold tracking-[0.04em] text-white">BARU</span>
-            v2.2 · Judul & slug untuk URL
+            Judul & slug untuk URL
             <svg
               class="size-3.5"
               v-bind="svgAttrs"

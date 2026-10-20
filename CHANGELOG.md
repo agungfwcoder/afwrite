@@ -1,23 +1,29 @@
 # Changelog
 
-## 2.2.0 — 2026-10-20
+## v2
 
-### Baru
+Versi yang ditampilkan hanya versi mayor. Perubahan kecil dicatat sebagai checkpoint (terbaru di
+atas); tag git `v2.x.y` hanya penanda checkpoint. CDN `@2` dan `npm install github:agungfwcoder/afwrite#semver:^2`
+selalu mengambil checkpoint v2 terbaru.
+
+### Checkpoint 2026-10-20 · judul & slug (tag `v2.2.0`)
+
+**Baru**
 - `slugify(teks, { maxLength })`: slug untuk URL dari judul ("Café Pagi!" -> `cafe-pagi`). Hanya
   pratinjau; slug final tetap dibuat server
 - `getMeta()` ikut mengembalikan `slug`, dan event `wysiwyg-change` kini membawa `{ html, meta }`
 - Opsi `titleName`: input hidden berisi judul (`<h1>` artikel / teks pertama). Prop Blade `title-name`
 
-## 2.1.0 — 2026-10-20
+### Checkpoint 2026-10-20 · nama afwrite, CDN, mode artikel (tag `v2.1.0`)
 
-### Berubah
+**Berubah**
 - Nama paket menjadi `afwrite` (sebelumnya `wyswyg`, nama yang di npm sudah dipakai paket lain):
   `import afwrite from 'afwrite'`, `import 'afwrite/style.css'`. Berkas build menjadi
   `dist/afwrite.js` & `dist/afwrite.css`. Komponen `x-data="wysiwyg(...)"`, event, dan nama di
   integrasi Laravel (`WyswygHtml`, route `wyswyg.upload`) tidak berubah
 - `dist/` ikut di repo agar bisa dipasang dari GitHub dan dimuat lewat CDN
 
-### Baru
+**Baru**
 - Build standalone `dist/afwrite.min.js` untuk `<script>` / CDN (jsDelivr), sudah berisi
   Tiptap/ProseMirror. Plugin terdaftar otomatis, API di `window.Afwrite`
 - Opsi `headings` (bawaan `[2, 3]`): level judul H2–H6. Tombol toolbar & bubble (bubble paling
@@ -44,13 +50,13 @@
   blok utuh. Ctrl/⌘+Shift+↑/↓ memindah blok lewat keyboard. Judul/subjudul artikel tidak ikut
   dipindah. Opsi `dragHandle: false` untuk mematikan pegangan. API `moveBlock()`, `selectBlock()`
 
-## 2.0.0 — 2026-10-18
+### Rilis v2 · 2026-10-18
 
 Engine baru: [Tiptap](https://tiptap.dev) 3 / [ProseMirror](https://prosemirror.net), menggantikan
 `contenteditable` + `document.execCommand`. Tampilan, komponen Alpine, API `Editor`, event, dan
 format HTML output tidak berubah, sehingga konten lama tetap terbaca.
 
-### Berubah
+**Berubah**
 - Perilaku mengetik, list, format, dan kursor ditangani ProseMirror: sama di semua browser,
   tanpa tambalan khusus Chrome/Safari
 - JSON memakai format dokumen ProseMirror (`{ type: 'doc', content: [...] }`); format v1
@@ -58,18 +64,20 @@ format HTML output tidak berubah, sehingga konten lama tetap terbaca.
 - Build hanya modul ES; Tiptap/ProseMirror menjadi dependency (total sekitar 135 KB gzip di aplikasi)
 - Build UMD (`<script>` tanpa bundler) dihapus
 
-### Baru
+**Baru**
 - `editor.tiptap`: akses ke instance Tiptap untuk kebutuhan lanjutan
 - Gap cursor (kursor di antara dua media) dan penanda posisi saat menyeret gambar
 
-### Perbaikan
+**Perbaikan**
 - Seleksi yang dipasang lewat script, atau tombol yang ditekan sangat cepat setelah
   Shift+Panah, kini selalu terbaca sebelum perintah dijalankan
 - Drop HTML/teks dari luar memakai aturan yang sama dengan paste di semua browser
 
-## 1.1.0 — 2026-10-17
+## v1
 
-### Termin 6: lanjutan
+### 1.1.0 — 2026-10-17
+
+#### Termin 6: lanjutan
 - Blok kode `<pre><code>`: ```` ``` ````, `/kode`, tombol toolbar, Ctrl/⌘+Alt+C; Enter, Tab,
   Shift+Tab, dan paste sebagai teks di dalam blok
 - Model JSON: `getJSON()` / `setJSON()`, `toJSON()` / `fromJSON()`, opsi `format: 'json'`
@@ -78,11 +86,11 @@ format HTML output tidak berubah, sehingga konten lama tetap terbaca.
   (HTMLPurifier) beserta feature test
 - Test: 115 unit test, 207 pemeriksaan browser per engine (Chromium, Firefox, WebKit)
 
-## 1.0.0 — 2026-10-17
+### 1.0.0 — 2026-10-17
 
 Rilis pertama.
 
-### Termin 5: API & stabilitas
+#### Termin 5: API & stabilitas
 - Undo/redo dengan riwayat sendiri (ketikan beruntun digabung; operasi media ikut tercatat),
   tombol undo/redo di toolbar, dan dukungan menu Edit browser
 - Mode baca saja (`readonly`, `setReadOnly()`)
@@ -95,14 +103,14 @@ Rilis pertama.
   shortcut markdown, spasi saat paste
 - Test browser di Chromium, Firefox, dan WebKit (`npm run test:browser -- all`)
 
-### Termin 4: media
+#### Termin 4: media
 - Gambar (upload, caption, alt text, ukuran normal/lebar/penuh), video YouTube/Vimeo, pemisah
 
-### Termin 3: UI modern
+#### Termin 3: UI modern
 - Bubble toolbar, link inline, slash command, tombol `+`, shortcut markdown, statistik
 
-### Termin 2: sanitasi & paste
+#### Termin 2: sanitasi & paste
 - Sanitasi berbasis whitelist; paste dari Word/Google Docs/web dibersihkan
 
-### Termin 1: editor dasar
+#### Termin 1: editor dasar
 - Format teks, heading, kutipan, list, link, shortcut keyboard, CSS terisolasi `afw`

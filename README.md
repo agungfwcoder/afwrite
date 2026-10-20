@@ -24,15 +24,15 @@ Dokumentasi lengkap: https://agungfwcoder.github.io/afwrite/
 Script afwrite dimuat **sebelum** Alpine; plugin terdaftar otomatis dan API lain ada di `window.Afwrite`:
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/agungfwcoder/afwrite@v2.2.0/dist/afwrite.css">
-<script defer src="https://cdn.jsdelivr.net/gh/agungfwcoder/afwrite@v2.2.0/dist/afwrite.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/agungfwcoder/afwrite@2/dist/afwrite.css">
+<script defer src="https://cdn.jsdelivr.net/gh/agungfwcoder/afwrite@2/dist/afwrite.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 ```
 
 ### Lewat bundler
 
 ```bash
-npm install github:agungfwcoder/afwrite#v2.2.0 alpinejs
+npm install github:agungfwcoder/afwrite#semver:^2 alpinejs
 # setelah dipublish ke npm: npm install afwrite alpinejs
 ```
 
