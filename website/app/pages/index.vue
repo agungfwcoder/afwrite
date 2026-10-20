@@ -1353,17 +1353,13 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
     <section class="mx-auto max-w-(--ui-container) px-4 sm:px-6 lg:px-8 pb-24">
       <div
         data-reveal
-        class="relative flex flex-col items-center gap-5 overflow-hidden rounded-2xl border border-brand-500/30 bg-zinc-50 px-6 py-20 text-center sm:px-8 dark:bg-[#0d0d0f]"
+        class="relative flex flex-col items-center gap-5 overflow-hidden rounded-2xl border border-brand-500/30 bg-zinc-100 px-6 py-20 text-center sm:px-8 dark:bg-[#070809]"
       >
         <div
           aria-hidden="true"
           class="hero-dots pointer-events-none absolute inset-0"
         />
-        <div
-          aria-hidden="true"
-          class="hero-fade pointer-events-none absolute inset-x-0 bottom-0 h-full"
-        />
-        <!-- Cahaya yang meredup dan menerang bergantian (bawah & belakang judul). -->
+        <!-- Cahaya yang bergerak sambil meredup dan menerang (latar sengaja gelap; cahaya hanya dari sini). -->
         <div
           aria-hidden="true"
           class="cta-glow pointer-events-none absolute inset-0"
@@ -1598,52 +1594,86 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   }
 }
 
-/* CTA: dua pendar brand yang bergantian meredup dan menerang. */
+/* CTA: latar gelap dengan cahaya brand yang bergerak. Lapisan gradien besar perlahan berpindah
+   posisi, pendar bawah bergeser kiri-kanan sambil bernapas, dan pendar di belakang judul bergerak
+   berlawanan arah. */
+.landing .cta-glow {
+  background:
+    radial-gradient(38% 60% at 18% 100%, rgba(12, 180, 174, 0.2), transparent 70%),
+    radial-gradient(34% 55% at 85% 10%, rgba(12, 180, 174, 0.12), transparent 70%);
+  background-size: 160% 160%;
+  animation: cta-pan 16s ease-in-out infinite alternate;
+}
+
+.dark .landing .cta-glow {
+  background:
+    radial-gradient(38% 60% at 18% 100%, rgba(20, 204, 198, 0.16), transparent 70%),
+    radial-gradient(34% 55% at 85% 10%, rgba(20, 204, 198, 0.08), transparent 70%);
+  background-size: 160% 160%;
+}
+
 .landing .cta-glow::before,
 .landing .cta-glow::after {
   content: '';
   position: absolute;
   left: 50%;
   border-radius: 50%;
-  transform: translateX(-50%);
-  animation: cta-pulse 6s ease-in-out infinite;
 }
 
 /* Pendar lebar dari tepi bawah. */
 .landing .cta-glow::before {
   bottom: -55%;
-  width: 90%;
+  width: 80%;
   height: 100%;
-  background: radial-gradient(closest-side, rgba(12, 180, 174, 0.32), transparent);
+  background: radial-gradient(closest-side, rgba(12, 180, 174, 0.34), transparent);
+  animation: cta-drift-bottom 11s ease-in-out infinite;
 }
 
-/* Pendar lembut di belakang judul, berlawanan fase dengan pendar bawah. */
+/* Pendar lembut di belakang judul. */
 .landing .cta-glow::after {
-  top: 8%;
-  width: 46%;
+  top: 6%;
+  width: 44%;
   height: 55%;
   background: radial-gradient(closest-side, rgba(12, 180, 174, 0.16), transparent);
-  animation-delay: -3s;
+  animation: cta-drift-top 13s ease-in-out infinite;
 }
 
 .dark .landing .cta-glow::before {
-  background: radial-gradient(closest-side, rgba(20, 204, 198, 0.26), transparent);
+  background: radial-gradient(closest-side, rgba(20, 204, 198, 0.28), transparent);
 }
 
 .dark .landing .cta-glow::after {
-  background: radial-gradient(closest-side, rgba(20, 204, 198, 0.12), transparent);
+  background: radial-gradient(closest-side, rgba(20, 204, 198, 0.13), transparent);
 }
 
-@keyframes cta-pulse {
+@keyframes cta-pan {
+  0% { background-position: 0% 100%; }
+  50% { background-position: 60% 40%; }
+  100% { background-position: 100% 0%; }
+}
+
+@keyframes cta-drift-bottom {
   0%,
-  100% { opacity: 0.35; transform: translateX(-50%) scale(0.92); }
-  50% { opacity: 1; transform: translateX(-50%) scale(1.08); }
+  100% { opacity: 0.4; transform: translateX(-78%) scale(0.9); }
+  50% { opacity: 1; transform: translateX(-22%) scale(1.1); }
+}
+
+@keyframes cta-drift-top {
+  0%,
+  100% { opacity: 0.9; transform: translateX(-25%) translateY(4%) scale(1.05); }
+  50% { opacity: 0.35; transform: translateX(-75%) translateY(-6%) scale(0.9); }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .landing .cta-glow,
   .landing .cta-glow::before,
   .landing .cta-glow::after {
     animation: none;
+  }
+
+  .landing .cta-glow::before,
+  .landing .cta-glow::after {
+    transform: translateX(-50%);
     opacity: 0.7;
   }
 }
