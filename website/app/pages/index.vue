@@ -1469,88 +1469,113 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 }
 
 /* Horizon hero: cahaya di sepanjang garis bawah (tepi kiri sampai kanan layar) yang membesar lalu
-   meredup. Pendar dasar bernapas, gelombang pendar menyapu ke kanan dan ke kiri, dan garisnya
-   sendiri ikut menyala. */
+   meredup. Pendar dasar bernapas, pita-pita cahaya menyapu ke kanan dan ke kiri, dan garisnya ikut
+   menyala. Sengaja tidak simetris: tiap pita punya lebar, tinggi, kecepatan, dan titik terang sendiri. */
 .landing .hero-horizon {
   overflow: hidden;
 }
 
-/* Pendar dasar selebar layar. */
+/* Pendar dasar selebar layar, lebih terang di beberapa bagian. */
 .landing .hero-horizon::before {
   content: '';
   position: absolute;
   inset: auto 0 0;
   height: 70px;
   background: linear-gradient(to top, rgba(16, 185, 129, 0.22), transparent);
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.45), #000 28%, rgba(0, 0, 0, 0.6) 55%, #000 80%, rgba(0, 0, 0, 0.5));
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.45), #000 28%, rgba(0, 0, 0, 0.6) 55%, #000 80%, rgba(0, 0, 0, 0.5));
   transform-origin: 50% 100%;
-  animation: hero-breathe 6s ease-in-out infinite;
+  animation: hero-breathe 7s ease-in-out infinite;
 }
 
 .dark .landing .hero-horizon::before {
   background: linear-gradient(to top, rgba(52, 211, 153, 0.18), transparent);
 }
 
-/* Garis horizon yang menyala. */
+/* Garis horizon yang menyala, paling terang agak ke kiri. */
 .landing .hero-horizon::after {
   content: '';
   position: absolute;
   inset: auto 0 0;
   height: 1px;
-  background: linear-gradient(to right, rgba(16, 185, 129, 0.35), rgba(16, 185, 129, 0.95) 50%, rgba(16, 185, 129, 0.35));
-  animation: hero-core 6s ease-in-out infinite;
+  background: linear-gradient(to right, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.95) 36%, rgba(16, 185, 129, 0.55) 70%, rgba(16, 185, 129, 0.35));
+  animation: hero-core 5s ease-in-out infinite;
 }
 
 .dark .landing .hero-horizon::after {
-  background: linear-gradient(to right, rgba(52, 211, 153, 0.4), rgba(209, 250, 229, 0.95) 50%, rgba(52, 211, 153, 0.4));
+  background: linear-gradient(to right, rgba(52, 211, 153, 0.35), rgba(209, 250, 229, 0.95) 36%, rgba(52, 211, 153, 0.6) 70%, rgba(52, 211, 153, 0.4));
 }
 
-/* Gelombang: pendar elips pipih yang menyapu sepanjang garis, bergantian ke kanan dan ke kiri,
-   sambil membesar lalu meredup. Lebar 45%: geser -100% (luar kiri) sampai 222% (luar kanan). */
+/* Pita cahaya datar yang menempel di garis (memudar ke atas dan ke kedua sisi, tanpa lengkung).
+   --from/--to: posisi awal & akhir (persen lebar pita sendiri), --mid: posisi saat paling terang. */
 .landing .hero-wave {
+  --w: 40%;
+  --peak: 1;
   position: absolute;
-  bottom: -70px;
+  bottom: 0;
   left: 0;
-  width: 45%;
-  height: 140px;
-  background: radial-gradient(50% 50% at 50% 50%, rgba(16, 185, 129, 0.36), rgba(16, 185, 129, 0.1) 50%, transparent 72%);
-  animation: hero-sweep-right 9s ease-in-out infinite;
+  width: var(--w);
+  height: 80px;
+  background: linear-gradient(to top, rgba(16, 185, 129, 0.34), rgba(16, 185, 129, 0.08) 45%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 30%, #000 60%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 30%, #000 60%, transparent);
+  opacity: 0;
+  transform-origin: 50% 100%;
+  animation: hero-sweep 11s ease-in-out infinite;
 }
 
 .dark .landing .hero-wave {
-  background: radial-gradient(50% 50% at 50% 50%, rgba(52, 211, 153, 0.32), rgba(52, 211, 153, 0.08) 50%, transparent 72%);
+  background: linear-gradient(to top, rgba(52, 211, 153, 0.3), rgba(52, 211, 153, 0.07) 45%, transparent);
 }
 
+/* Ke kanan, sedang. */
+.landing .hero-wave:nth-child(1) {
+  --from: -100%;
+  --mid: 70%;
+  --to: 250%;
+  animation-delay: -2s;
+}
+
+/* Ke kiri, lebar & rendah, lebih lambat dan redup. */
 .landing .hero-wave:nth-child(2) {
-  animation-name: hero-sweep-left;
+  --w: 58%;
+  --peak: 0.7;
+  --from: 172%;
+  --mid: 25%;
+  --to: -100%;
+  height: 55px;
+  animation-duration: 15s;
+  animation-delay: -9s;
 }
 
+/* Ke kanan, sempit & tinggi, paling lambat. */
 .landing .hero-wave:nth-child(3) {
-  animation-duration: 12s;
-  animation-delay: -6s;
+  --w: 26%;
+  --peak: 0.55;
+  --from: -100%;
+  --mid: 230%;
+  --to: 385%;
+  height: 115px;
+  animation-duration: 19s;
+  animation-delay: -13s;
 }
 
 @keyframes hero-breathe {
   0%,
   100% { opacity: 0.5; transform: scaleY(0.7); }
-  50% { opacity: 1; transform: scaleY(1.25); }
+  45% { opacity: 1; transform: scaleY(1.25); }
 }
 
-@keyframes hero-sweep-right {
-  0% { opacity: 0; transform: translateX(-100%) scale(0.7, 0.5); }
-  50% { opacity: 1; transform: translateX(61%) scale(1.25, 1.3); }
-  100% { opacity: 0; transform: translateX(222%) scale(0.7, 0.5); }
-}
-
-@keyframes hero-sweep-left {
-  0% { opacity: 0; transform: translateX(222%) scale(0.7, 0.5); }
-  50% { opacity: 1; transform: translateX(61%) scale(1.25, 1.3); }
-  100% { opacity: 0; transform: translateX(-100%) scale(0.7, 0.5); }
+@keyframes hero-sweep {
+  0% { opacity: 0; transform: translateX(var(--from)) scale(0.7, 0.6); }
+  42% { opacity: var(--peak); transform: translateX(var(--mid)) scale(1.3, 1); }
+  100% { opacity: 0; transform: translateX(var(--to)) scale(0.8, 0.7); }
 }
 
 @keyframes hero-core {
   0%,
   100% { opacity: 0.5; }
-  50% { opacity: 1; }
+  55% { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
