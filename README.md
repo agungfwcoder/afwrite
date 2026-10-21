@@ -2,26 +2,28 @@
 
 # afwrite
 
-Editor WYSIWYG modern berbasis **vanilla JS + Alpine.js**, dengan engine
+**English** · [Bahasa Indonesia](https://github.com/agungfwcoder/afwrite/blob/main/README.id.md)
+
+A modern WYSIWYG editor built with **vanilla JS + Alpine.js**, powered by
 [Tiptap](https://tiptap.dev) / [ProseMirror](https://prosemirror.net).
 
-- Bubble toolbar saat teks diblok, slash command `/`, tombol `+` di baris kosong
-- Shortcut markdown: `##`, `>`, `-`, `1.`, `---`, `**tebal**`, `*miring*`, `` `kode` ``
-- Gambar (upload, caption, alt text, 3 ukuran), video YouTube/Vimeo, pemisah, blok kode
-- Output HTML atau JSON (format dokumen ProseMirror), autosave draf ke localStorage
-- Paste dari Word, Google Docs, dan web selalu bersih; output HTML ter-sanitasi
-- Perilaku mengetik konsisten di semua browser (engine ProseMirror), undo/redo, mode baca saja,
-  `x-model`, bahasa Indonesia & Inggris
-- CSS terisolasi dengan prefix `afw` — aman bersama Bootstrap, Tailwind, dll.
-- Teruji di Chrome, Firefox, dan Safari (WebKit); integrasi Laravel siap pakai
+- Bubble toolbar on text selection, `/` slash commands, `+` button on empty lines
+- Markdown shortcuts: `##`, `>`, `-`, `1.`, `---`, `**bold**`, `*italic*`, `` `code` ``
+- Images (upload, caption, alt text, 3 sizes), YouTube/Vimeo video, dividers, code blocks
+- HTML or JSON output (ProseMirror document format), draft autosave to localStorage
+- Pasting from Word, Google Docs, and the web always comes out clean; HTML output is sanitized
+- Consistent typing behavior across browsers (ProseMirror engine), undo/redo, read-only mode,
+  `x-model`, Indonesian & English UI
+- CSS isolated under the `afw` prefix — safe alongside Bootstrap, Tailwind, etc.
+- Tested in Chrome, Firefox, and Safari (WebKit); ready-made Laravel integration
 
-Dokumentasi lengkap: https://agungfwcoder.github.io/afwrite/
+Full documentation (in Indonesian): https://agungfwcoder.github.io/afwrite/
 
-## Instalasi
+## Installation
 
-### Lewat CDN (tanpa build)
+### Via CDN (no build step)
 
-Script afwrite dimuat **sebelum** Alpine; plugin terdaftar otomatis dan API lain ada di `window.Afwrite`:
+Load the afwrite script **before** Alpine; the plugin registers itself and the rest of the API is on `window.Afwrite`:
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/agungfwcoder/afwrite@2/dist/afwrite.css">
@@ -29,17 +31,16 @@ Script afwrite dimuat **sebelum** Alpine; plugin terdaftar otomatis dan API lain
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 ```
 
-### Lewat bundler
+### Via a bundler
 
 ```bash
 npm install github:agungfwcoder/afwrite#semver:^2 alpinejs
-# setelah dipublish ke npm: npm install afwrite alpinejs
+# once published to npm: npm install afwrite alpinejs
 ```
 
-Tiptap/ProseMirror ikut terpasang sebagai dependency. Dipakai lewat bundler (Vite, termasuk Vite di
-Laravel). Ukuran total di aplikasi sekitar
-135 KB gzip (ProseMirror sekitar 77 KB di antaranya); muat hanya di halaman yang memakai editor
-bila perlu (`import()` dinamis).
+Tiptap/ProseMirror are installed as dependencies. Use it through a bundler (Vite, including Vite in
+Laravel). The total size in your app is about 135 KB gzip (ProseMirror accounts for about 77 KB of
+that); load it only on pages that use the editor if needed (dynamic `import()`).
 
 ```js
 import Alpine from 'alpinejs';
@@ -50,25 +51,26 @@ Alpine.plugin(afwrite);
 Alpine.start();
 ```
 
-Livewire 3/4 sudah membawa dan menjalankan Alpine sendiri: jangan impor `alpinejs` atau memanggil
-`Alpine.start()`. Cukup `import 'afwrite'` dan `import 'afwrite/style.css'`; plugin terdaftar
-otomatis saat event `alpine:init`.
+Livewire 3/4 ships and starts its own Alpine: don't import `alpinejs` or call `Alpine.start()`.
+Just `import 'afwrite'` and `import 'afwrite/style.css'`; the plugin registers itself on the
+`alpine:init` event.
 
-## Pemakaian
+## Usage
 
 ```html
 <form method="post">
-  <div x-data="wysiwyg({ name: 'body', upload: uploadImage })">
-    <p>Konten awal (opsional)</p>
+  <div x-data="wysiwyg({ name: 'body', upload: uploadImage, lang: 'en' })">
+    <p>Initial content (optional)</p>
   </div>
-  <button>Simpan</button>
+  <button>Save</button>
 </form>
 ```
 
-Markup UI (toolbar, bubble, menu) dibuat otomatis. Isi elemen menjadi konten awal, dan
-`name` membuat `<input type="hidden">` berisi HTML yang ikut terkirim bersama form.
+The UI markup (toolbar, bubble, menus) is generated automatically. The element's content becomes
+the initial content, and `name` creates an `<input type="hidden">` holding the HTML, submitted with
+the form.
 
-Dengan `x-model`:
+With `x-model`:
 
 ```html
 <div x-data="{ body: '' }">
@@ -76,38 +78,38 @@ Dengan `x-model`:
 </div>
 ```
 
-### Opsi
+### Options
 
-| Opsi | Default | Keterangan |
+| Option | Default | Description |
 |---|---|---|
-| `name` | `''` | Nama input hidden untuk form |
-| `lang` | `'id'` | Bahasa antarmuka: `'id'` atau `'en'` |
-| `strings` | `{}` | Timpa sebagian teks, mis. `{ placeholder: 'Tulis…' }` (lihat `src/i18n.js`) |
-| `placeholder` | dari `lang` | Teks saat editor kosong |
-| `toolbar` | `true` | Toolbar di atas; `false` = hanya bubble (ala Medium) |
-| `bubble` | `true` | Bubble toolbar saat teks diblok |
-| `stats` | `true` | Jumlah kata & waktu baca |
-| `dragHandle` | `true` | Pegangan ⋮⋮ di kiri blok: seret untuk memindah, klik untuk memilih |
-| `readonly` | `false` | Mode baca saja |
-| `upload` | `null` | `async (file) => url` atau `{ url, mediaId, alt }` (`mediaId` ditulis sebagai `data-media-id`). Tanpa ini gambar disimpan sebagai base64 |
-| `maxImageSize` | `5 MB` | Batas ukuran gambar (byte); `0` = tanpa batas |
-| `allowDataImages` | `true` | Izinkan `<img src="data:image/…">` di output |
-| `headings` | `[2, 3]` | Level judul yang dipakai (2–6), mis. `[2, 3, 4, 5, 6]`. Tombol toolbar, slash menu, shortcut, dan markdown mengikuti; level lain diturunkan ke level aktif terdekat |
-| `title` | `false` | Mode artikel ala Medium: teks paling atas judul `<h1>` (di atasnya hanya boleh gambar/video/pemisah); tombol judul kecil (level kedua) di baris tepat setelahnya membuat subjudul `<p class="afw-subtitle">` |
-| `formats` | semua | Format tambahan: `'underline'`, `'strike'`, `'color'`, `'highlight'`, `'align'`. Mode artikel: tidak ada (tetap polos). `false` = tanpa |
-| `colors`, `highlights` | palet bawaan | Palet warna teks & stabilo (hex); warna di luar palet dibuang |
-| `extensions` | `[]` | Extension Tiptap tambahan (node/mark milik aplikasi) |
-| `sanitize` | `null` | Whitelist untuk extension di atas: `{ allowTags, allowAttributes, allowClasses }` |
-| `markdown` | `true` | Shortcut markdown |
+| `name` | `''` | Hidden input name for forms |
+| `lang` | `'id'` | UI language: `'id'` or `'en'` |
+| `strings` | `{}` | Override some strings, e.g. `{ placeholder: 'Write…' }` (see `src/i18n.js`) |
+| `placeholder` | from `lang` | Text shown while the editor is empty |
+| `toolbar` | `true` | Top toolbar; `false` = bubble only (Medium style) |
+| `bubble` | `true` | Bubble toolbar on text selection |
+| `stats` | `true` | Word count & reading time |
+| `dragHandle` | `true` | ⋮⋮ handle left of each block: drag to move, click to select |
+| `readonly` | `false` | Read-only mode |
+| `upload` | `null` | `async (file) => url` or `{ url, mediaId, alt }` (`mediaId` is written as `data-media-id`). Without it, images are stored as base64 |
+| `maxImageSize` | `5 MB` | Maximum image size (bytes); `0` = no limit |
+| `allowDataImages` | `true` | Allow `<img src="data:image/…">` in the output |
+| `headings` | `[2, 3]` | Heading levels in use (2–6), e.g. `[2, 3, 4, 5, 6]`. Toolbar buttons, slash menu, shortcuts, and markdown follow it; other levels are mapped to the nearest active level |
+| `title` | `false` | Medium-style article mode: the topmost text is an `<h1>` title (only images/video/dividers may sit above it); the small heading button (second level) on the line right after it makes a `<p class="afw-subtitle">` subtitle |
+| `formats` | all | Extra formats: `'underline'`, `'strike'`, `'color'`, `'highlight'`, `'align'`. Article mode: none (stays plain). `false` = none |
+| `colors`, `highlights` | built-in palette | Text color & highlight palettes (hex); colors outside the palette are dropped |
+| `extensions` | `[]` | Extra Tiptap extensions (your app's own nodes/marks) |
+| `sanitize` | `null` | Whitelist for the extensions above: `{ allowTags, allowAttributes, allowClasses }` |
+| `markdown` | `true` | Markdown shortcuts |
 | `slash` | `true` | Slash menu |
-| `pasteAsPlainText` | `false` | Buang semua format saat paste |
-| `toolbarItems`, `bubbleItems` | bawaan | Susunan tombol (lihat `src/icons.js`) |
-| `historyLimit` | `100` | Jumlah langkah undo |
-| `format` | `'html'` | Isi input hidden: `'html'` atau `'json'` |
-| `titleName` | `''` | Nama input hidden berisi judul (`<h1>` artikel / teks pertama) |
-| `autosave` | `null` | `'kunci-unik'` atau `{ key, delay }`: simpan draf ke localStorage |
+| `pasteAsPlainText` | `false` | Strip all formatting on paste |
+| `toolbarItems`, `bubbleItems` | built-in | Button layout (see `src/icons.js`) |
+| `historyLimit` | `100` | Number of undo steps |
+| `format` | `'html'` | Hidden input content: `'html'` or `'json'` |
+| `titleName` | `''` | Name of a hidden input holding the title (article `<h1>` / first text) |
+| `autosave` | `null` | `'unique-key'` or `{ key, delay }`: save drafts to localStorage |
 
-Contoh `upload`:
+Example `upload`:
 
 ```js
 async function uploadImage(file) {
@@ -118,24 +120,24 @@ async function uploadImage(file) {
 }
 ```
 
-### Method komponen Alpine
+### Alpine component methods
 
-Dipanggil dari markup di dalam komponen atau lewat `Alpine.$data(el)`:
+Call them from markup inside the component or via `Alpine.$data(el)`:
 
-| Method | Keterangan |
+| Method | Description |
 |---|---|
-| `getHTML()` / `setHTML(html)` | Ambil / ganti isi (selalu disanitasi) |
-| `getJSON()` / `setJSON(doc)` | Isi sebagai JSON dokumen ProseMirror |
-| `getMeta()` | Pratinjau ala Medium: `{ image, title, subtitle, slug }` dari gambar pertama (dengan `mediaId`), teks pertama, dan teks kedua |
-| `exec(perintah, ...arg)` | Jalankan perintah, lihat tabel perintah |
-| `isActive(perintah)` | Format aktif di posisi kursor |
-| `setReadOnly(bool)` | Ubah mode baca saja |
-| `focus()` | Fokus ke akhir editor |
-| `editor()` | Instance `Editor` (API lengkap di bawah) |
+| `getHTML()` / `setHTML(html)` | Get / replace the content (always sanitized) |
+| `getJSON()` / `setJSON(doc)` | Content as a ProseMirror document JSON |
+| `getMeta()` | Medium-style preview: `{ image, title, subtitle, slug }` from the first image (with `mediaId`), first text, and second text |
+| `exec(command, ...args)` | Run a command, see the commands table |
+| `isActive(command)` | Whether a format is active at the cursor |
+| `setReadOnly(bool)` | Toggle read-only mode |
+| `focus()` | Focus the end of the editor |
+| `editor()` | The `Editor` instance (full API below) |
 
-### Event
+### Events
 
-Dikirim dari elemen editor dan *bubbling*, jadi bisa ditangkap di parent:
+Dispatched from the editor element and *bubbling*, so a parent can listen:
 
 ```html
 <div x-data="wysiwyg()" @wysiwyg-change="console.log($event.detail.html)"></div>
@@ -144,37 +146,39 @@ Dikirim dari elemen editor dan *bubbling*, jadi bisa ditangkap di parent:
 `wysiwyg-ready` (`{ editor }`), `wysiwyg-change` (`{ html, meta }`), `wysiwyg-focus`, `wysiwyg-blur`,
 `wysiwyg-error` (`{ message }`).
 
-### Perintah & shortcut
+### Commands & shortcuts
 
-| Perintah | Shortcut | Markdown |
+| Command | Shortcut | Markdown |
 |---|---|---|
-| `bold` / `italic` | Ctrl/⌘ + B / I | `**teks**` / `*teks*` |
+| `bold` / `italic` | Ctrl/⌘ + B / I | `**text**` / `*text*` |
 | `underline` / `strike` | Ctrl/⌘ + U / Ctrl/⌘ + Shift + X | |
-| `color` / `highlight` | palet di toolbar & bubble; `exec('color', '#e11d48')` | |
+| `color` / `highlight` | palette in toolbar & bubble; `exec('color', '#e11d48')` | |
 | `alignLeft` … `alignJustify` | Ctrl/⌘ + Shift + L / E / R / J; `exec('align', 'center')` | |
-| `link` | Ctrl/⌘ + K | tempel URL di atas teks terseleksi |
-| `h2` … `h6` | Ctrl/⌘ + Alt + 2 … 6 | `## ` … `###### ` (level harus aktif di `headings`) |
+| `link` | Ctrl/⌘ + K | paste a URL over selected text |
+| `h2` … `h6` | Ctrl/⌘ + Alt + 2 … 6 | `## ` … `###### ` (level must be enabled in `headings`) |
 | `paragraph` | Ctrl/⌘ + Alt + 0 | |
 | `quote` | Ctrl/⌘ + Shift + 9 | `> ` |
 | `ul` / `ol` | Ctrl/⌘ + Shift + 8 / 7 | `- ` / `1. ` |
-| `indent` / `outdent` | Tab / Shift + Tab (di dalam list) | |
-| `image` | | `/gambar`, seret file, tempel screenshot |
-| `embed` | | `/video`, tempel link YouTube di baris kosong |
+| `indent` / `outdent` | Tab / Shift + Tab (inside a list) | |
+| `image` | | `/image`, drop a file, paste a screenshot |
+| `embed` | | `/video`, paste a YouTube link on an empty line |
 | `hr` | | `--- ` |
-| `codeblock` | Ctrl/⌘ + Alt + C | ```` ``` ```` + spasi, `/kode` |
-| `undo` / `redo` | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (atau Ctrl + Y) | |
-| pindah blok | Ctrl/⌘ + Shift + ↑ / ↓, atau seret pegangan ⋮⋮ | |
+| `codeblock` | Ctrl/⌘ + Alt + C | ```` ``` ```` + space, `/code` |
+| `undo` / `redo` | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (or Ctrl + Y) | |
+| move block | Ctrl/⌘ + Shift + ↑ / ↓, or drag the ⋮⋮ handle | |
 | `unlink` | | |
 
-Di dalam blok kode: **Enter** = baris baru, **Tab / Shift+Tab** = indentasi, **Enter** di baris
-kosong terakhir = keluar dari blok, paste selalu sebagai teks.
+Slash menu entries follow the UI language (`/gambar`, `/kode` with `lang: 'id'`).
 
-Saat gambar/video/pemisah dipilih: **Backspace/Delete** menghapus, **Enter** membuat paragraf
-baru di bawahnya, **panah** keluar dari media.
+Inside a code block: **Enter** = new line, **Tab / Shift+Tab** = indent, **Enter** on the last
+empty line = leave the block, paste is always plain text.
 
-## Tanpa Alpine
+When an image/video/divider is selected: **Backspace/Delete** removes it, **Enter** creates a new
+paragraph below, **arrow keys** move out of the media.
 
-Inti editor tidak bergantung pada Alpine (tanpa UI melayang; link & video memakai `prompt()`):
+## Without Alpine
+
+The editor core doesn't depend on Alpine (no floating UI; links & video use `prompt()`):
 
 ```js
 import { Editor } from 'afwrite';
@@ -185,49 +189,49 @@ editor.on('change', (html) => (input.value = html));
 document.querySelector('#bold').onclick = () => editor.exec('bold');
 ```
 
-Elemen `#editor` perlu dibungkus elemen berclass `afw` agar style berlaku.
+The `#editor` element must be wrapped in an element with the `afw` class for styles to apply.
 
-| API `Editor` | Keterangan |
+| `Editor` API | Description |
 |---|---|
-| `exec(nama, ...arg)`, `isActive(nama)`, `state()`, `formatValues()` | Perintah & status format (`formatValues()`: `{ color, highlight, align }` di posisi kursor) |
-| `getHTML()`, `setHTML(html, { resetHistory })`, `getJSON()`, `setJSON(doc)`, `getText()`, `clear()`, `isEmpty()` | Isi |
-| `normalizeHTML(html)` | HTML seperti hasil `getHTML()` setelah `setHTML(html)`, tanpa mengubah isi; untuk membandingkan konten dari luar |
-| `insertHTML(html)`, `insertText(teks)`, `paste({ html, text, files })`, `insertImages(files)` | Sisipkan |
-| `undo()`, `redo()`, `canUndo()`, `canRedo()` | Riwayat |
+| `exec(name, ...args)`, `isActive(name)`, `state()`, `formatValues()` | Commands & format state (`formatValues()`: `{ color, highlight, align }` at the cursor) |
+| `getHTML()`, `setHTML(html, { resetHistory })`, `getJSON()`, `setJSON(doc)`, `getText()`, `clear()`, `isEmpty()` | Content |
+| `normalizeHTML(html)` | The HTML `getHTML()` would return after `setHTML(html)`, without changing the content; for comparing external content |
+| `insertHTML(html)`, `insertText(text)`, `paste({ html, text, files })`, `insertImages(files)` | Insert |
+| `undo()`, `redo()`, `canUndo()`, `canRedo()` | History |
 | `restoreDraft()`, `discardDraft()`, `clearDraft()`, `draft` | Autosave |
-| `setReadOnly(bool)`, `focus()`, `stats()` | Lainnya |
-| `on(event, fn)` → fungsi untuk berhenti, `off()`, `destroy()` | Event |
+| `setReadOnly(bool)`, `focus()`, `stats()` | Other |
+| `on(event, fn)` → unsubscribe function, `off()`, `destroy()` | Events |
 
-Event `Editor`: `change`, `state`, `selection`, `slash`, `history`, `readonly`, `linkrequest`,
+`Editor` events: `change`, `state`, `selection`, `slash`, `history`, `readonly`, `linkrequest`,
 `embedrequest`, `error`, `focus`, `blur`.
 
-Instance Tiptap tersedia di `editor.tiptap` untuk kebutuhan lanjutan (mis.
-`editor.tiptap.commands`, `editor.tiptap.state`). Perubahan lewat jalur ini tetap memicu event
-`change`, tetapi output tetap dibatasi whitelist sanitasi.
+The Tiptap instance is available as `editor.tiptap` for advanced use (e.g.
+`editor.tiptap.commands`, `editor.tiptap.state`). Changes made this way still fire the `change`
+event, and the output is still limited by the sanitizer whitelist.
 
-## Format JSON
+## JSON format
 
-Format dokumen ProseMirror/Tiptap, sehingga bisa dibaca alat-alat dari ekosistem yang sama:
+The ProseMirror/Tiptap document format, so tools from the same ecosystem can read it:
 
 ```js
 editor.getJSON();
 // { type: 'doc', content: [
-//   { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Judul' }] },
+//   { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Title' }] },
 //   { type: 'paragraph', content: [
-//     { type: 'text', text: 'Halo ' },
-//     { type: 'text', marks: [{ type: 'bold' }], text: 'dunia' } ] },
+//     { type: 'text', text: 'Hello ' },
+//     { type: 'text', marks: [{ type: 'bold' }], text: 'world' } ] },
 //   { type: 'bulletList', content: [{ type: 'listItem', content: [{ type: 'paragraph', ... }] }] },
-//   { type: 'image', attrs: { src: '/x.png', alt: '', size: 'wide' }, content: [/* keterangan */] },
+//   { type: 'image', attrs: { src: '/x.png', alt: '', size: 'wide' }, content: [/* caption */] },
 //   { type: 'embed', attrs: { provider: 'youtube', id: '...' } },
 //   { type: 'codeBlock', content: [...] }, { type: 'horizontalRule' } ] }
 ```
 
-Node: `paragraph`, `heading` (level 2/3), `blockquote`, `bulletList`, `orderedList`, `listItem`,
-`codeBlock`, `horizontalRule`, `image`, `embed`, `hardBreak`, `text`. Mark: `bold`, `italic`,
-`code`, `link` (`href`). `toJSON(html)` dan `fromJSON(doc)` juga diekspor; `fromJSON` membuang
-node/mark yang tidak dikenal dan selalu menyanitasi, jadi JSON dari sumber tak dipercaya tetap aman.
+Nodes: `paragraph`, `heading` (level 2/3), `blockquote`, `bulletList`, `orderedList`, `listItem`,
+`codeBlock`, `horizontalRule`, `image`, `embed`, `hardBreak`, `text`. Marks: `bold`, `italic`,
+`code`, `link` (`href`). `toJSON(html)` and `fromJSON(doc)` are exported too; `fromJSON` drops
+unknown nodes/marks and always sanitizes, so JSON from untrusted sources stays safe.
 
-> Berubah di v2: format JSON v1 (`blocks` + `marks` rentang) tidak lagi didukung. HTML tidak berubah.
+> Changed in v2: the v1 JSON format (`blocks` + range `marks`) is no longer supported. HTML is unchanged.
 
 ## Autosave
 
@@ -235,110 +239,110 @@ node/mark yang tidak dikenal dan selalu menyanitasi, jadi JSON dari sumber tak d
 <div x-data="wysiwyg({ name: 'body', autosave: 'post-42' })"></div>
 ```
 
-Draf disimpan ke localStorage setiap ada perubahan (jeda 1 detik). Saat halaman dibuka lagi dan
-ada draf yang berbeda, muncul banner **Pulihkan / Buang**; selama belum dipilih, draf lama tidak
-ditimpa. Draf dihapus otomatis saat form induknya dikirim.
+Drafts are saved to localStorage on every change (1 second debounce). When the page is reopened and
+a different draft exists, a **Restore / Discard** banner appears; until one is chosen, the old draft
+is not overwritten. The draft is cleared automatically when its parent form is submitted.
 
 ## Laravel
 
-Komponen `<x-wysiwyg>`, controller upload, dan sanitasi server (HTMLPurifier) yang sudah diuji ada
-di [`integrations/laravel`](integrations/laravel/README.md).
+A tested `<x-wysiwyg>` component, upload controller, and server-side sanitization (HTMLPurifier)
+live in [`integrations/laravel`](integrations/laravel/README.md).
 
-## Menampilkan hasil
+## Displaying content
 
-Pakai class `afw-prose` agar tipografi sama dengan di editor:
+Use the `afw-prose` class to get the same typography as in the editor:
 
 ```html
 <article class="afw-prose">{!! $post->body !!}</article>
 ```
 
-Tema gelap: `data-afw-theme="dark"` (atau `"auto"`) pada `.afw` maupun `.afw-prose`, atau class
-`.dark` pada ancestor (Tailwind, Flux, Nuxt UI) yang langsung berlaku tanpa reload;
-`data-afw-theme="light"` untuk tetap terang di dalam `.dark`.
-Media ukuran penuh di `.afw-prose` melebar keluar sebesar `--afw-prose-bleed` (default `0`).
+Dark theme: `data-afw-theme="dark"` (or `"auto"`) on `.afw` or `.afw-prose`, or a `.dark` class on
+an ancestor (Tailwind, Flux, Nuxt UI), which applies immediately without a reload;
+`data-afw-theme="light"` keeps it light inside `.dark`.
+Full-size media in `.afw-prose` bleeds outward by `--afw-prose-bleed` (default `0`).
 
-## Kustomisasi tampilan
+## Customizing the look
 
-Semua warna, font, dan ukuran memakai variabel CSS `--afw-*`:
+All colors, fonts, and sizes use `--afw-*` CSS variables:
 
 ```css
 .afw, .afw-prose {
   --afw-accent: #e11d48;
   --afw-font-content: Georgia, serif;
   --afw-content-size: 1.25rem;
-  --afw-quote-style: italic; /* kutipan miring (bawaan: normal) */
+  --afw-quote-style: italic; /* italic quotes (default: normal) */
 }
 ```
 
-## Keamanan
+## Security
 
-Semua HTML yang masuk (paste, drop, `setHTML`) dan keluar (`getHTML`) melewati whitelist:
+All incoming HTML (paste, drop, `setHTML`) and outgoing HTML (`getHTML`) goes through a whitelist:
 
-- Tag: `p h1 (mode artikel) h2–h6 (sesuai headings) blockquote ul ol li b i a code br pre figure img figcaption iframe hr`,
-  plus `u s span mark` jika format tambahan aktif
-- Format tambahan: `span[style=color]` & `mark[style=background-color]` hanya warna dari palet (hex),
-  `class="afw-align-center|right|justify"` pada `p` & `h2`–`h6`
-- Atribut: `a[href]` (http/https/mailto/tel/relatif), `img[src alt data-media-id]` (src divalidasi; data URL
-  hanya PNG/JPG/GIF/WebP/AVIF; `data-media-id` hanya angka), `figure[data-size data-embed]`, iframe hanya YouTube/Vimeo
-  dengan `src` yang dibangun ulang dari ID video.
+- Tags: `p h1 (article mode) h2–h6 (per headings) blockquote ul ol li b i a code br pre figure img figcaption iframe hr`,
+  plus `u s span mark` when extra formats are enabled
+- Extra formats: `span[style=color]` & `mark[style=background-color]` only with palette colors (hex),
+  `class="afw-align-center|right|justify"` on `p` & `h2`–`h6`
+- Attributes: `a[href]` (http/https/mailto/tel/relative), `img[src alt data-media-id]` (src validated; data URLs
+  only PNG/JPG/GIF/WebP/AVIF; `data-media-id` digits only), `figure[data-size data-embed]`, iframes only
+  YouTube/Vimeo with `src` rebuilt from the video ID.
 
-> **Penting:** sanitasi di browser tidak menggantikan sanitasi di server. Request bisa dikirim
-> tanpa melewati editor, jadi server wajib menyaring HTML sebelum menyimpan atau menampilkannya
-> (mis. HTMLPurifier / `mews/purifier` di Laravel) dengan whitelist yang sama.
+> **Important:** browser-side sanitization does not replace server-side sanitization. Requests can be
+> sent without going through the editor, so the server must filter HTML before storing or displaying
+> it (e.g. HTMLPurifier / `mews/purifier` in Laravel) with the same whitelist.
 
-`sanitize()` juga bisa dipakai langsung:
+`sanitize()` can also be used directly:
 
 ```js
 import { sanitize } from 'afwrite';
-sanitize('<div style="x">Hai <script>x()</script><b>kamu</b></div>'); // '<p>Hai <b>kamu</b></p>'
+sanitize('<div style="x">Hi <script>x()</script><b>you</b></div>'); // '<p>Hi <b>you</b></p>'
 ```
 
-## Dokumentasi
+## Documentation
 
-Situs dokumentasi lengkap (dengan editor yang bisa dicoba) ada di folder [`website/`](website/README.md):
+The full documentation site (with a live editor to try) is in the [`website/`](website/README.md) folder:
 
 ```bash
 cd website && npm install && npm run dev
 ```
 
-## Pengembangan
+## Development
 
 ```bash
 npm install
-npm run dev            # demo di http://localhost:5173
+npm run dev            # demo at http://localhost:5173
 npm run build          # dist/
-npm test               # unit test (Vitest)
+npm test               # unit tests (Vitest)
 
-npx playwright install chromium firefox webkit   # sekali saja
-npm run test:browser                             # test browser di Chromium
+npx playwright install chromium firefox webkit   # once
+npm run test:browser                             # browser tests in Chromium
 npm run test:browser -- all                      # Chromium, Firefox, WebKit
 ```
 
-Integrasi Laravel: `php artisan test --filter=WyswygTest` di proyek Laravel yang sudah memuat
-file dari `integrations/laravel`.
+Laravel integration: `php artisan test --filter=WyswygTest` in a Laravel project that includes the
+files from `integrations/laravel`.
 
-Struktur:
+Layout:
 
 ```
 src/
-  core/        inti editor tanpa Alpine (engine Tiptap: schema, perintah, sanitasi, media, markdown)
-  alpine.js    komponen Alpine: bubble, slash menu, toolbar media, input link
-  template.js  markup UI default
-  i18n.js      teks bahasa Indonesia & Inggris
-  style.css    seluruh CSS (prefix afw)
-demo/          halaman demo
-integrations/  integrasi Laravel (Blade, upload, sanitasi server)
-tests/         unit test (Vitest) & test browser (Playwright)
-website/       situs dokumentasi (Nuxt UI Docs)
+  core/        editor core without Alpine (Tiptap engine: schema, commands, sanitizer, media, markdown)
+  alpine.js    Alpine component: bubble, slash menu, media toolbar, link input
+  template.js  default UI markup
+  i18n.js      Indonesian & English strings
+  style.css    all CSS (afw prefix)
+demo/          demo page
+integrations/  Laravel integration (Blade, upload, server sanitization)
+tests/         unit tests (Vitest) & browser tests (Playwright)
+website/       documentation site (Nuxt UI Docs)
 ```
 
-## Credit
+## Credits
 
-Dibangun di atas [Tiptap](https://tiptap.dev), [ProseMirror](https://prosemirror.net), dan
-[Alpine.js](https://alpinejs.dev) (semuanya berlisensi MIT). Ikon berbasis [Lucide](https://lucide.dev)
-(ISC). Situs dokumentasi memakai template [Nuxt UI Docs](https://github.com/nuxt-ui-templates/docs)
-(MIT, lisensinya di `website/LICENSE`).
+Built on [Tiptap](https://tiptap.dev), [ProseMirror](https://prosemirror.net), and
+[Alpine.js](https://alpinejs.dev) (all MIT licensed). Icons based on [Lucide](https://lucide.dev)
+(ISC). The documentation site uses the [Nuxt UI Docs](https://github.com/nuxt-ui-templates/docs)
+template (MIT, license in `website/LICENSE`).
 
-## Lisensi
+## License
 
 [MIT](LICENSE) © 2026 agungfwcoder
