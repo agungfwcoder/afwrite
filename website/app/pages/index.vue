@@ -2157,8 +2157,9 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
   color: #a1a1aa;
 }
 
+/* Gambar contoh "Senja di Parangtritis": kuning logo ke teal brand. */
 .landing .img-mock {
-  background: linear-gradient(135deg, #f59e0b 0%, #ec4899 45%, #6366f1 100%);
+  background: linear-gradient(135deg, #f7c143 0%, #3fb5ae 55%, #127a76 100%);
 }
 
 .landing .img-full {
