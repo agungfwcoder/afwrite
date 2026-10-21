@@ -32,7 +32,7 @@
   .works .sep { width: 1px; height: 18px; margin: 0 8px; background: #3f3f46; }
   .works .gh { display: flex; align-items: center; gap: 8px; }
   /* kanan: kertas + kaca */
-  .right { position: absolute; left: 650px; top: 120px; width: 500px; height: 380px; }
+  .right { position: absolute; left: 650px; top: 62px; width: 500px; height: 380px; }
   .paper { position: absolute; border-radius: 18px; }
   .card { position: absolute; inset: 0; border-radius: 22px; padding: 10px;
     background: rgba(16,16,16,.86); border: 1px solid rgba(255,255,255,.1);
@@ -48,6 +48,21 @@
   .doc .h { margin-bottom: 28px; font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; color: #fafafa; }
   .sel { background: rgba(12,180,174,.3); border-radius: 3px; padding: 0 2px; color: #fafafa; font-weight: 700; }
   .q { padding-left: 14px; border-left: 3px solid #009994; color: #a1a1aa; }
+  /* Baris slash dan menu yang menjorok keluar dari bawah kartu, seperti hero. */
+  .cmd { display: flex; align-items: center; gap: 10px; margin-left: -26px; color: #71717a; }
+  .cmd .plus { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border: 1px solid #52525b; border-radius: 50%; font-size: 14px; line-height: 1; }
+  .cmd .sl { color: #fafafa; }
+  .cmd .ph { margin-left: -6px; border-left: 2px solid #ffbb00; padding-left: 2px; }
+  .slash { position: relative; margin: -4px 0 0 -2px; width: 236px; flex: none; padding: 6px; border-radius: 14px; z-index: 3;
+    background: rgba(24,24,27,.94); border: 1px solid #3f3f46; box-shadow: 0 20px 40px -12px rgba(0,0,0,.7); font-size: 14px; }
+  .slash .cap { padding: 6px 10px 6px; font-size: 11px; font-weight: 600; letter-spacing: .06em; color: #a1a1aa; }
+  .mi { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; color: #d4d4d8; }
+  .mi.on { background: rgba(12,180,174,.2); color: #fafafa; }
+  .mi .ic { width: 26px; height: 26px; border-radius: 6px; background: #27272a; display: flex; align-items: center; justify-content: center; color: #a1a1aa; }
+  .mi.on .ic { color: #70e2dc; }
+  .mi svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .mi .lb { flex: 1; }
+  .mi kbd { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a1a1aa; }
   .bubble { position: absolute; left: 290px; top: 72px; display: flex; gap: 2px; padding: 4px; border-radius: 10px; background: #18181b; border: 1px solid #3f3f46;
     box-shadow: 0 12px 28px -8px rgba(0,0,0,.6); font-size: 15px; color: #d4d4d8; }
   .bubble span { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
@@ -80,8 +95,10 @@
         <div class="h">Catatan untuk tim redaksi</div>
         <div>Menulis seharusnya terasa <span class="sel">tenang dan fokus</span>. Toolbar hanya muncul ketika Anda memblok teks.</div>
         <div class="q">Ketik ## untuk judul, &gt; untuk kutipan.</div>
+        <div class="cmd"><span class="plus">+</span><span class="sl">/</span><span class="ph">Ketik untuk memfilter…</span></div>
+        <div class="slash"><div class="cap">BLOK</div><div class="mi on"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 7V5h14v2"/><path d="M12 5v14"/><path d="M9.5 19h5"/></svg></span><span class="lb">Judul</span><kbd>##</kbd></div><div class="mi"><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg></span><span class="lb">Daftar berpoin</span><kbd>-</kbd></div><div class="mi"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></span><span class="lb">Gambar</span></div><div class="mi"><span class="ic"><svg viewBox="0 0 24 24"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></span><span class="lb">Blok kode</span><kbd>```</kbd></div></div>
       </div>
-    </div>
+          </div>
   </div>
 </body>
 </html>
