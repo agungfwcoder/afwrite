@@ -264,7 +264,7 @@ const shortcuts = [
 ]
 
 // Kartu "Judul & slug" memakai slugify asli dari library.
-const slugTitle = ref('Café Pagi di Bandung!')
+const slugTitle = ref('Café Pagi di Medan!')
 const slug = computed(() => slugify(slugTitle.value))
 
 // Kartu bubble toolbar: tombol B / i bisa diklik.
@@ -327,7 +327,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 </script>
 
 <template>
-  <div class="landing bg-[#f4f6f6] text-zinc-700 dark:bg-[#09090b] dark:text-zinc-200">
+  <div class="landing overflow-x-clip bg-[#f4f6f6] text-zinc-700 dark:bg-[#09090b] dark:text-zinc-200">
     <!-- HERO -->
     <section class="hero relative overflow-hidden">
       <div
@@ -702,12 +702,14 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
       <div
         data-reveal="move"
         style="--reveal-delay: 80ms"
-        class="relative mt-4 overflow-hidden rounded-[24px] border border-zinc-200 bg-[#edf0f0] p-3 sm:rounded-[28px] sm:p-4 dark:border-white/[0.07] dark:bg-[#0d0d0d]"
+        class="relative mt-4 rounded-[24px] border border-zinc-200 bg-[#edf0f0] p-3 sm:rounded-[28px] sm:p-4 dark:border-white/[0.07] dark:bg-[#0d0d0d]"
       >
+        <!-- Panel tanpa overflow-hidden agar kertas boleh sedikit keluar dari tepinya; titik-titik tetap
+             di dalam panel lewat sudut yang sama (rounded-[inherit]). -->
         <template v-if="showcase === 'fitur'">
           <div
             aria-hidden="true"
-            class="sc-dots pointer-events-none absolute inset-0"
+            class="sc-dots pointer-events-none absolute inset-0 rounded-[inherit]"
           />
           <span
             aria-hidden="true"
@@ -721,12 +723,12 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           />
           <span
             aria-hidden="true"
-            class="paper paper-sun top-10 right-[22%] size-[150px]"
+            class="paper paper-sun top-10 right-[22%] hidden size-[150px] sm:block"
             style="--d: 8s"
           />
           <span
             aria-hidden="true"
-            class="paper paper-teal-soft top-[24%] right-[30px] size-[220px]"
+            class="paper paper-teal-soft top-[24%] -right-6 hidden size-[220px] sm:block"
             style="--d: 10s"
           />
           <span
@@ -736,7 +738,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           />
           <span
             aria-hidden="true"
-            class="paper paper-teal right-[31%] bottom-[16%] size-[180px]"
+            class="paper paper-teal right-[6%] bottom-[24%] sm:right-[36%] sm:bottom-[11%] size-[180px]"
             style="--d: 8.5s"
           />
         </template>
@@ -904,7 +906,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             <div class="grid grid-cols-[52px_minmax(0,1fr)] gap-x-3 gap-y-1.5">
               <span class="pt-1.5 text-right text-[11px] text-zinc-400 dark:text-zinc-500">Judul</span>
               <div class="border-l border-zinc-300 pl-3 text-lg leading-snug font-extrabold text-zinc-950 dark:border-zinc-700 dark:text-zinc-50">
-                Catatan dari Bandung
+                Catatan dari Medan
               </div>
               <span class="pt-0.5 text-right text-[11px] text-zinc-400 dark:text-zinc-500">Subjudul</span>
               <div class="border-l border-zinc-300 pb-1 pl-3 text-[13.5px] text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
