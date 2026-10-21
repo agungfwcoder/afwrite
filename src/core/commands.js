@@ -5,7 +5,7 @@
 // UI hanya mengenal nama perintah; isinya memakai perintah Tiptap/ProseMirror
 // (editor.tiptap), bukan document.execCommand seperti v1.
 
-import { insertImageFiles, pickImageFiles } from './media.js';
+import { createImageRequest, insertImages, pickImageFiles } from './media.js';
 import { parseEmbed } from './embed.js';
 import { ALIGNS, normalizeColor } from './formats.js';
 import { titleIndex } from './schema.js';
@@ -244,8 +244,19 @@ export const COMMANDS = {
   },
   // ----- Media -----
   image: {
-    // Tanpa argumen: buka dialog pilih file. Dengan argumen: FileList/array File.
-    run: (ed, files) => (files ? insertImageFiles(ed, files) : pickImageFiles(ed)),
+    // Tanpa argumen: minta gambar ke UI aplikasi (event 'imagerequest', mis. galeri), atau buka
+    // dialog pilih file jika tidak ada. Dengan argumen: FileList/File/array File (diupload), atau
+    // deskriptor { src, alt?, mediaId?, size? } / array-nya (disisipkan langsung).
+    run(ed, arg) {
+      if (arg == null) {
+        if (ed.listeners.imagerequest?.length) {
+          ed.emit('imagerequest', createImageRequest(ed));
+          return;
+        }
+        return pickImageFiles(ed);
+      }
+      return insertImages(ed, arg);
+    },
     active: () => false,
   },
   embed: {

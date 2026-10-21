@@ -49,6 +49,7 @@ const id = {
     ol: ['Daftar bernomor', 'Daftar berurutan'],
     codeblock: ['Kode', 'Blok kode program'],
     image: ['Gambar', 'Unggah dari perangkat'],
+    imageRequest: ['Gambar', 'Unggah atau pilih dari galeri'],
     embed: ['Video', 'YouTube atau Vimeo'],
     hr: ['Pemisah', 'Garis pemisah antarbagian'],
   },
@@ -86,6 +87,7 @@ const id = {
   errorEmbed: 'Link video tidak dikenali (YouTube/Vimeo)',
   errorImageType: 'Format gambar tidak didukung (pakai PNG, JPG, GIF, WebP, atau AVIF).',
   errorImageSize: '"{name}" lebih dari {size} MB.',
+  errorImageSrc: 'Alamat gambar tidak valid.',
   errorUpload: 'Gagal mengunggah "{name}".',
 };
 
@@ -137,6 +139,7 @@ const en = {
     ol: ['Numbered list', 'Ordered list'],
     codeblock: ['Code', 'Code block'],
     image: ['Image', 'Upload from your device'],
+    imageRequest: ['Image', 'Upload or choose from library'],
     embed: ['Video', 'YouTube or Vimeo'],
     hr: ['Divider', 'Separate sections'],
   },
@@ -174,6 +177,7 @@ const en = {
   errorEmbed: 'Video link not recognized (YouTube/Vimeo)',
   errorImageType: 'Unsupported image format (use PNG, JPG, GIF, WebP, or AVIF).',
   errorImageSize: '"{name}" is larger than {size} MB.',
+  errorImageSrc: 'Invalid image URL.',
   errorUpload: 'Failed to upload "{name}".',
 };
 

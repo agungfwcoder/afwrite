@@ -12,6 +12,9 @@
 //   slash        (state)  status slash menu: { open, query, items, index, rect }
 //   linkrequest  ({href}) perintah link dijalankan tanpa URL; UI diminta menampilkan input
 //   embedrequest ()       perintah embed dijalankan tanpa URL
+//   imagerequest ({insert, pickFiles, cancel}) perintah image dijalankan tanpa argumen; hanya
+//                         dipancarkan bila ada listener (UI aplikasi, mis. galeri), jika tidak
+//                         dialog file dibuka
 //   error        ({message, error?}) mis. upload gagal / file terlalu besar
 //   history      ({canUndo, canRedo})
 //   readonly     (boolean)
@@ -30,7 +33,7 @@ import { COMMANDS, commandAvailable, currentAlign, isCommandDisabled } from './c
 import { parseEmbed } from './embed.js';
 import { DEFAULT_COLORS, DEFAULT_HIGHLIGHTS, normalizeFormats, normalizePalette } from './formats.js';
 import { markdownRules } from './markdown.js';
-import { insertImageFiles, insertMediaBlock, isMediaNode, mediaKind, SIZES } from './media.js';
+import { insertImages, insertMediaBlock, isMediaNode, mediaKind, SIZES } from './media.js';
 import { fromJSON, toJSON } from './model.js';
 import { normalizeHeadings, sanitize, sanitizeToElement, textToHtml } from './sanitize.js';
 import { createExtensions, titleIndex, titlePos, withTitle } from './schema.js';
@@ -407,8 +410,9 @@ export class Editor {
 
   // ----- Media (gambar, video, pemisah) -----
 
-  insertImages(files) {
-    return insertImageFiles(this, files);
+  // File(s) diupload; deskriptor { src, alt?, mediaId?, size? } disisipkan langsung.
+  insertImages(images) {
+    return insertImages(this, images);
   }
 
   // `target`: elemen <figure>/<hr> di editor, atau posisi node di dokumen.
@@ -928,6 +932,13 @@ export class Editor {
     return { ...allow, allowDataImages, headings, title, formats, colors, highlights };
   }
 
+  // Bila gambar dipilih lewat UI aplikasi (imagerequest), deskripsi blok gambar ikut berubah.
+  _blockStrings() {
+    const { blocks } = this.strings;
+    if (!this.listeners.imagerequest?.length || !blocks.imageRequest) return this.strings;
+    return { ...this.strings, blocks: { ...blocks, image: blocks.imageRequest } };
+  }
+
   // Item slash menu: judul hanya untuk level yang aktif.
   _blocks() {
     // Hanya blok yang berlaku di posisi kursor (mis. di judul artikel: gambar, video, pemisah).
@@ -1280,7 +1291,7 @@ export class Editor {
     if (this._slashDismissed === context.from) return;
 
     const query = match[1];
-    const items = filterBlocks(query, this._blocks(), this.strings);
+    const items = filterBlocks(query, this._blocks(), this._blockStrings());
     const sameQuery = this.slash.open && this.slash.query === query;
 
     this.slash = {

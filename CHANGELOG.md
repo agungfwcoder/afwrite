@@ -79,6 +79,13 @@ Sampai ada pemakai, perubahan kecil berikutnya digabung ke 2.0.0 ini. CDN `@2` d
 - Dark mode mengikuti class `.dark` pada ancestor (Tailwind, Flux, Nuxt UI) tanpa reload;
   `data-afw-theme="light"` untuk tetap terang
 - `editor.normalizeHTML(html)` dan `editor.formatValues()`
+- Gambar dari galeri aplikasi: opsi `imageRequest: true` membuat perintah `image` (tombol, `/gambar`)
+  memancarkan event `wysiwyg-image-request` dengan `{ insert, pickFiles, cancel }` alih-alih membuka
+  dialog file, jadi aplikasi bisa menampilkan media picker sendiri. Seleksi disimpan saat event
+  dipancarkan, dan tiap fungsi hanya berlaku sekali. `exec('image', { src, alt?, mediaId?, size? })`
+  (atau array-nya) dan method `insertImage()` menyisipkan gambar dari URL dalam satu langkah undo;
+  `src` divalidasi seperti HTML paste. Event core `imagerequest`, teks `blocks.imageRequest` dan
+  `errorImageSrc`. Drag & drop dan paste file tetap lewat `upload`
 
 ### Perbaikan
 - x-model / `$wire`: HTML dari luar yang isinya sama tetapi beda penulisan (mis. hasil

@@ -6,7 +6,7 @@
 
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { format } from '../i18n.js';
-import { createEmbedIframe } from './embed.js';
+import { createEmbedIframe, normalizeImageSrc } from './embed.js';
 import { embedOf, MEDIA_NODES } from './schema.js';
 
 export const SIZES = ['wide', 'full'];
@@ -127,6 +127,47 @@ function findUploading(doc, id) {
 
 let uploadCounter = 0;
 
+const isFileList = (value) => typeof value?.length === 'number' && typeof value.item === 'function';
+
+// Argumen perintah image: FileList / File / array File (diupload), atau deskriptor
+// { src, alt?, mediaId?, size? } / array-nya (gambar yang sudah punya URL, mis. dari galeri).
+export function insertImages(editor, arg) {
+  const items = Array.isArray(arg) || isFileList(arg) ? [...arg] : [arg];
+  const isFile = (item) => typeof Blob !== 'undefined' && item instanceof Blob;
+  const descriptors = items.filter((item) => item && !isFile(item));
+  const files = items.filter(isFile);
+  if (descriptors.length) insertImageSources(editor, descriptors);
+  if (files.length) return insertImageFiles(editor, files);
+}
+
+// Deskriptor gambar dari aplikasi, divalidasi dengan aturan yang sama seperti parseHTML.
+// src tidak valid -> null.
+export function normalizeImageDescriptor(item, { allowData = true } = {}) {
+  const src = normalizeImageSrc(typeof item?.src === 'string' ? item.src : '', { allowData });
+  if (!src) return null;
+  const mediaId = item.mediaId ?? item.media_id;
+  return {
+    src,
+    alt: typeof item.alt === 'string' ? item.alt.trim() : '',
+    mediaId: /^\d{1,20}$/.test(String(mediaId ?? '')) ? String(mediaId) : null,
+    size: SIZES.includes(item.size) ? item.size : null,
+  };
+}
+
+// Sisipkan gambar dari URL. Semua gambar masuk dalam satu transaksi (satu langkah undo).
+export function insertImageSources(editor, descriptors) {
+  const images = [];
+  for (const item of descriptors) {
+    const image = normalizeImageDescriptor(item, { allowData: editor.options.allowDataImages });
+    if (image) images.push(image);
+    else editor.emit('error', { message: editor.strings.errorImageSrc });
+  }
+  if (!images.length) return;
+  const chain = editor.tiptap.chain();
+  images.forEach((attrs) => chain.insertMediaBlock({ type: 'image', attrs }));
+  chain.run();
+}
+
 const readAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -207,4 +248,23 @@ export function pickImageFiles(editor) {
     insertImageFiles(editor, input.files);
   });
   input.click();
+}
+
+// Detail event 'imagerequest': UI aplikasi (mis. galeri) memilih gambar, lalu memanggil salah
+// satu fungsinya. Seleksi disimpan sekarang karena modal aplikasi akan mengambil fokus.
+// Masing-masing hanya berlaku sekali, agar klik ganda tidak menyisipkan dua gambar.
+export function createImageRequest(editor) {
+  const saved = editor.saveSelection();
+  let done = false;
+  const once = (fn) => (arg) => {
+    if (done) return;
+    done = true;
+    editor.restoreSelection(saved);
+    fn(arg);
+  };
+  return {
+    insert: once((images) => images != null && editor.exec('image', images)),
+    pickFiles: once(() => pickImageFiles(editor)),
+    cancel: once(() => {}),
+  };
 }

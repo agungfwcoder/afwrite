@@ -166,6 +166,12 @@ export function wysiwygComponent(options = {}) {
       editor.on('slash', (state) => this.onSlash(state));
       editor.on('linkrequest', ({ href }) => this.openInput('link', href));
       editor.on('embedrequest', () => this.openInput('embed'));
+      // Opsi imageRequest: gambar dipilih lewat UI aplikasi (mis. galeri) alih-alih dialog file.
+      // Listener hanya dipasang bila diminta, karena keberadaannya mematikan dialog file bawaan.
+      if (options.imageRequest) {
+        editor.on('imagerequest', (detail) =>
+          root.dispatchEvent(new CustomEvent('wysiwyg-image-request', { detail, bubbles: true })));
+      }
       editor.on('error', (detail) => {
         this.showToast(detail.message);
         root.dispatchEvent(new CustomEvent('wysiwyg-error', { detail, bubbles: true }));
@@ -234,6 +240,11 @@ export function wysiwygComponent(options = {}) {
 
     exec(name, ...args) {
       editor?.exec(name, ...args);
+    },
+
+    // Deskriptor { src, alt?, mediaId?, size? } atau array-nya, mis. hasil pilihan galeri.
+    insertImage(images) {
+      editor?.exec('image', images);
     },
 
     isActive(name) {

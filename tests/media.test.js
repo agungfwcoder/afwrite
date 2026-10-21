@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { sanitize } from '../src/core/sanitize.js';
 import { normalizeImageSrc, parseEmbed } from '../src/core/embed.js';
+import { normalizeImageDescriptor } from '../src/core/media.js';
 
 const YT = '<iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ" title="YouTube" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
 
@@ -76,5 +77,32 @@ describe('normalizeImageSrc', () => {
     ['data:text/html;base64,PHNjcmlwdD4=', null],
   ])('%j', (src, expected) => {
     expect(normalizeImageSrc(src)).toBe(expected);
+  });
+});
+
+describe('normalizeImageDescriptor (gambar dari galeri)', () => {
+  test('src + mediaId', () => {
+    expect(normalizeImageDescriptor({ src: '/storage/a.jpg', mediaId: '12' })).toEqual({ src: '/storage/a.jpg', alt: '', mediaId: '12', size: null });
+  });
+  test('alt di-trim, size & media_id', () => {
+    expect(normalizeImageDescriptor({ src: 'https://a.com/x.png', alt: ' Foto ', media_id: 7, size: 'wide' })).toEqual({ src: 'https://a.com/x.png', alt: 'Foto', mediaId: '7', size: 'wide' });
+  });
+  test.each([['12a'], [-1], ['1.5'], [{}]])('mediaId bukan digit (%j) -> null', (mediaId) => {
+    expect(normalizeImageDescriptor({ src: '/a.jpg', mediaId }).mediaId).toBeNull();
+  });
+  test('size tidak dikenal -> default', () => {
+    expect(normalizeImageDescriptor({ src: '/a.jpg', size: 'raksasa' }).size).toBeNull();
+  });
+  test.each([['javascript:alert(1)'], ['data:image/svg+xml;base64,PHN2Zz4='], [''], [42]])('src berbahaya/kosong (%j) -> null', (src) => {
+    expect(normalizeImageDescriptor({ src })).toBeNull();
+  });
+  test('data: ditolak saat allowData false', () => {
+    const src = 'data:image/png;base64,iVBORw0KGgo=';
+    expect(normalizeImageDescriptor({ src }).src).toBe(src);
+    expect(normalizeImageDescriptor({ src }, { allowData: false })).toBeNull();
+  });
+  test('bukan objek -> null', () => {
+    expect(normalizeImageDescriptor(null)).toBeNull();
+    expect(normalizeImageDescriptor('/a.jpg')).toBeNull();
   });
 });

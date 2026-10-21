@@ -97,6 +97,7 @@ With `x-model`:
 | `upload` | `null` | `async (file) => url` or `{ url, mediaId, alt }` (`mediaId` is written as `data-media-id`). Without it, images are stored as base64 |
 | `maxImageSize` | `5 MB` | Maximum image size (bytes); `0` = no limit |
 | `allowDataImages` | `true` | Allow `<img src="data:image/…">` in the output |
+| `imageRequest` | `false` | `true` = the `image` command fires `wysiwyg-image-request` instead of opening the file dialog, so your app can show its own gallery (see [Choosing from your app's gallery](#choosing-from-your-apps-gallery)) |
 | `headings` | `[2, 3]` | Heading levels in use (2–6), e.g. `[2, 3, 4, 5, 6]`. Toolbar buttons, slash menu, shortcuts, and markdown follow it; other levels are mapped to the nearest active level |
 | `title` | `false` | Medium-style article mode: the topmost text is an `<h1>` title (only images/video/dividers may sit above it); the small heading button (second level) on the line right after it makes a `<p class="afw-subtitle">` subtitle |
 | `formats` | all | Extra formats: `'underline'`, `'strike'`, `'color'`, `'highlight'`, `'align'`. Article mode: none (stays plain). `false` = none |
@@ -133,6 +134,7 @@ Call them from markup inside the component or via `Alpine.$data(el)`:
 | `getJSON()` / `setJSON(doc)` | Content as a ProseMirror document JSON |
 | `getMeta()` | Medium-style preview: `{ image, title, subtitle, slug }` from the first image (with `mediaId`), first text, and second text |
 | `exec(command, ...args)` | Run a command, see the commands table |
+| `insertImage(images)` | Insert images that already have a URL: `{ src, alt?, mediaId?, size? }` or an array of them |
 | `isActive(command)` | Whether a format is active at the cursor |
 | `setReadOnly(bool)` | Toggle read-only mode |
 | `focus()` | Focus the end of the editor |
@@ -147,7 +149,40 @@ Dispatched from the editor element and *bubbling*, so a parent can listen:
 ```
 
 `wysiwyg-ready` (`{ editor }`), `wysiwyg-change` (`{ html, meta }`), `wysiwyg-focus`, `wysiwyg-blur`,
-`wysiwyg-error` (`{ message }`).
+`wysiwyg-error` (`{ message }`), `wysiwyg-image-request` (`{ insert, pickFiles, cancel }`, only with
+`imageRequest: true`).
+
+### Choosing from your app's gallery
+
+By default the `image` command opens the device file dialog. With `imageRequest: true` it fires the
+`wysiwyg-image-request` event instead, so your app can show its own media picker (a CMS gallery
+modal, for example). The event `detail` has three functions, and each one works only once, so a
+double click in the gallery can't insert two images:
+
+| Function | Description |
+|---|---|
+| `insert(images)` | Insert at the cursor position from when the request started. Takes `{ src, alt?, mediaId?, size? }`, an array of them, or a `FileList` |
+| `pickFiles()` | Open the device file dialog instead (for an "Upload from device" button in your picker) |
+| `cancel()` | Return the cursor to the editor without inserting anything |
+
+```html
+<div x-data="wysiwyg({ name: 'body', imageRequest: true, upload: uploadImage })"
+     @wysiwyg-image-request="openGallery($event.detail)"></div>
+```
+
+```js
+let request = null // keep it outside Alpine's reactive data
+function openGallery(detail) {
+  request = detail
+  galleryModal.show()
+}
+galleryModal.onSelect = (media) => request.insert({ src: media.url, mediaId: media.id })
+galleryModal.onClose = () => request?.cancel()
+```
+
+`src` follows the same rules as pasted HTML (`http(s)`, `//`, relative paths, and raster `data:`
+images when `allowDataImages` is on). An invalid `src` is skipped with a `wysiwyg-error`. A
+non-numeric `mediaId` is dropped. Drag & drop and pasted files still go through `upload`.
 
 ### Commands & shortcuts
 
@@ -163,7 +198,7 @@ Dispatched from the editor element and *bubbling*, so a parent can listen:
 | `quote` | Ctrl/⌘ + Shift + 9 | `> ` |
 | `ul` / `ol` | Ctrl/⌘ + Shift + 8 / 7 | `- ` / `1. ` |
 | `indent` / `outdent` | Tab / Shift + Tab (inside a list) | |
-| `image` | | `/image`, drop a file, paste a screenshot |
+| `image` | | `/image`, drop a file, paste a screenshot; `exec('image', { src, mediaId })` inserts from a URL |
 | `embed` | | `/video`, paste a YouTube link on an empty line |
 | `hr` | | `--- ` |
 | `codeblock` | Ctrl/⌘ + Alt + C | ```` ``` ```` + space, `/code` |
@@ -199,14 +234,15 @@ The `#editor` element must be wrapped in an element with the `afw` class for sty
 | `exec(name, ...args)`, `isActive(name)`, `state()`, `formatValues()` | Commands & format state (`formatValues()`: `{ color, highlight, align }` at the cursor) |
 | `getHTML()`, `setHTML(html, { resetHistory })`, `getJSON()`, `setJSON(doc)`, `getText()`, `clear()`, `isEmpty()` | Content |
 | `normalizeHTML(html)` | The HTML `getHTML()` would return after `setHTML(html)`, without changing the content; for comparing external content |
-| `insertHTML(html)`, `insertText(text)`, `paste({ html, text, files })`, `insertImages(files)` | Insert |
+| `insertHTML(html)`, `insertText(text)`, `paste({ html, text, files })`, `insertImages(files \| images)` | Insert |
 | `undo()`, `redo()`, `canUndo()`, `canRedo()` | History |
 | `restoreDraft()`, `discardDraft()`, `clearDraft()`, `draft` | Autosave |
 | `setReadOnly(bool)`, `focus()`, `stats()` | Other |
 | `on(event, fn)` → unsubscribe function, `off()`, `destroy()` | Events |
 
 `Editor` events: `change`, `state`, `selection`, `slash`, `history`, `readonly`, `linkrequest`,
-`embedrequest`, `error`, `focus`, `blur`.
+`embedrequest`, `imagerequest`, `error`, `focus`, `blur`. `imagerequest` fires only while it has a
+listener; without one, the `image` command opens the file dialog.
 
 The Tiptap instance is available as `editor.tiptap` for advanced use (e.g.
 `editor.tiptap.commands`, `editor.tiptap.state`). Changes made this way still fire the `change`
