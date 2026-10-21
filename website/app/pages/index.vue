@@ -1369,11 +1369,12 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
 
         <div
           v-if="showcase === 'fitur' && showAll"
-          class="flex justify-center pt-1 pb-1 sm:hidden"
+          class="sticky bottom-4 z-10 flex justify-center pt-1 pb-1 sm:hidden"
         >
+          <!-- Menempel di bawah layar selama daftar fitur yang terbuka masih terlihat. -->
           <button
             type="button"
-            class="btn-soft cursor-pointer gap-2"
+            class="btn-soft btn-float cursor-pointer gap-2"
             @click="collapseFeatures"
           >
             Show less
@@ -2178,6 +2179,20 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
     color-mix(in srgb, var(--ui-bg) 85%, transparent) 72%,
     var(--ui-bg) 92%
   );
+}
+
+/* Tombol yang melayang di atas kartu (sticky): latar padat agar tetap terbaca. */
+.landing .btn-soft.btn-float {
+  border: 1px solid rgba(24, 24, 27, 0.1);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 24px rgba(24, 24, 27, 0.14);
+  backdrop-filter: blur(8px);
+}
+
+.dark .landing .btn-soft.btn-float {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(24, 24, 27, 0.92);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 /* Daftar yang terpotong: item terakhir memudar ke bawah. */
