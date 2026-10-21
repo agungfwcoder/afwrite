@@ -1,11 +1,26 @@
 // Situs dokumentasi (berbasis template Nuxt UI Docs). Nama yang tampil diatur di brand.ts.
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { BRAND } from './brand'
 
 // Demo di dokumentasi memakai source library langsung dari repo ini (../src),
 // beserta Alpine dari node_modules repo induk.
 const root = fileURLToPath(new URL('..', import.meta.url))
+
+// Versi aset di public/ (dipakai sebagai ?v= lewat useAsset): hash pendek isi berkasnya, jadi berubah
+// sendiri setiap logo/ikon/og diganti dan cache browser maupun pratinjau link ikut segar.
+// Versi manifest ikut ikon PWA di dalamnya.
+const assetHash = (...files: string[]) => {
+  const hash = createHash('sha1')
+  for (const file of files) hash.update(readFileSync(new URL(`./public/${file}`, import.meta.url)))
+  return hash.digest('hex').slice(0, 8)
+}
+const assetVersions = Object.fromEntries(
+  ['logo.svg', 'favicon.svg', 'favicon.ico', 'apple-touch-icon.png', 'og.png'].map(file => [file, assetHash(file)])
+)
+assetVersions['site.webmanifest'] = assetHash('site.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png')
 
 // Origin situs (tanpa path). NUXT_SITE_URL juga dibaca langsung oleh modul site-config, jadi
 // isinya cukup origin; base path (/afwrite/ di GitHub Pages) datang dari NUXT_APP_BASE_URL.
@@ -28,6 +43,12 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/main.css'],
+
+  runtimeConfig: {
+    public: {
+      assetVersions
+    }
+  },
 
   // Alamat situs untuk URL absolut (og:image). Base path ditambahkan sendiri oleh modul.
   site: {

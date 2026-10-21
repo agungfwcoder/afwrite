@@ -9,9 +9,6 @@ const { data: files } = useLazyAsyncData('search', () => queryCollectionSearchSe
   server: false
 })
 
-// Situs bisa berada di sub-folder (GitHub Pages: /afwrite/), jadi aset diberi baseURL.
-const base = useRuntimeConfig().app.baseURL
-
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -20,11 +17,12 @@ useHead({
     // halaman terang secara paksa (teks jadi putih di atas kartu yang tetap terang).
     { name: 'color-scheme', content: 'light dark' }
   ],
+  // useAsset: baseURL (GitHub Pages: /afwrite/) + ?v= dari isi berkas.
   link: [
-    { rel: 'icon', href: `${base}favicon.ico`, sizes: '48x48' },
-    { rel: 'icon', href: `${base}favicon.svg`, type: 'image/svg+xml' },
-    { rel: 'apple-touch-icon', href: `${base}apple-touch-icon.png` },
-    { rel: 'manifest', href: `${base}site.webmanifest` }
+    { rel: 'icon', href: useAsset('favicon.ico'), sizes: '48x48' },
+    { rel: 'icon', href: useAsset('favicon.svg'), type: 'image/svg+xml' },
+    { rel: 'apple-touch-icon', href: useAsset('apple-touch-icon.png') },
+    { rel: 'manifest', href: useAsset('site.webmanifest') }
   ],
   htmlAttrs: {
     lang: 'id'

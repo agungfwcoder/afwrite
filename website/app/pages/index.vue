@@ -17,7 +17,7 @@ const description = page.value.seo?.description || page.value.description
 // Gambar OG landing memakai nama tetap (public/og.png), bukan hasil defineOgImage yang namanya berganti tiap isinya
 // berubah: WhatsApp dkk. menyimpan alamat gambar lama, dan alamat yang hilang membuat pratinjau link kosong.
 // Gambar ini dirender dari template OgImage/Docs (judul SLOGAN, headline BRAND); salin ulang jika slogan berubah.
-const ogImage = unref(createSitePathResolver({ absolute: true, withBase: true })('/og.png'))
+const ogImage = `${unref(createSitePathResolver({ absolute: true, withBase: true })('/og.png'))}?v=${useRuntimeConfig().public.assetVersions['og.png']}`
 
 useSeoMeta({
   titleTemplate: '',
@@ -31,7 +31,7 @@ useSeoMeta({
 })
 
 const REPO = 'https://github.com/agungfwcoder/afwrite'
-const base = useRuntimeConfig().app.baseURL
+const logo = useAsset('logo.svg')
 
 const { copy, copied } = useClipboard()
 
@@ -1484,7 +1484,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
       <div class="mx-auto flex max-w-(--ui-container) flex-col items-center gap-5 px-4 sm:px-6 lg:px-8 py-8 text-[13px] text-zinc-500 md:flex-row md:justify-between dark:text-zinc-400">
         <div class="flex items-center gap-2">
           <img
-            :src="`${base}logo.svg`"
+            :src="logo"
             alt=""
             class="size-5"
           >

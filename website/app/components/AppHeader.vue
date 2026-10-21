@@ -4,7 +4,7 @@ import type { ContentNavigationItem } from '@nuxt/content'
 const navigation = inject<Ref<ContentNavigationItem[]>>('navigation')
 
 const { header } = useAppConfig()
-const base = useRuntimeConfig().app.baseURL
+const logo = useAsset('logo.svg')
 const route = useRoute()
 
 const isActive = (item: { match: string }) => new RegExp(item.match).test(route.path)
@@ -48,7 +48,7 @@ const isActive = (item: { match: string }) => new RegExp(item.match).test(route.
         class="flex items-center gap-2.5"
       >
         <img
-          :src="`${base}logo.svg`"
+          :src="logo"
           alt=""
           class="size-7"
         >
