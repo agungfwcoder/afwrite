@@ -322,7 +322,7 @@ export function wysiwygComponent(options = {}) {
 
     draftMessage() {
       if (!this.draft) return '';
-      const time = new Date(this.draft.time).toLocaleString(options.lang === 'en' ? 'en' : 'id', {
+      const time = new Date(this.draft.time).toLocaleString(options.lang === 'id' ? 'id' : 'en', {
         dateStyle: 'medium',
         timeStyle: 'short',
       });

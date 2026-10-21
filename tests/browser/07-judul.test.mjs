@@ -25,7 +25,7 @@ check('bawaan: toolbar hanya Judul & Subjudul', toolbar.includes('Judul') && too
 await page.evaluate(() => {
   const host = document.createElement('div');
   host.id = 'judul-host';
-  host.innerHTML = '<div id="judul" x-data="wysiwyg({ name: \'judul\', headings: [2, 3, 4, 5, 6], autosave: null })"><p>x</p></div>';
+  host.innerHTML = '<div id="judul" x-data="wysiwyg({ name: \'judul\', lang: \'id\', headings: [2, 3, 4, 5, 6], autosave: null })"><p>x</p></div>';
   document.body.append(host);
 });
 await page.waitForSelector('#judul .afw-btn');

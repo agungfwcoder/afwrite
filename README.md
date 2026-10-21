@@ -83,7 +83,7 @@ With `x-model`:
 | Option | Default | Description |
 |---|---|---|
 | `name` | `''` | Hidden input name for forms |
-| `lang` | `'id'` | UI language: `'id'` or `'en'` |
+| `lang` | `'en'` | UI language: `'en'` or `'id'` |
 | `strings` | `{}` | Override some strings, e.g. `{ placeholder: 'Write…' }` (see `src/i18n.js`) |
 | `placeholder` | from `lang` | Text shown while the editor is empty |
 | `toolbar` | `true` | Top toolbar; `false` = bubble only (Medium style) |

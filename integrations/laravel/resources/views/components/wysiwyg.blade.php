@@ -14,7 +14,7 @@
 @props([
     'name',
     'value' => '',
-    'lang' => 'id',
+    'lang' => 'en',
     'placeholder' => null,
     'uploadUrl' => null,
     'autosave' => null,

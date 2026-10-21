@@ -67,7 +67,7 @@ Route::post('/wyswyg/upload', WyswygUploadController::class)
 </form>
 ```
 
-Props: `name` (wajib), `value`, `lang` (`id`/`en`), `placeholder`, `upload-url`, `autosave`,
+Props: `name` (wajib), `value`, `lang` (`en` bawaan / `id`), `placeholder`, `upload-url`, `autosave`,
 `:toolbar="false"`, `:readonly="true"`, `format` (`html`/`json`), `:headings="[2, 3, 4]"`,
 `:title="true"`, `title-name`, `:formats="['underline', 'align']"`. Atribut lain (mis. `class`)
 diteruskan ke elemen editor. Setelah validasi gagal, isi dari `old()` dipakai otomatis.

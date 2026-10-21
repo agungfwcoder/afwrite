@@ -1,4 +1,4 @@
-// Teks antarmuka. Pilih dengan opsi `lang` ('id' | 'en'), dan timpa sebagian
+// Teks antarmuka. Pilih dengan opsi `lang` ('en' bawaan | 'id'), dan timpa sebagian
 // dengan opsi `strings`, mis. { placeholder: 'Mulai…', bold: 'Fett' }.
 
 const id = {
@@ -179,8 +179,8 @@ const en = {
 
 export const LOCALES = { id, en };
 
-export function getStrings(lang = 'id', overrides = {}) {
-  const base = LOCALES[lang] || LOCALES.id;
+export function getStrings(lang = 'en', overrides = {}) {
+  const base = LOCALES[lang] || LOCALES.en;
   return {
     ...base,
     ...overrides,

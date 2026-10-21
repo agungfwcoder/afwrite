@@ -17,9 +17,9 @@ const wait = (ms = 120) => page.waitForTimeout(ms);
 await page.goto(`${BASE_URL}/`);
 await page.waitForSelector('.afw-btn');
 
-// Editor uji di halaman demo. `options` berupa teks JS (boleh berisi fungsi).
+// Editor uji di halaman demo (bahasa Indonesia). `options` berupa teks JS (boleh berisi fungsi).
 async function mount(id, options = '{}', content = '<p>x</p>', wrapper = (editor) => editor, attrs = '') {
-  const html = wrapper(`<div id="${id}" ${attrs} x-data="wysiwyg(${options})">${content}</div>`);
+  const html = wrapper(`<div id="${id}" ${attrs} x-data="wysiwyg({ lang: 'id', ...${options} })">${content}</div>`);
   await page.evaluate(({ id, html }) => {
     document.getElementById(`${id}-host`)?.remove();
     const host = document.createElement('div');
@@ -235,7 +235,7 @@ const counts = await page.evaluate(async () => {
   for (let i = 0; i < 5; i++) {
     const host = document.createElement('div');
     host.className = 'nav-host';
-    host.innerHTML = '<form><div x-data="wysiwyg({ name: \'nav\' })"><p>halaman</p></div></form>';
+    host.innerHTML = '<form><div x-data="wysiwyg({ name: \'nav\', lang: \'id\' })"><p>halaman</p></div></form>';
     document.body.append(host);
     await new Promise((r) => setTimeout(r, 60));
     sizes.push(document.querySelectorAll('.nav-host .afw-content').length);

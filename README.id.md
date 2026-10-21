@@ -83,7 +83,7 @@ Dengan `x-model`:
 | Opsi | Default | Keterangan |
 |---|---|---|
 | `name` | `''` | Nama input hidden untuk form |
-| `lang` | `'id'` | Bahasa antarmuka: `'id'` atau `'en'` |
+| `lang` | `'en'` | Bahasa antarmuka: `'en'` atau `'id'` (Indonesia) |
 | `strings` | `{}` | Timpa sebagian teks, mis. `{ placeholder: 'Tulis…' }` (lihat `src/i18n.js`) |
 | `placeholder` | dari `lang` | Teks saat editor kosong |
 | `toolbar` | `true` | Toolbar di atas; `false` = hanya bubble (ala Medium) |

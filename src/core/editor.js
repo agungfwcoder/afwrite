@@ -38,7 +38,7 @@ import { slugify } from './slug.js';
 
 const DEFAULTS = {
   content: '',
-  lang: 'id', // 'id' | 'en'
+  lang: 'en', // 'en' | 'id'
   strings: {}, // timpa sebagian teks antarmuka, lihat src/i18n.js
   placeholder: null, // default dari teks bahasa
   label: null, // aria-label editor; default dari teks bahasa

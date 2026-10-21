@@ -172,8 +172,8 @@ var me = {
 		errorUpload: "Failed to upload \"{name}\"."
 	}
 };
-function he(e = "id", t = {}) {
-	let n = me[e] || me.id;
+function he(e = "en", t = {}) {
+	let n = me[e] || me.en;
 	return {
 		...n,
 		...t,
@@ -1609,7 +1609,7 @@ function On(e, { maxLength: t = 80 } = {}) {
 //#region src/core/editor.js
 var kn = {
 	content: "",
-	lang: "id",
+	lang: "en",
 	strings: {},
 	placeholder: null,
 	label: null,
@@ -3168,7 +3168,7 @@ function cr(e = {}) {
 		},
 		draftMessage() {
 			if (!this.draft) return "";
-			let t = new Date(this.draft.time).toLocaleString(e.lang === "en" ? "en" : "id", {
+			let t = new Date(this.draft.time).toLocaleString(e.lang === "id" ? "id" : "en", {
 				dateStyle: "medium",
 				timeStyle: "short"
 			});

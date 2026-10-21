@@ -10,6 +10,8 @@ Sampai ada pemakai, perubahan kecil berikutnya digabung ke 2.0.0 ini. CDN `@2` d
 `npm install github:agungfwcoder/afwrite#semver:^2` selalu mengambil v2 terbaru.
 
 ### Berubah
+- Bahasa antarmuka bawaan kini bahasa Inggris (`lang: 'en'`), termasuk komponen Blade Laravel.
+  Pakai `lang: 'id'` (atau `lang="id"` di Blade) untuk bahasa Indonesia
 - Perilaku mengetik, list, format, dan kursor ditangani ProseMirror: sama di semua browser,
   tanpa tambalan khusus Chrome/Safari
 - JSON memakai format dokumen ProseMirror (`{ type: 'doc', content: [...] }`); format v1

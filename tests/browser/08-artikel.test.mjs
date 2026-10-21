@@ -18,7 +18,7 @@ await page.waitForSelector('.afw-btn');
 await page.evaluate(() => {
   const host = document.createElement('div');
   host.style.width = '900px';
-  host.innerHTML = '<div id="art" x-data="wysiwyg({ name: \'artikel\', title: true, titleName: \'judul\' })"></div>';
+  host.innerHTML = '<div id="art" x-data="wysiwyg({ name: \'artikel\', lang: \'id\', title: true, titleName: \'judul\' })"></div>';
   document.body.prepend(host);
   // Catat detail event perubahan terakhir.
   host.addEventListener('wysiwyg-change', (e) => (window.__lastChange = e.detail));

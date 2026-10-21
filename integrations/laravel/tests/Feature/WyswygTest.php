@@ -40,7 +40,7 @@ class WyswygTest extends TestCase
         // Opsi dalam JSON.parse('...') dapat dibaca kembali dengan benar.
         preg_match("/JSON\\.parse\\('(.*?)'\\)/", $xData, $json);
         $options = json_decode(json_decode('"'.$json[1].'"'), true);
-        $this->assertSame(['name' => 'body', 'lang' => 'id', 'placeholder' => 'Tulis "sesuatu" </div><script>alert(1)</script>', 'toolbar' => false, 'readonly' => false, 'format' => 'html'], $options);
+        $this->assertSame(['name' => 'body', 'lang' => 'en', 'placeholder' => 'Tulis "sesuatu" </div><script>alert(1)</script>', 'toolbar' => false, 'readonly' => false, 'format' => 'html'], $options);
     }
 
     public function test_title_name_diteruskan_ke_alpine(): void
