@@ -164,6 +164,7 @@ Dikirim dari elemen editor dan *bubbling*, jadi bisa ditangkap di parent:
 | `ul` / `ol` | Ctrl/⌘ + Shift + 8 / 7 | `- ` / `1. ` |
 | `indent` / `outdent` | Tab / Shift + Tab (di dalam list) | |
 | `image` | | `/gambar`, seret file, tempel screenshot |
+| `replaceImage` | | tombol **Ganti gambar** di toolbar media; caption, ukuran, dan posisi tetap |
 | `embed` | | `/video`, tempel link YouTube di baris kosong |
 | `hr` | | `--- ` |
 | `codeblock` | Ctrl/⌘ + Alt + C | ```` ``` ```` + spasi, `/kode` |

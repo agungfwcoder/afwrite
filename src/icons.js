@@ -14,6 +14,7 @@ export const ICONS = {
   sizeNormal: svg('<path d="M3 3h18"/><path d="M3 21h18"/><rect x="7" y="7" width="10" height="10" rx="1.5"/>'),
   sizeWide: svg('<path d="M3 3h18"/><path d="M3 21h18"/><rect x="4" y="7" width="16" height="10" rx="1.5"/>'),
   sizeFull: svg('<path d="M3 3h18"/><path d="M3 21h18"/><rect x="1" y="7" width="22" height="10" rx="1.5"/>'),
+  replace: svg('<path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>'),
   alt: svg('<path d="M17 6.1H3"/><path d="M21 12.1H3"/><path d="M15.1 18H3"/>'),
   trash: svg('<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>'),
   paragraph: svg('<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>'),

@@ -963,7 +963,7 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
                 Images &amp; video
               </div>
               <div class="sc-desc">
-                Uploads, captions, alt text, and three sizes.
+                Uploads, one-click replace, captions, alt text, and three sizes.
               </div>
             </div>
             <div class="flex flex-col items-center gap-2">
@@ -1341,6 +1341,13 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
             </ul>
           </div>
         </div>
+
+        <!-- Desktop: bagian bawah panel (kartu, tepi, kertas) memudar ke latar halaman. -->
+        <div
+          v-if="showcase === 'fitur'"
+          aria-hidden="true"
+          class="sc-fade-out pointer-events-none absolute -inset-x-10 -bottom-px hidden h-[240px] sm:block"
+        />
 
         <div
           v-if="showcase === 'fitur' && !showAll"
@@ -2160,6 +2167,17 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
 .dark .landing .sc-inset {
   border-color: rgba(255, 255, 255, 0.08);
   background: rgba(10, 10, 10, 0.55);
+}
+
+/* Ujung bawah panel fitur memudar ke latar halaman, dengan kurva agar tidak terlihat seperti pita. */
+.landing .sc-fade-out {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--ui-bg) 45%, transparent) 40%,
+    color-mix(in srgb, var(--ui-bg) 85%, transparent) 72%,
+    var(--ui-bg) 92%
+  );
 }
 
 /* Daftar yang terpotong: item terakhir memudar ke bawah. */

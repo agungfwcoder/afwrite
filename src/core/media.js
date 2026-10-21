@@ -127,13 +127,13 @@ function findUploading(doc, id) {
 
 let uploadCounter = 0;
 
-const isFileList = (value) => typeof value?.length === 'number' && typeof value.item === 'function';
+export const isFileList = (value) => typeof value?.length === 'number' && typeof value.item === 'function';
+const isFile = (item) => typeof Blob !== 'undefined' && item instanceof Blob;
 
 // Argumen perintah image: FileList / File / array File (diupload), atau deskriptor
 // { src, alt?, mediaId?, size? } / array-nya (gambar yang sudah punya URL, mis. dari galeri).
 export function insertImages(editor, arg) {
   const items = Array.isArray(arg) || isFileList(arg) ? [...arg] : [arg];
-  const isFile = (item) => typeof Blob !== 'undefined' && item instanceof Blob;
   const descriptors = items.filter((item) => item && !isFile(item));
   const files = items.filter(isFile);
   if (descriptors.length) insertImageSources(editor, descriptors);
@@ -189,63 +189,118 @@ export function normalizeUpload(result) {
   };
 }
 
-// Sisipkan file gambar. `upload(file)` -> Promise<url | { url, mediaId, alt }> dari opsi pengguna;
-// tanpa itu, gambar disimpan sebagai data URL (base64) di dalam HTML.
-export async function insertImageFiles(editor, files) {
-  const { upload, maxImageSize } = editor.options;
+// File gambar yang boleh diupload: jenis & ukuran diperiksa, yang ditolak memancarkan 'error'.
+function acceptImageFiles(editor, files) {
+  const { maxImageSize } = editor.options;
   const t = editor.strings;
   const images = [...files].filter((f) => /^image\/(png|jpe?g|gif|webp|avif)$/.test(f.type));
+  if (!images.length && files.length) editor.emit('error', { message: t.errorImageType });
 
-  if (!images.length) {
-    if (files.length) editor.emit('error', { message: t.errorImageType });
-    return;
-  }
+  return images.filter((file) => {
+    if (!maxImageSize || file.size <= maxImageSize) return true;
+    const mb = (maxImageSize / 1024 / 1024).toFixed(1).replace(/\.0$/, '');
+    editor.emit('error', { message: format(t.errorImageSize, { name: file.name, size: mb }) });
+    return false;
+  });
+}
 
-  for (const file of images) {
-    if (maxImageSize && file.size > maxImageSize) {
-      const mb = (maxImageSize / 1024 / 1024).toFixed(1).replace(/\.0$/, '');
-      editor.emit('error', { message: format(t.errorImageSize, { name: file.name, size: mb }) });
-      continue;
-    }
+// `upload(file)` -> Promise<url | { url, mediaId, alt }> dari opsi pengguna; tanpa itu, gambar
+// disimpan sebagai data URL (base64) di dalam HTML.
+async function uploadImage(editor, file) {
+  const { upload } = editor.options;
+  const result = normalizeUpload(upload ? await upload(file) : await readAsDataUrl(file));
+  if (!result.url) throw new Error('URL hasil upload kosong');
+  return result;
+}
 
-    // Pratinjau langsung tampil selama upload berjalan.
+const uploadError = (editor, file, err) =>
+  editor.emit('error', { message: format(editor.strings.errorUpload, { name: file.name }), error: err });
+
+// Sisipkan file gambar; pratinjau langsung tampil selama upload berjalan.
+export async function insertImageFiles(editor, files) {
+  for (const file of acceptImageFiles(editor, files)) {
     const preview = URL.createObjectURL(file);
     const id = `u${++uploadCounter}`;
     editor.tiptap.commands.insertMediaBlock({ type: 'image', attrs: { src: preview, alt: '', uploading: id } });
 
     try {
-      const { url, mediaId, alt } = normalizeUpload(upload ? await upload(file) : await readAsDataUrl(file));
-      if (!url) throw new Error('URL hasil upload kosong');
+      const { url, mediaId, alt } = await uploadImage(editor, file);
       updateUploading(editor, id, (tr, pos, node) =>
         tr.setNodeMarkup(pos, null, { ...node.attrs, src: url, mediaId, alt: node.attrs.alt || alt, uploading: null }));
     } catch (err) {
       updateUploading(editor, id, (tr, pos, node) => tr.delete(pos, pos + node.nodeSize));
-      editor.emit('error', { message: format(t.errorUpload, { name: file.name }), error: err });
+      uploadError(editor, file, err);
     } finally {
       URL.revokeObjectURL(preview);
     }
   }
 }
 
-function updateUploading(editor, id, change) {
+// `history: false`: transaksi tidak menjadi langkah undo sendiri (undo langsung melompati
+// keadaan "sedang upload"). Gambar yang sedang dipilih tetap terpilih.
+function updateUploading(editor, id, change, { history = true } = {}) {
   const { state, view } = editor.tiptap;
   const pos = findUploading(state.doc, id);
   if (pos === null) return; // gambar sudah dihapus pengguna selama upload
+  const selected = state.selection instanceof NodeSelection && state.selection.from === pos;
   const tr = state.tr;
   change(tr, pos, state.doc.nodeAt(pos));
+  if (selected && tr.doc.nodeAt(pos)?.type.name === 'image') tr.setSelection(NodeSelection.create(tr.doc, pos));
+  if (!history) tr.setMeta('addToHistory', false);
   view.dispatch(tr);
 }
 
-// Buka dialog pilih file (tanpa UI khusus; bekerja juga tanpa Alpine).
-export function pickImageFiles(editor) {
+// ---------- Ganti gambar yang sedang dipilih ----------
+// Caption, posisi, dan ukuran tetap (kecuali deskriptor memberi size). Alt & mediaId mengikuti
+// gambar baru: alt lama mendeskripsikan gambar lama. Hanya berlaku bila yang terpilih gambar.
+
+export function replaceImage(editor, arg) {
+  const item = Array.isArray(arg) || isFileList(arg) ? arg[0] : arg;
+  if (!item || editor.selectedMedia()?.kind !== 'image') return;
+  if (isFile(item)) return replaceImageFile(editor, item);
+
+  const image = normalizeImageDescriptor(item, { allowData: editor.options.allowDataImages });
+  if (!image) return editor.emit('error', { message: editor.strings.errorImageSrc });
+  const { size, ...attrs } = image;
+  editor._updateMedia(() => ({ ...attrs, ...(size && { size }), uploading: null }));
+}
+
+// Pratinjau menggantikan gambar selama upload (satu langkah undo); gagal -> gambar lama kembali.
+async function replaceImageFile(editor, file) {
+  const [accepted] = acceptImageFiles(editor, [file]);
+  if (!accepted) return;
+  const { src, alt, mediaId } = editor.tiptap.state.selection.node.attrs;
+  const preview = URL.createObjectURL(file);
+  const id = `u${++uploadCounter}`;
+  editor._updateMedia(() => ({ src: preview, alt: '', mediaId: null, uploading: id }));
+
+  try {
+    const result = await uploadImage(editor, file);
+    updateUploading(editor, id, (tr, pos, node) =>
+      tr.setNodeMarkup(pos, null, { ...node.attrs, src: result.url, mediaId: result.mediaId, alt: node.attrs.alt || result.alt, uploading: null }),
+    { history: false });
+  } catch (err) {
+    updateUploading(editor, id, (tr, pos, node) =>
+      tr.setNodeMarkup(pos, null, { ...node.attrs, src, alt, mediaId, uploading: null }),
+    { history: false });
+    uploadError(editor, file, err);
+  } finally {
+    URL.revokeObjectURL(preview);
+  }
+}
+
+// Buka dialog pilih file (tanpa UI khusus; bekerja juga tanpa Alpine). `replace`: satu file
+// yang menggantikan gambar terpilih.
+export function pickImageFiles(editor, { replace = false } = {}) {
   const saved = editor.saveSelection();
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/png,image/jpeg,image/gif,image/webp,image/avif';
-  input.multiple = true;
+  input.multiple = !replace;
   input.addEventListener('change', () => {
     editor.restoreSelection(saved);
-    insertImageFiles(editor, input.files);
+    if (replace) replaceImage(editor, input.files);
+    else insertImageFiles(editor, input.files);
   });
   input.click();
 }
@@ -253,7 +308,10 @@ export function pickImageFiles(editor) {
 // Detail event 'imagerequest': UI aplikasi (mis. galeri) memilih gambar, lalu memanggil salah
 // satu fungsinya. Seleksi disimpan sekarang karena modal aplikasi akan mengambil fokus.
 // Masing-masing hanya berlaku sekali, agar klik ganda tidak menyisipkan dua gambar.
-export function createImageRequest(editor) {
+// mode 'replace': gambar terpilih diganti (detail.current = gambar lama), bukan disisipi gambar baru.
+export function createImageRequest(editor, { mode = 'insert' } = {}) {
+  const replace = mode === 'replace';
+  const current = replace ? editor.selectedMedia() : null;
   const saved = editor.saveSelection();
   let done = false;
   const once = (fn) => (arg) => {
@@ -263,8 +321,10 @@ export function createImageRequest(editor) {
     fn(arg);
   };
   return {
-    insert: once((images) => images != null && editor.exec('image', images)),
-    pickFiles: once(() => pickImageFiles(editor)),
+    mode,
+    ...(replace && { current: { src: current?.src ?? null, alt: current?.alt ?? '', mediaId: current?.mediaId ?? null } }),
+    insert: once((images) => images != null && (replace ? replaceImage(editor, images) : editor.exec('image', images))),
+    pickFiles: once(() => pickImageFiles(editor, { replace })),
     cancel: once(() => {}),
   };
 }

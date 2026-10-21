@@ -86,6 +86,12 @@ Sampai ada pemakai, perubahan kecil berikutnya digabung ke 2.0.0 ini. CDN `@2` d
   (atau array-nya) dan method `insertImage()` menyisipkan gambar dari URL dalam satu langkah undo;
   `src` divalidasi seperti HTML paste. Event core `imagerequest`, teks `blocks.imageRequest` dan
   `errorImageSrc`. Drag & drop dan paste file tetap lewat `upload`
+- Ganti gambar yang sudah ada: tombol **Ganti gambar** di toolbar media, perintah `replaceImage`,
+  `editor.replaceMedia(deskriptor | File)`, dan method `replaceImage()`. Caption, posisi, dan ukuran
+  tetap dalam satu langkah undo; alt dan `mediaId` mengikuti gambar baru. Dengan `imageRequest`,
+  event `wysiwyg-image-request` membawa `mode: 'replace'` dan `current: { src, alt, mediaId }`
+  (perintah `image` memakai `mode: 'insert'`). Upload gagal mengembalikan gambar lama.
+  `selectedMedia()` kini juga berisi `src` dan `mediaId`
 
 ### Perbaikan
 - x-model / `$wire`: HTML dari luar yang isinya sama tetapi beda penulisan (mis. hasil

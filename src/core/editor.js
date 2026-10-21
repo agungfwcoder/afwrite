@@ -12,9 +12,10 @@
 //   slash        (state)  status slash menu: { open, query, items, index, rect }
 //   linkrequest  ({href}) perintah link dijalankan tanpa URL; UI diminta menampilkan input
 //   embedrequest ()       perintah embed dijalankan tanpa URL
-//   imagerequest ({insert, pickFiles, cancel}) perintah image dijalankan tanpa argumen; hanya
-//                         dipancarkan bila ada listener (UI aplikasi, mis. galeri), jika tidak
-//                         dialog file dibuka
+//   imagerequest ({mode, current?, insert, pickFiles, cancel}) perintah image / replaceImage
+//                         dijalankan tanpa argumen; hanya dipancarkan bila ada listener (UI
+//                         aplikasi, mis. galeri), jika tidak dialog file dibuka. mode 'insert'
+//                         atau 'replace' (current = { src, alt, mediaId } gambar yang diganti)
 //   error        ({message, error?}) mis. upload gagal / file terlalu besar
 //   history      ({canUndo, canRedo})
 //   readonly     (boolean)
@@ -33,7 +34,7 @@ import { COMMANDS, commandAvailable, currentAlign, isCommandDisabled } from './c
 import { parseEmbed } from './embed.js';
 import { DEFAULT_COLORS, DEFAULT_HIGHLIGHTS, normalizeFormats, normalizePalette } from './formats.js';
 import { markdownRules } from './markdown.js';
-import { insertImages, insertMediaBlock, isMediaNode, mediaKind, SIZES } from './media.js';
+import { insertImages, insertMediaBlock, isMediaNode, mediaKind, replaceImage, SIZES } from './media.js';
 import { fromJSON, toJSON } from './model.js';
 import { normalizeHeadings, sanitize, sanitizeToElement, textToHtml } from './sanitize.js';
 import { createExtensions, titleIndex, titlePos, withTitle } from './schema.js';
@@ -135,7 +136,8 @@ export class Editor {
     const command = this.commands[name];
     if (!command) return console.warn(`[afwrite] Perintah tidak dikenal: ${name}`);
 
-    if (!this.hasFocus()) this.focus();
+    // Media yang terpilih tetap terpilih (mis. replaceImage); selain itu kursor ke akhir dokumen.
+    if (!this.hasFocus()) this._selectedMediaNode() ? this.tiptap.view.focus() : this.focus();
     this._syncSelection();
     if (this.isDisabled(name)) return false;
     return command.run(this, ...args);
@@ -432,12 +434,27 @@ export class Editor {
     view.dispatch(state.tr.setSelection(Selection.near(state.doc.resolve(media.pos + media.node.nodeSize))));
   }
 
-  // { kind: 'image' | 'embed' | 'divider', size, alt } atau null
+  // { kind: 'image' | 'embed' | 'divider', size, alt, src, mediaId } atau null
+  // (src & mediaId null untuk embed / pemisah)
   selectedMedia() {
     const media = this._selectedMediaNode();
     if (!media) return null;
     const { node } = media;
-    return { kind: mediaKind(node), size: node.attrs.size || 'normal', alt: node.attrs.alt || '' };
+    const image = node.type.name === 'image';
+    return {
+      kind: mediaKind(node),
+      size: node.attrs.size || 'normal',
+      alt: node.attrs.alt || '',
+      src: image ? node.attrs.src || null : null,
+      mediaId: image ? node.attrs.mediaId || null : null,
+    };
+  }
+
+  // Ganti gambar terpilih: deskriptor { src, alt?, mediaId?, size? } atau File (diupload).
+  // Caption, posisi, dan ukuran tetap; alt & mediaId mengikuti gambar baru.
+  replaceMedia(image) {
+    if (this.readOnly) return;
+    return replaceImage(this, image);
   }
 
   setMediaSize(size) {

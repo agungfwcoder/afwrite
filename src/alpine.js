@@ -98,7 +98,7 @@ export function wysiwygComponent(options = {}) {
     titleName: options.titleName || '',
     // mode: format | input | linkinfo; purpose (mode input): link | embed | alt
     bubble: { open: false, ready: false, mode: 'format', purpose: 'link', x: 0, y: 0, url: '', href: '', hasLink: false, error: '' },
-    media: { open: false, ready: false, x: 0, y: 0, kind: 'image', size: 'normal', alt: '' },
+    media: { open: false, ready: false, x: 0, y: 0, kind: 'image', size: 'normal', alt: '', src: null, mediaId: null },
     mediaSizes: MEDIA_SIZES,
     toast: { open: false, message: '' },
     slash: { open: false, ready: false, items: [], index: 0, x: 0, y: 0 },
@@ -245,6 +245,11 @@ export function wysiwygComponent(options = {}) {
     // Deskriptor { src, alt?, mediaId?, size? } atau array-nya, mis. hasil pilihan galeri.
     insertImage(images) {
       editor?.exec('image', images);
+    },
+
+    // Ganti gambar terpilih. Tanpa argumen: galeri (imageRequest) atau dialog file.
+    replaceImage(image) {
+      editor?.exec('replaceImage', image);
     },
 
     isActive(name) {
@@ -545,9 +550,9 @@ export function wysiwygComponent(options = {}) {
 
     // ---------- Media ----------
 
-    showMediaBar({ kind, size, alt, rect }) {
+    showMediaBar({ kind, size, alt, src, mediaId, rect }) {
       const wasOpen = this.media.open;
-      Object.assign(this.media, { open: true, kind, size, alt });
+      Object.assign(this.media, { open: true, kind, size, alt, src, mediaId });
       if (!wasOpen) this.media.ready = false;
       this.$nextTick(() => {
         const pos = this.place(this.$refs.mediabar, rect, { prefer: 'above' });

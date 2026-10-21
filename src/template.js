@@ -118,6 +118,9 @@ export const TEMPLATE = `
       </div>
     </template>
     <button type="button" class="afw-btn afw-btn-inverse" x-show="media.kind === 'image'"
+            :title="t('replaceImage')" :aria-label="t('replaceImage')"
+            @mousedown.prevent @click="replaceImage()" x-html="icon('replace')"></button>
+    <button type="button" class="afw-btn afw-btn-inverse" x-show="media.kind === 'image'"
             :class="{ 'afw-is-active': !!media.alt }"
             :title="t('altText')" :aria-label="t('altText')"
             @mousedown.prevent @click="editAlt()" x-html="icon('alt')"></button>

@@ -135,6 +135,7 @@ Call them from markup inside the component or via `Alpine.$data(el)`:
 | `getMeta()` | Medium-style preview: `{ image, title, subtitle, slug }` from the first image (with `mediaId`), first text, and second text |
 | `exec(command, ...args)` | Run a command, see the commands table |
 | `insertImage(images)` | Insert images that already have a URL: `{ src, alt?, mediaId?, size? }` or an array of them |
+| `replaceImage(image?)` | Replace the selected image (`{ src, alt?, mediaId?, size? }` or a `File`); no argument opens the gallery/file dialog |
 | `isActive(command)` | Whether a format is active at the cursor |
 | `setReadOnly(bool)` | Toggle read-only mode |
 | `focus()` | Focus the end of the editor |
@@ -149,7 +150,7 @@ Dispatched from the editor element and *bubbling*, so a parent can listen:
 ```
 
 `wysiwyg-ready` (`{ editor }`), `wysiwyg-change` (`{ html, meta }`), `wysiwyg-focus`, `wysiwyg-blur`,
-`wysiwyg-error` (`{ message }`), `wysiwyg-image-request` (`{ insert, pickFiles, cancel }`, only with
+`wysiwyg-error` (`{ message }`), `wysiwyg-image-request` (`{ mode, current?, insert, pickFiles, cancel }`, only with
 `imageRequest: true`).
 
 ### Choosing from your app's gallery
@@ -184,6 +185,37 @@ galleryModal.onClose = () => request?.cancel()
 images when `allowDataImages` is on). An invalid `src` is skipped with a `wysiwyg-error`. A
 non-numeric `mediaId` is dropped. Drag & drop and pasted files still go through `upload`.
 
+### Replacing an image
+
+Click an image and choose **Replace image** in the media toolbar. The new image takes the old one's
+place: the caption, position, and size stay, and it is a single undo step. The alt text and
+`mediaId` come from the new image (the old alt described the old picture), so the alt button shows
+right away when it still needs filling in.
+
+Without `imageRequest`, the button opens the file dialog (one file, uploaded through `upload`). With
+`imageRequest: true`, the same `wysiwyg-image-request` event fires, with two extra properties:
+
+| Property | Description |
+|---|---|
+| `mode` | `'insert'` (the `image` command) or `'replace'` (the **Replace image** button) |
+| `current` | Only with `'replace'`: `{ src, alt, mediaId }` of the image being replaced, e.g. to highlight it in your gallery |
+
+In `'replace'` mode, `insert(image)` replaces the selected image instead of inserting a new one, and
+`pickFiles()` replaces it with the chosen file. The gallery code above works unchanged; only the
+modal title needs to look at `mode`:
+
+```js
+function openGallery(detail) {
+  request = detail
+  galleryModal.title = detail.mode === 'replace' ? 'Replace image' : 'Insert image'
+  galleryModal.highlight(detail.current?.mediaId)
+  galleryModal.show()
+}
+```
+
+If the image was removed while the modal was open, `insert()` does nothing. If an upload for the
+replacement fails, the old image comes back and `wysiwyg-error` fires.
+
 ### Commands & shortcuts
 
 | Command | Shortcut | Markdown |
@@ -199,6 +231,7 @@ non-numeric `mediaId` is dropped. Drag & drop and pasted files still go through 
 | `ul` / `ol` | Ctrl/⌘ + Shift + 8 / 7 | `- ` / `1. ` |
 | `indent` / `outdent` | Tab / Shift + Tab (inside a list) | |
 | `image` | | `/image`, drop a file, paste a screenshot; `exec('image', { src, mediaId })` inserts from a URL |
+| `replaceImage` | | **Replace image** in the media toolbar; `exec('replaceImage', { src, mediaId })` replaces the selected image |
 | `embed` | | `/video`, paste a YouTube link on an empty line |
 | `hr` | | `--- ` |
 | `codeblock` | Ctrl/⌘ + Alt + C | ```` ``` ```` + space, `/code` |
@@ -242,7 +275,7 @@ The `#editor` element must be wrapped in an element with the `afw` class for sty
 
 `Editor` events: `change`, `state`, `selection`, `slash`, `history`, `readonly`, `linkrequest`,
 `embedrequest`, `imagerequest`, `error`, `focus`, `blur`. `imagerequest` fires only while it has a
-listener; without one, the `image` command opens the file dialog.
+listener; without one, the `image` and `replaceImage` commands open the file dialog.
 
 The Tiptap instance is available as `editor.tiptap` for advanced use (e.g.
 `editor.tiptap.commands`, `editor.tiptap.state`). Changes made this way still fire the `change`
