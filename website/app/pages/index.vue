@@ -16,7 +16,7 @@ const description = page.value.seo?.description || page.value.description
 
 // Gambar OG landing memakai nama tetap (public/og.png), bukan hasil defineOgImage yang namanya berganti tiap isinya
 // berubah: WhatsApp dkk. menyimpan alamat gambar lama, dan alamat yang hilang membuat pratinjau link kosong.
-// Gambar ini dirender dari template OgImage/Docs (judul SLOGAN, headline BRAND); salin ulang jika slogan berubah.
+// Gambar ini meniru hero dan dirender dari website/og/landing.html; render ulang jika slogan atau hero berubah.
 const ogImage = `${unref(createSitePathResolver({ absolute: true, withBase: true })('/og.png'))}?v=${useRuntimeConfig().public.assetVersions['og.png']}`
 
 useSeoMeta({

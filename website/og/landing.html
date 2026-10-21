@@ -1,0 +1,83 @@
+<!doctype html>
+<!-- Sumber public/og.png (gambar OG landing, 1200x630). Ubah, lalu screenshot halaman ini di viewport
+     1200x630 (mis. Playwright) dan simpan sebagai public/og.png; ?v= di meta ikut berubah otomatis. -->
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=Intel+One+Mono:wght@600;700&display=swap">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    width: 1200px; height: 630px; overflow: hidden; position: relative;
+    background: #09090b; color: #e4e4e7; font-family: 'Public Sans', sans-serif;
+  }
+  .glow { position: absolute; inset: 0;
+    background:
+      radial-gradient(70% 55% at 50% 112%, rgba(12, 180, 174, 0.32), transparent 70%),
+      radial-gradient(420px 320px at 96% 0%, rgba(255, 187, 0, 0.13), transparent 70%); }
+  .horizon { position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+    background: linear-gradient(to right, rgba(20,204,198,.3), rgba(211,247,244,.95) 36%, rgba(20,204,198,.6) 70%, rgba(20,204,198,.4)); }
+  .left { position: absolute; left: 72px; top: 64px; width: 520px; display: flex; flex-direction: column; gap: 26px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-family: 'Intel One Mono', monospace; font-weight: 700; font-size: 26px; color: #fafafa; }
+  .brand img { width: 40px; height: 40px; }
+  .ver { padding: 1px 10px; border: 1px solid rgba(255,187,0,.5); border-radius: 999px; background: rgba(255,187,0,.08); font-size: 15px; color: #fde68a; }
+  h1 { margin: 18px 0 0; font-size: 84px; line-height: 1.02; font-weight: 800; letter-spacing: -0.04em; color: #fafafa; }
+  h1 .t { color: #14ccc6; } h1 .d { color: #ffbb00; }
+  p { margin: 0; font-size: 23px; line-height: 1.5; color: #a1a1aa; }
+  .works { display: flex; gap: 10px; align-items: center; font-size: 17px; color: #71717a; }
+  .works b { color: #d4d4d8; font-weight: 600; }
+  /* kanan: kertas + kaca */
+  .right { position: absolute; left: 650px; top: 120px; width: 500px; height: 380px; }
+  .paper { position: absolute; border-radius: 18px; }
+  .card { position: absolute; inset: 0; border-radius: 22px; padding: 10px;
+    background: rgba(16,16,16,.86); border: 1px solid rgba(255,255,255,.1);
+    backdrop-filter: blur(28px) saturate(160%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 30px 60px -20px rgba(0,0,0,.75); }
+  .tabs { display: flex; align-items: center; gap: 8px; padding: 2px 4px 10px; font-size: 14px; color: #a1a1aa; }
+  .tab { padding: 5px 12px; border-radius: 999px; }
+  .tab.on { background: rgba(255,255,255,.08); color: #fafafa; font-weight: 600; }
+  .saved { margin-left: auto; display: flex; align-items: center; gap: 6px; color: #70e2dc; font-size: 13px; padding-right: 6px; }
+  .saved i { width: 7px; height: 7px; border-radius: 50%; background: #14ccc6; }
+  .doc { position: relative; height: 308px; border-radius: 14px; background: rgba(10,10,10,.88); border: 1px solid rgba(255,255,255,.06);
+    padding: 34px 34px; display: flex; flex-direction: column; gap: 16px; font-size: 17px; line-height: 1.65; color: #d4d4d8; }
+  .doc .h { margin-bottom: 28px; font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; color: #fafafa; }
+  .sel { background: rgba(12,180,174,.3); border-radius: 3px; padding: 0 2px; color: #fafafa; font-weight: 700; }
+  .q { padding-left: 14px; border-left: 3px solid #009994; color: #a1a1aa; }
+  .bubble { position: absolute; left: 290px; top: 72px; display: flex; gap: 2px; padding: 4px; border-radius: 10px; background: #18181b; border: 1px solid #3f3f46;
+    box-shadow: 0 12px 28px -8px rgba(0,0,0,.6); font-size: 15px; color: #d4d4d8; }
+  .bubble span { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+  .bubble .on { background: rgba(12,180,174,.2); color: #abefea; font-weight: 800; }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="horizon"></div>
+
+  <div class="left">
+    <div class="brand"><img src="../public/logo.svg" alt="">afwrite<span class="ver">v2</span></div>
+    <h1>All fine.<br><span class="t">Just write</span><span class="d">.</span></h1>
+    <p>Editor ala Medium untuk Alpine.js dan Laravel, dengan output HTML yang selalu bersih.</p>
+    <div class="works">Bekerja dengan <b>Alpine.js</b>·<b>Laravel</b>·<b>Livewire</b></div>
+  </div>
+
+  <div class="right">
+    <span class="paper" style="right:-40px; top:-56px; width:220px; height:220px; background:#009994; transform:rotate(12deg)"></span>
+    <span class="paper" style="right:90px; top:-34px; width:120px; height:120px; background:#f7c143; transform:rotate(-6deg)"></span>
+    <span class="paper" style="left:-46px; bottom:-10px; width:180px; height:180px; background:#f7c143; transform:rotate(-10deg)"></span>
+    <span class="paper" style="left:40%; bottom:-58px; width:140px; height:140px; background:#3fb5ae; transform:rotate(18deg)"></span>
+    <div class="card">
+      <div class="tabs">
+        <span class="tab on">✎ Editor</span><span class="tab">form.html</span><span class="tab">app.js</span>
+        <span class="saved"><i></i>Draf tersimpan</span>
+      </div>
+      <div class="doc">
+        <div class="bubble"><span class="on">B</span><span style="font-style:italic;font-family:Georgia,serif">i</span><span>🔗</span><span style="font-weight:700">T</span></div>
+        <div class="h">Catatan untuk tim redaksi</div>
+        <div>Menulis seharusnya terasa <span class="sel">tenang dan fokus</span>. Toolbar hanya muncul ketika Anda memblok teks.</div>
+        <div class="q">Ketik ## untuk judul, &gt; untuk kutipan.</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
