@@ -23,7 +23,7 @@ const reset = async () => {
   await page.click('.afw-content');
 };
 
-await page.goto(`${BASE_URL}/`);
+await page.goto(`${BASE_URL}/?lang=id`);
 await page.waitForSelector('.afw-btn');
 await page.screenshot({ path: `${SHOTS}/1-initial.png`, fullPage: true });
 
@@ -147,7 +147,7 @@ await page.locator('.afw').screenshot({ path: `${SHOTS}/2-dark.png` });
 
 // Framework collision screenshots
 for (const fw of ['bootstrap', 'tailwind']) {
-  await page.goto(`${BASE_URL}/?fw=${fw}`);
+  await page.goto(`${BASE_URL}/?fw=${fw}&lang=id`);
   await page.waitForSelector('.afw-btn');
   await page.waitForTimeout(1500);
   const s = await page.evaluate(() => {
@@ -165,7 +165,7 @@ for (const fw of ['bootstrap', 'tailwind']) {
 
 // Mobile
 await page.setViewportSize({ width: 390, height: 800 });
-await page.goto(`${BASE_URL}/`);
+await page.goto(`${BASE_URL}/?lang=id`);
 await page.waitForSelector('.afw-btn');
 const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
 check('mobile: tidak ada scroll horizontal', !overflow);

@@ -9,7 +9,7 @@ document.title = `${BRAND} — Demo`;
 document.querySelectorAll('[data-brand]').forEach((el) => (el.textContent = BRAND));
 
 const params = new URLSearchParams(location.search);
-window.demoLang = params.get('lang') || 'id';
+window.demoLang = params.get('lang') || 'en';
 
 const FRAMEWORKS = {
   bootstrap: { tag: 'link', attrs: { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css' } },
@@ -29,7 +29,7 @@ function pretty(html) {
 Alpine.data('demo', () => ({
   theme: 'light',
   mode: 'full',
-  lang: params.get('lang') || 'id',
+  lang: params.get('lang') || 'en',
   readonly: false,
   framework: 'none',
   output: '',

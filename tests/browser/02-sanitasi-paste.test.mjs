@@ -59,7 +59,7 @@ const caretAt = (selector, offset = 'end') => page.evaluate(([sel, off]) => {
   getSelection().addRange(range);
 }, [selector, offset]);
 
-await page.goto(`${BASE_URL}/`);
+await page.goto(`${BASE_URL}/?lang=id`);
 await page.waitForSelector('.afw-btn');
 
 // --- Paste dari demo (tombol simulasi) ---

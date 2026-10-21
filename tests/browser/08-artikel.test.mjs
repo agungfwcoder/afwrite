@@ -13,7 +13,7 @@ process.on('unhandledRejection', bail);
 const check = (name, ok, extra = '') => results.push(`${ok ? 'PASS' : 'FAIL'}  ${name}${extra ? '  -> ' + extra : ''}`);
 const wait = (ms = 150) => page.waitForTimeout(ms);
 
-await page.goto(`${BASE_URL}/`);
+await page.goto(`${BASE_URL}/?lang=id`);
 await page.waitForSelector('.afw-btn');
 await page.evaluate(() => {
   const host = document.createElement('div');

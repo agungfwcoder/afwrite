@@ -80,7 +80,7 @@ const dropOrPasteFile = async (kind, type = 'image/png', name = 'foto.png') => {
 };
 const pasteText = (text, html = '') => fire('paste', { text, html });
 
-await page.goto(`${BASE_URL}/`);
+await page.goto(`${BASE_URL}/?lang=id`);
 await page.waitForSelector('.afw-content figure img');
 await page.waitForFunction(() => document.querySelector('.afw-content figure img').complete);
 

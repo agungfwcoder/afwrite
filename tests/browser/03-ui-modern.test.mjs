@@ -58,7 +58,7 @@ const fresh = async (html = '') => {
   }
 };
 
-await page.goto(`${BASE_URL}/`);
+await page.goto(`${BASE_URL}/?lang=id`);
 await page.waitForSelector('.afw-content');
 await page.evaluate(() => window.scrollTo(0, 0));
 

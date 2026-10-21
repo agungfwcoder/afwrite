@@ -13,7 +13,7 @@ process.on('unhandledRejection', bail);
 const check = (name, ok, extra = '') => results.push(`${ok ? 'PASS' : 'FAIL'}  ${name}${extra ? '  -> ' + extra : ''}`);
 const wait = (ms = 120) => page.waitForTimeout(ms);
 
-await page.goto(`${BASE_URL}/`);
+await page.goto(`${BASE_URL}/?lang=id`);
 await page.waitForSelector('.afw-btn');
 const ed = '.demo-panel-editor .afw';
 const out = () => page.evaluate((s) => Alpine.$data(document.querySelector(s)).getHTML(), ed);

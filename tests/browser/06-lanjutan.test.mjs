@@ -45,7 +45,7 @@ const caretEndOfCode = () => page.evaluate(() => {
   getSelection().addRange(r);
 });
 
-await page.goto(`${BASE_URL}/`);
+await page.goto(`${BASE_URL}/?lang=id`);
 await page.waitForSelector('.afw-content');
 await page.evaluate(() => localStorage.clear());
 

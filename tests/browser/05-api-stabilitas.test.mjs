@@ -35,7 +35,7 @@ const caretEnd = async (sel = ':scope > :last-child') => {
 };
 const btn = (label) => `.afw-toolbar .afw-btn[aria-label="${label}"]`;
 
-await page.goto(`${BASE_URL}/`);
+await page.goto(`${BASE_URL}/?lang=id`);
 await page.waitForSelector('.afw-content');
 
 // ---------- Undo / redo ----------
