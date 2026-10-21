@@ -713,7 +713,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           />
           <span
             aria-hidden="true"
-            class="paper paper-teal top-[70px] left-[60px] size-[210px]"
+            class="paper paper-teal top-[70px] -left-6 size-[150px] sm:size-[210px]"
             style="--d: 9s"
           />
           <span
