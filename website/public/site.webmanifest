@@ -1,7 +1,7 @@
 {
   "name": "afwrite",
   "short_name": "afwrite",
-  "description": "Editor WYSIWYG ala Medium untuk Alpine.js",
+  "description": "Medium-style WYSIWYG editor for Alpine.js",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

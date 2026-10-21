@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { id } from '@nuxt/ui/locale'
+import { en } from '@nuxt/ui/locale'
 import type { NuxtError } from '#app'
 
 defineProps<{
@@ -8,13 +8,13 @@ defineProps<{
 
 useHead({
   htmlAttrs: {
-    lang: 'id'
+    lang: 'en'
   }
 })
 
 useSeoMeta({
-  title: 'Halaman tidak ditemukan',
-  description: 'Maaf, halaman yang Anda cari tidak ada.'
+  title: 'Page not found',
+  description: 'Sorry, the page you are looking for does not exist.'
 })
 
 const { data: navigation } = await useAsyncData('navigation', () => queryCollectionNavigation('docs'))
@@ -26,7 +26,7 @@ provide('navigation', navigation)
 </script>
 
 <template>
-  <UApp :locale="id">
+  <UApp :locale="en">
     <AppHeader />
 
     <UError :error="error" />

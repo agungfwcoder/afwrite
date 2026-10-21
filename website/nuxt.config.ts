@@ -48,7 +48,7 @@ export default defineNuxtConfig({
   site: {
     url: siteOrigin,
     name: BRAND,
-    defaultLocale: 'id'
+    defaultLocale: 'en'
   },
 
   content: {
@@ -134,31 +134,31 @@ export default defineNuxtConfig({
   llms: {
     domain: siteUrl.replace(/\/$/, ''),
     title: BRAND,
-    description: `Dokumentasi ${BRAND}: editor WYSIWYG modern untuk Alpine.js berbasis Tiptap/ProseMirror.`,
+    description: `${BRAND} documentation: a modern WYSIWYG editor for Alpine.js built on Tiptap/ProseMirror.`,
     full: {
-      title: `${BRAND} - Dokumentasi lengkap`,
-      description: `Seluruh dokumentasi ${BRAND} dalam satu berkas.`
+      title: `${BRAND} - Full documentation`,
+      description: `The complete ${BRAND} documentation in a single file.`
     },
     sections: [
       {
-        title: 'Memulai',
+        title: 'Getting started',
         contentCollection: 'docs',
         contentFilters: [
-          { field: 'path', operator: 'LIKE', value: '/memulai%' }
+          { field: 'path', operator: 'LIKE', value: '/getting-started%' }
         ]
       },
       {
-        title: 'Panduan',
+        title: 'Guide',
         contentCollection: 'docs',
         contentFilters: [
-          { field: 'path', operator: 'LIKE', value: '/panduan%' }
+          { field: 'path', operator: 'LIKE', value: '/guide%' }
         ]
       },
       {
-        title: 'Integrasi',
+        title: 'Integrations',
         contentCollection: 'docs',
         contentFilters: [
-          { field: 'path', operator: 'LIKE', value: '/integrasi%' }
+          { field: 'path', operator: 'LIKE', value: '/integrations%' }
         ]
       }
     ]

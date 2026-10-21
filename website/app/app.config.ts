@@ -94,38 +94,38 @@ export default defineAppConfig({
     search: true,
     colorMode: true,
     nav: [
-      { label: 'Dokumentasi', to: '/memulai', match: '^/(memulai(?!/demo)|panduan|integrasi|lainnya/(pengembangan|kredit))' },
-      { label: 'Coba langsung', to: '/memulai/demo', match: '^/memulai/demo' },
-      { label: 'Catatan rilis', to: '/lainnya/changelog', match: '^/lainnya/changelog' }
+      { label: 'Docs', to: '/getting-started', match: '^/(getting-started(?!/demo)|guide|integrations|more/(development|credits))' },
+      { label: 'Try it live', to: '/getting-started/demo', match: '^/getting-started/demo' },
+      { label: 'Changelog', to: '/more/changelog', match: '^/more/changelog' }
     ],
     links: [{
       'icon': 'i-simple-icons-github',
       'to': 'https://github.com/agungfwcoder/afwrite',
       'target': '_blank',
-      'aria-label': 'Repositori GitHub'
+      'aria-label': 'GitHub repository'
     }]
   },
   footer: {
-    credits: `${BRAND} · MIT · Dibangun dengan Tiptap, ProseMirror & Nuxt UI · © ${new Date().getFullYear()}`,
+    credits: `${BRAND} · MIT · Built with Tiptap, ProseMirror & Nuxt UI · © ${new Date().getFullYear()}`,
     colorMode: false,
     links: []
   },
   toc: {
-    title: 'Di halaman ini',
+    title: 'On this page',
     bottom: {
-      title: 'Tautan',
+      title: 'Links',
       edit: 'https://github.com/agungfwcoder/afwrite/edit/main/website/content',
       links: [{
         icon: 'i-lucide-play',
-        label: 'Coba editornya',
-        to: '/memulai/demo'
+        label: 'Try the editor',
+        to: '/getting-started/demo'
       }, {
         icon: 'i-lucide-scroll-text',
-        label: 'Catatan rilis',
-        to: '/lainnya/changelog'
+        label: 'Changelog',
+        to: '/more/changelog'
       }, {
         icon: 'i-lucide-circle-plus',
-        label: 'Laporkan masalah',
+        label: 'Report an issue',
         to: 'https://github.com/agungfwcoder/afwrite/issues',
         target: '_blank'
       }]

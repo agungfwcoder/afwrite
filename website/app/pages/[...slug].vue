@@ -12,7 +12,7 @@ const navigation = inject<Ref<ContentNavigationItem[]>>('navigation')
 
 const { data: page } = await useAsyncData(route.path, () => queryCollection('docs').path(route.path).first())
 if (!page.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Halaman tidak ditemukan', fatal: true })
+  throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
 }
 
 const { data: surround } = await useAsyncData(`${route.path}-surround`, () => {
@@ -38,7 +38,7 @@ defineOgImage('Docs', { title, description, headline: headline.value })
 const editLink = computed(() => toc?.bottom?.edit && `${toc.bottom.edit}/${page.value?.stem}.${page.value?.extension}`)
 // Seperti situs Nuxt UI: "Sunting halaman ini" ada di daftar tautan di bawah TOC.
 const links = computed(() => [
-  ...(editLink.value ? [{ icon: 'i-lucide-pencil', label: 'Sunting halaman', to: editLink.value, target: '_blank' }] : []),
+  ...(editLink.value ? [{ icon: 'i-lucide-pencil', label: 'Edit this page', to: editLink.value, target: '_blank' }] : []),
   ...(toc?.bottom?.links || [])
 ].filter(Boolean))
 </script>
@@ -65,7 +65,7 @@ const links = computed(() => [
       <ContentRenderer
         v-if="page"
         :value="page"
-        :class="{ 'afw-changelog': page.path === '/lainnya/changelog' }"
+        :class="{ 'afw-changelog': page.path === '/more/changelog' }"
       />
 
       <USeparator v-if="surround?.length" />

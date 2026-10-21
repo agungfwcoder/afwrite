@@ -14,25 +14,25 @@ const mdPath = computed(() => `${origin}${rawPath.value}`)
 
 const items = [
   {
-    label: 'Salin link Markdown',
+    label: 'Copy Markdown link',
     icon: 'i-lucide-link',
     onSelect() {
       copy(mdPath.value)
       toast.add({
-        title: 'Tersalin ke clipboard',
+        title: 'Copied to clipboard',
         icon: 'i-lucide-check-circle'
       })
     }
   },
   {
-    label: 'Lihat sebagai Markdown',
+    label: 'View as Markdown',
     icon: 'i-simple-icons:markdown',
     target: '_blank',
     to: rawPath.value,
     external: true
   },
   {
-    label: 'Unduh Markdown',
+    label: 'Download Markdown',
     icon: 'i-lucide-download',
     onSelect: downloadPage
   }
@@ -57,7 +57,7 @@ async function copyPage() {
 <template>
   <UFieldGroup>
     <UButton
-      label="Salin halaman"
+      label="Copy page"
       :icon="copied ? 'i-lucide-copy-check' : 'i-lucide-copy'"
       color="neutral"
       variant="outline"
@@ -82,7 +82,7 @@ async function copyPage() {
         size="sm"
         color="neutral"
         variant="outline"
-        aria-label="Menu salin"
+        aria-label="Copy options"
       />
     </UDropdownMenu>
   </UFieldGroup>

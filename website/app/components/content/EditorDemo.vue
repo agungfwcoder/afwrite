@@ -70,9 +70,9 @@ const pretty = computed(() => html.value
       class="rounded-lg border border-default bg-muted text-sm"
     >
       <summary class="cursor-pointer select-none px-4 py-2 font-medium text-muted">
-        Output HTML ({{ html.length }} karakter)
+        HTML output ({{ html.length }} characters)
       </summary>
-      <pre class="overflow-x-auto whitespace-pre-wrap break-all px-4 pb-4 font-mono text-xs text-default">{{ pretty || '(kosong)' }}</pre>
+      <pre class="overflow-x-auto whitespace-pre-wrap break-all px-4 pb-4 font-mono text-xs text-default">{{ pretty || '(empty)' }}</pre>
     </details>
   </div>
 </template>

@@ -17,7 +17,7 @@ const isActive = (item: { match: string }) => new RegExp(item.match).test(route.
   >
     <nav
       v-if="header?.nav"
-      aria-label="Utama"
+      aria-label="Main"
       class="flex items-center gap-6 text-sm font-medium"
     >
       <NuxtLink
@@ -73,7 +73,7 @@ const isActive = (item: { match: string }) => new RegExp(item.match).test(route.
       <UContentSearchButton
         v-if="header?.search"
         :collapsed="false"
-        label="Cari dokumentasi…"
+        label="Search docs…"
         variant="soft"
         color="neutral"
         class="hidden lg:flex w-70"

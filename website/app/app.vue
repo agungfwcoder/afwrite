@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { id } from '@nuxt/ui/locale'
+import { en } from '@nuxt/ui/locale'
 
 const { seo } = useAppConfig()
 const route = useRoute()
@@ -25,7 +25,7 @@ useHead({
     { rel: 'manifest', href: useAsset('site.webmanifest') }
   ],
   htmlAttrs: {
-    lang: 'id'
+    lang: 'en'
   }
 })
 
@@ -33,7 +33,7 @@ useSeoMeta({
   titleTemplate: `%s - ${seo?.siteName}`,
   ogSiteName: seo?.siteName,
   ogType: 'website',
-  ogLocale: 'id_ID',
+  ogLocale: 'en_US',
   twitterCard: 'summary_large_image'
 })
 
@@ -41,17 +41,17 @@ provide('navigation', navigation)
 
 // Grup "Links" di modal pencarian (⌘K), seperti situs Nuxt UI.
 const searchLinks = [
-  { label: 'Memulai', description: 'Pasang dan pakai afwrite untuk pertama kali.', icon: 'i-lucide-play', to: '/memulai' },
-  { label: 'Panduan', description: 'Opsi, toolbar, perintah, gambar, event, dan API.', icon: 'i-lucide-book-open', to: '/panduan/opsi' },
-  { label: 'Integrasi', description: 'Komponen Blade, upload, sanitasi server, dan Livewire.', icon: 'i-lucide-plug', to: '/integrasi/laravel' },
-  { label: 'Coba langsung', description: 'Editor sungguhan di halaman depan.', icon: 'i-lucide-square-pen', to: '/#coba' },
-  { label: 'Catatan rilis', description: 'Perubahan di setiap versi.', icon: 'i-lucide-rocket', to: '/lainnya/changelog' },
-  { label: 'GitHub', description: 'Kode sumber, isu, dan laporan keamanan.', icon: 'i-simple-icons-github', to: 'https://github.com/agungfwcoder/afwrite', target: '_blank' }
+  { label: 'Getting started', description: 'Install and use afwrite for the first time.', icon: 'i-lucide-play', to: '/getting-started' },
+  { label: 'Guide', description: 'Options, toolbar, commands, images, events, and API.', icon: 'i-lucide-book-open', to: '/guide/options' },
+  { label: 'Integrations', description: 'Blade component, uploads, server-side sanitizing, and Livewire.', icon: 'i-lucide-plug', to: '/integrations/laravel' },
+  { label: 'Try it live', description: 'The real editor on the home page.', icon: 'i-lucide-square-pen', to: '/#try' },
+  { label: 'Changelog', description: 'What changed in each version.', icon: 'i-lucide-rocket', to: '/more/changelog' },
+  { label: 'GitHub', description: 'Source code, issues, and security reports.', icon: 'i-simple-icons-github', to: 'https://github.com/agungfwcoder/afwrite', target: '_blank' }
 ]
 </script>
 
 <template>
-  <UApp :locale="id">
+  <UApp :locale="en">
     <NuxtLoadingIndicator />
 
     <AppHeader />

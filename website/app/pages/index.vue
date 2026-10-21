@@ -8,7 +8,7 @@ import { slugify } from '../../../src/core/slug.js'
 
 const { data: page } = await useAsyncData('index', () => queryCollection('landing').path('/').first())
 if (!page.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Halaman tidak ditemukan', fatal: true })
+  throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
 }
 
 const title = `${BRAND} — ${page.value.seo?.title || page.value.title}`
@@ -81,9 +81,9 @@ const tabs: { name: string, icon: string, lines: Token[][] }[] = [
     lines: [
       [['<form', T.tag], [' '], ['method', T.attr], ['='], ['"post"', T.str], ['>', T.tag]],
       [['  <div', T.tag], [' '], ['x-data', T.attr], ['='], ['"wysiwyg({ name: \'body\' })"', T.str], ['>', T.tag]],
-      [['    <p>', T.tag], ['Mulai menulis…'], ['</p>', T.tag]],
+      [['    <p>', T.tag], ['Start writing…'], ['</p>', T.tag]],
       [['  </div>', T.tag]],
-      [['  <button>', T.tag], ['Simpan'], ['</button>', T.tag]],
+      [['  <button>', T.tag], ['Save'], ['</button>', T.tag]],
       [['</form>', T.tag]]
     ]
   },
@@ -107,7 +107,7 @@ const tabs: { name: string, icon: string, lines: Token[][] }[] = [
       [['  @csrf', T.kw]],
       [['  <x-wysiwyg', T.tag], [' '], ['name', T.attr], ['='], ['"body"', T.str]],
       [['    '], [':value', T.attr], ['='], ['"$post->body"', T.str], [' '], ['/>', T.tag]],
-      [['  <button>', T.tag], ['Simpan'], ['</button>', T.tag]],
+      [['  <button>', T.tag], ['Save'], ['</button>', T.tag]],
       [['</form>', T.tag]]
     ]
   }
@@ -116,11 +116,11 @@ const heroTab = ref(-1) // -1 = Editor
 
 // Deretan chip blok di bawah kartu hero (seperti deretan tema di halaman Nuxt UI).
 const chips = [
-  { icon: 'headingLarge', label: 'Judul', cls: 'bg-brand-500/12 text-brand-600 ring-brand-500/25 dark:text-brand-300' },
-  { icon: 'list', label: 'Daftar berpoin', cls: 'bg-sky-500/12 text-sky-600 ring-sky-500/25 dark:text-sky-300' },
-  { icon: 'quote', label: 'Kutipan', cls: 'bg-violet-500/12 text-violet-600 ring-violet-500/25 dark:text-violet-300' },
-  { icon: 'code', label: 'Blok kode', cls: 'bg-rose-500/12 text-rose-600 ring-rose-500/25 dark:text-rose-300' },
-  { icon: 'image', label: 'Gambar', cls: 'bg-amber-500/12 text-amber-600 ring-amber-500/25 dark:text-amber-300' },
+  { icon: 'headingLarge', label: 'Heading', cls: 'bg-brand-500/12 text-brand-600 ring-brand-500/25 dark:text-brand-300' },
+  { icon: 'list', label: 'Bulleted list', cls: 'bg-sky-500/12 text-sky-600 ring-sky-500/25 dark:text-sky-300' },
+  { icon: 'quote', label: 'Quote', cls: 'bg-violet-500/12 text-violet-600 ring-violet-500/25 dark:text-violet-300' },
+  { icon: 'code', label: 'Code block', cls: 'bg-rose-500/12 text-rose-600 ring-rose-500/25 dark:text-rose-300' },
+  { icon: 'image', label: 'Image', cls: 'bg-amber-500/12 text-amber-600 ring-amber-500/25 dark:text-amber-300' },
   { icon: 'video', label: 'Video', cls: 'bg-red-500/12 text-red-600 ring-red-500/25 dark:text-red-300' }
 ] as const
 
@@ -173,20 +173,20 @@ async function playDemo() {
   }
 }
 
-// Panel showcase: "fitur" (kartu demo) atau "coba" (editor sungguhan). #coba di URL membuka tab kedua.
+// Panel showcase: "fitur" (kartu demo) atau "coba" (editor sungguhan). #try di URL membuka tab kedua.
 const showcase = ref<'fitur' | 'coba'>('fitur')
 // Di ponsel kartu fitur dipotong (5 pertama) sampai tombol "Tampilkan semua" ditekan.
 const showAll = ref(false)
 function collapseFeatures() {
   showAll.value = false
-  document.getElementById('coba')?.scrollIntoView({ block: 'start' })
+  document.getElementById('try')?.scrollIntoView({ block: 'start' })
 }
 
 // Animasi reveal: elemen [data-reveal] di bawah layar disembunyikan lalu muncul saat di-scroll.
 // Yang sudah terlihat saat halaman dibuka dibiarkan (tanpa kedip); hero memakai animasi CSS.
 let observer: IntersectionObserver | null = null
 onMounted(() => {
-  if (location.hash === '#coba') showcase.value = 'coba'
+  if (location.hash === '#try') showcase.value = 'coba'
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
   playDemo().catch(() => {})
   if (!('IntersectionObserver' in window)) return
@@ -218,20 +218,20 @@ onBeforeUnmount(() => {
 // Varian editor di tab "Coba langsung".
 const variants = [
   {
-    name: 'Artikel ala Medium',
-    hint: 'Judul & subjudul otomatis, hanya bubble toolbar. Blok teks untuk memformat.',
+    name: 'Medium-style article',
+    hint: 'Automatic title & subtitle, bubble toolbar only. Select text to format it.',
     options: { title: true, toolbar: false, stats: false },
     content: '<h1>All fine. Just write.</h1><p class="afw-subtitle">Subjudul muncul lewat tombol t kecil di baris tepat setelah judul.</p><p>Blok kalimat ini untuk memunculkan <b>bubble toolbar</b>. Tekan Enter, lalu ketik <code>/</code> untuk memilih blok: judul, kutipan, daftar, kode, gambar, atau video.</p><blockquote>Tulisan yang baik dimulai dari editor yang tidak mengganggu.</blockquote>'
   },
   {
-    name: 'Lengkap',
-    hint: 'Toolbar atas, bubble, slash menu, dan statistik kata.',
+    name: 'Full',
+    hint: 'Top toolbar, bubble toolbar, slash menu, and word count.',
     options: {},
     content: '<h2>Catatan rapat</h2><p>Coba shortcut markdown: ketik <code>## </code> untuk judul, <code>- </code> untuk daftar, atau <code>**tebal**</code>.</p><ul><li><p>Rilis v2 minggu ini</p></li><li><p>Siapkan contoh Laravel</p></li></ul><p>Tempel link YouTube di baris kosong untuk menyisipkan video.</p>'
   },
   {
     name: 'Minimal',
-    hint: 'Tanpa toolbar atas & statistik: hanya bubble dan slash menu.',
+    hint: 'No top toolbar or stats: just the bubble toolbar and slash menu.',
     options: { toolbar: false, stats: false },
     content: '<p>Editor paling ringkas. Ketik apa saja, blok untuk format, <code>/</code> untuk blok baru.</p>'
   }
@@ -241,26 +241,26 @@ const variant = ref(0)
 // --- Data kartu showcase ---
 
 const slashItems = [
-  { icon: 'headingLarge', label: 'Judul', desc: 'Judul bagian yang besar', key: '##' },
-  { icon: 'headingSmall', label: 'Subjudul', desc: 'Judul bagian yang lebih kecil', key: '###' },
-  { icon: 'list', label: 'Daftar berpoin', desc: 'Daftar sederhana', key: '-' },
-  { icon: 'listOrdered', label: 'Daftar bernomor', desc: 'Daftar berurutan', key: '1.' },
-  { icon: 'quote', label: 'Kutipan', desc: 'Menyorot kutipan', key: '>' },
-  { icon: 'code', label: 'Kode', desc: 'Blok kode program', key: '```' },
-  { icon: 'image', label: 'Gambar', desc: 'Unggah dari perangkat', key: '' },
-  { icon: 'video', label: 'Video', desc: 'YouTube atau Vimeo', key: '' },
-  { icon: 'minus', label: 'Pemisah', desc: 'Garis pemisah antarbagian', key: '---' }
+  { icon: 'headingLarge', label: 'Heading', desc: 'Large section heading', key: '##' },
+  { icon: 'headingSmall', label: 'Subheading', desc: 'Smaller section heading', key: '###' },
+  { icon: 'list', label: 'Bulleted list', desc: 'Simple list', key: '-' },
+  { icon: 'listOrdered', label: 'Numbered list', desc: 'Ordered list', key: '1.' },
+  { icon: 'quote', label: 'Quote', desc: 'Highlight a quotation', key: '>' },
+  { icon: 'code', label: 'Code', desc: 'Code block', key: '```' },
+  { icon: 'image', label: 'Image', desc: 'Upload from your device', key: '' },
+  { icon: 'video', label: 'Video', desc: 'YouTube or Vimeo', key: '' },
+  { icon: 'minus', label: 'Divider', desc: 'Separate sections', key: '---' }
 ] as const
 
 const shortcuts = [
-  { label: 'Judul', keys: ['##'] },
-  { label: 'Kutipan', keys: ['>'] },
-  { label: 'Daftar berpoin', keys: ['-'] },
-  { label: 'Daftar bernomor', keys: ['1.'] },
-  { label: 'Blok kode', keys: ['```'] },
-  { label: 'Pemisah', keys: ['---'] },
-  { label: 'Tebal', keys: ['**teks**'] },
-  { label: 'Pindah blok', keys: ['⌘', '⇧', '↑'] }
+  { label: 'Heading', keys: ['##'] },
+  { label: 'Quote', keys: ['>'] },
+  { label: 'Bulleted list', keys: ['-'] },
+  { label: 'Numbered list', keys: ['1.'] },
+  { label: 'Code block', keys: ['```'] },
+  { label: 'Divider', keys: ['---'] },
+  { label: 'Bold', keys: ['**text**'] },
+  { label: 'Move block', keys: ['⌘', '⇧', '↑'] }
 ]
 
 // Kartu "Judul & slug" memakai slugify asli dari library.
@@ -274,12 +274,12 @@ const fmt = reactive({ bold: true, italic: false })
 const imgSize = ref<'normal' | 'wide' | 'full'>('wide')
 const imgSizes = [
   { key: 'normal', label: 'Normal' },
-  { key: 'wide', label: 'Lebar' },
-  { key: 'full', label: 'Penuh' }
+  { key: 'wide', label: 'Wide' },
+  { key: 'full', label: 'Full width' }
 ] as const
 
 // Kartu bahasa: teks antarmuka asli (src/i18n.js).
-const lang = ref<'id' | 'en'>('id')
+const lang = ref<'id' | 'en'>('en')
 const STR = {
   id: { placeholder: 'Mulai menulis… ketik / untuk pilihan blok', bold: 'Tebal', italic: 'Miring', link: 'Link', draft: 'Ada draf yang belum tersimpan dari 10.24.', restore: 'Pulihkan', stats: '128 kata · 1 menit baca' },
   en: { placeholder: 'Start writing… type / for blocks', bold: 'Bold', italic: 'Italic', link: 'Link', draft: 'You have an unsaved draft from 10:24.', restore: 'Restore', stats: '128 words · 1 min read' }
@@ -305,25 +305,25 @@ const browsers = [
 const outFormat = ref<'html' | 'json'>('html')
 const outputs: Record<'html' | 'json', Token[][]> = {
   html: [
-    [['<h2>', T.tag], ['Judul'], ['</h2>', T.tag]],
-    [['<p>', T.tag], ['Halo '], ['<strong>', T.tag], ['dunia'], ['</strong>', T.tag], ['</p>', T.tag]]
+    [['<h2>', T.tag], ['Title'], ['</h2>', T.tag]],
+    [['<p>', T.tag], ['Hello '], ['<strong>', T.tag], ['world'], ['</strong>', T.tag], ['</p>', T.tag]]
   ],
   json: [
     [['{ '], ['"type"', T.attr], [': '], ['"doc"', T.str], [', '], ['"content"', T.attr], [': [']],
     [['  { '], ['"type"', T.attr], [': '], ['"heading"', T.str], [',']],
     [['    '], ['"attrs"', T.attr], [': { '], ['"level"', T.attr], [': '], ['2', T.kw], [' },']],
     [['    '], ['"content"', T.attr], [': [{ '], ['"type"', T.attr], [': '], ['"text"', T.str], [',']],
-    [['      '], ['"text"', T.attr], [': '], ['"Judul"', T.str], [' }] },']],
+    [['      '], ['"text"', T.attr], [': '], ['"Title"', T.str], [' }] },']],
     [['  { '], ['"type"', T.attr], [': '], ['"paragraph"', T.str], [', '], ['"content"', T.attr], [': [']],
-    [['    { '], ['"type"', T.attr], [': '], ['"text"', T.str], [', '], ['"text"', T.attr], [': '], ['"Halo "', T.str], [' },']],
-    [['    { '], ['"type"', T.attr], [': '], ['"text"', T.str], [', '], ['"text"', T.attr], [': '], ['"dunia"', T.str], [',']],
+    [['    { '], ['"type"', T.attr], [': '], ['"text"', T.str], [', '], ['"text"', T.attr], [': '], ['"Hello "', T.str], [' },']],
+    [['    { '], ['"type"', T.attr], [': '], ['"text"', T.str], [', '], ['"text"', T.attr], [': '], ['"world"', T.str], [',']],
     [['      '], ['"marks"', T.attr], [': [{ '], ['"type"', T.attr], [': '], ['"bold"', T.str], [' }] }']],
     [['  ] }']],
     [['] }']]
   ]
 }
 
-const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Browser · WebKit', 'Feature test Laravel']
+const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Browser · WebKit', 'Laravel feature tests']
 </script>
 
 <template>
@@ -355,11 +355,11 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
       <div class="relative mx-auto grid max-w-(--ui-container) items-center gap-12 px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:pt-24 lg:pb-24">
         <div class="flex min-w-0 flex-col items-start gap-6">
           <NuxtLink
-            to="/panduan/event-api#judul-slug"
+            to="/guide/event-api#title-slug"
             style="--reveal-delay: 0ms"
             class="hero-in inline-flex items-center gap-1.5 rounded-full bg-brand-500/10 px-3 py-1 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-500/15 dark:text-brand-400"
           >
-            Baru di v2: judul &amp; slug
+            New in v2: title &amp; slug
             <svg
               class="size-4"
               v-bind="svgAttrs"
@@ -377,7 +377,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             style="--reveal-delay: 160ms"
             class="hero-in m-0 max-w-[560px] text-lg leading-[1.6] text-zinc-600 dark:text-zinc-400"
           >
-            Editor ala Medium untuk Alpine.js dan Laravel. Bubble toolbar, slash command, shortcut markdown, gambar &amp; video, dengan output HTML yang selalu bersih.
+            A Medium-style editor for Alpine.js and Laravel. Bubble toolbar, slash commands, markdown shortcuts, images &amp; video, and HTML output that's always clean.
           </p>
 
           <div
@@ -385,17 +385,17 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             class="hero-in flex flex-wrap gap-3"
           >
             <NuxtLink
-              to="/memulai"
+              to="/getting-started"
               class="btn-solid"
             >
-              Mulai
+              Get started
             </NuxtLink>
             <a
-              href="#coba"
+              href="#try"
               class="btn-soft"
               @click="showcase = 'coba'"
             >
-              Coba editornya
+              Try the editor
             </a>
           </div>
 
@@ -403,7 +403,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             style="--reveal-delay: 320ms"
             class="hero-in flex flex-wrap items-center gap-x-3 gap-y-3 text-[13px] text-zinc-500 dark:text-zinc-400"
           >
-            <span>Bekerja dengan</span>
+            <span>Works with</span>
             <div class="flex items-center gap-2.5">
               <UIcon
                 v-for="w in works"
@@ -462,7 +462,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             <div class="flex items-center gap-1 overflow-x-auto px-0.5 pb-2 sm:pb-2.5">
               <div
                 role="tablist"
-                aria-label="Contoh"
+                aria-label="Examples"
                 class="flex items-center gap-1"
               >
                 <button
@@ -497,7 +497,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 </button>
               </div>
               <div class="ml-auto hidden shrink-0 items-center gap-1.5 pr-2 text-xs text-brand-600 sm:flex dark:text-brand-300">
-                <span class="mock-pulse size-1.5 rounded-full bg-brand-500 dark:bg-brand-400" />Draf tersimpan
+                <span class="mock-pulse size-1.5 rounded-full bg-brand-500 dark:bg-brand-400" />Draft saved
               </div>
             </div>
 
@@ -581,7 +581,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   /></span><span
                     class="-ml-2.5 text-zinc-400 transition-opacity duration-200 dark:text-zinc-500"
                     :class="{ 'opacity-0': !demo.slash }"
-                  >Ketik untuk memfilter…</span>
+                  >Type to filter…</span>
                 </div>
 
                 <!-- slash menu menjorok ±16px keluar dari bawah kartu luar: margin negatif = pb-8 panel (32px)
@@ -592,14 +592,14 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   :class="{ 'is-on': demo.menu }"
                 >
                   <div class="px-2.5 pt-1.5 pb-2 text-[11px] font-semibold tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
-                    BLOK
+                    BLOCKS
                   </div>
                   <div
                     v-for="(item, i) in [
-                      { icon: 'headingLarge', label: 'Judul', key: '##' },
-                      { icon: 'list', label: 'Daftar berpoin', key: '-' },
-                      { icon: 'image', label: 'Gambar', key: '' },
-                      { icon: 'code', label: 'Blok kode', key: '```' }
+                      { icon: 'headingLarge', label: 'Heading', key: '##' },
+                      { icon: 'list', label: 'Bulleted list', key: '-' },
+                      { icon: 'image', label: 'Image', key: '' },
+                      { icon: 'code', label: 'Code block', key: '```' }
                     ]"
                     :key="item.label"
                     class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150"
@@ -662,7 +662,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
 
     <!-- SHOWCASE: kartu demo fitur / editor sungguhan -->
     <section
-      id="coba"
+      id="try"
       class="mx-auto max-w-(--ui-container) scroll-mt-20 px-4 sm:px-6 lg:px-8 pt-16 pb-24"
     >
       <div
@@ -675,7 +675,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           class="flex shrink-0 rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-[#111113]"
         >
           <button
-            v-for="s in ([{ key: 'fitur', label: 'Fitur', icon: 'grid' }, { key: 'coba', label: 'Coba langsung', icon: 'play' }] as const)"
+            v-for="s in ([{ key: 'fitur', label: 'Features', icon: 'grid' }, { key: 'coba', label: 'Try it live', icon: 'play' }] as const)"
             :key="s.key"
             type="button"
             role="tab"
@@ -696,7 +696,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           aria-hidden="true"
           class="hidden h-px flex-1 bg-zinc-200 sm:block dark:bg-zinc-800"
         />
-        <span class="hidden font-mono text-xs text-zinc-400 sm:block dark:text-zinc-500">Satu editor, banyak cara pakai</span>
+        <span class="hidden font-mono text-xs text-zinc-400 sm:block dark:text-zinc-500">One editor, many ways to use it</span>
       </div>
 
       <div
@@ -752,19 +752,19 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card sc-card-bleed">
             <div>
               <div class="sc-title">
-                Slash menu &amp; tombol +
+                Slash menu &amp; + button
               </div>
               <div class="sc-desc">
-                Ketik / di baris kosong untuk memilih blok.
+                Type / on an empty line to pick a block.
               </div>
             </div>
             <div class="sc-inset overflow-hidden">
               <div class="flex h-9 items-center gap-2 border-b border-zinc-200 px-3 text-[13px] dark:border-zinc-800">
-                <span class="font-semibold text-zinc-950 dark:text-zinc-50">/</span><span class="text-zinc-400 dark:text-zinc-500">Ketik untuk memfilter…</span>
+                <span class="font-semibold text-zinc-950 dark:text-zinc-50">/</span><span class="text-zinc-400 dark:text-zinc-500">Type to filter…</span>
               </div>
               <div class="p-1">
                 <div class="px-2 pt-1.5 pb-1 text-[11px] font-semibold tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
-                  BLOK
+                  BLOCKS
                 </div>
                 <!-- Sampai Kutipan terlihat jelas; satu item sesudahnya memudar, sisanya tidak ditampilkan. -->
                 <div class="sc-fade-end">
@@ -798,19 +798,19 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card">
             <div>
               <div class="sc-title">
-                Judul &amp; slug
+                Title &amp; slug
               </div>
               <div class="sc-desc">
-                Teks pertama jadi judul; slug-nya ikut di event change.
+                The first line becomes the title; its slug rides along on the change event.
               </div>
             </div>
             <label class="flex flex-col gap-1.5">
-              <span class="text-xs font-medium text-zinc-700 dark:text-zinc-300">Judul</span>
+              <span class="text-xs font-medium text-zinc-700 dark:text-zinc-300">Title</span>
               <input
                 v-model="slugTitle"
                 type="text"
                 class="sc-field w-full"
-                aria-label="Judul"
+                aria-label="Title"
               >
             </label>
             <div class="flex flex-col gap-1.5">
@@ -819,7 +819,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 <span class="min-w-0 truncate">{{ slug || '—' }}</span>
                 <button
                   type="button"
-                  aria-label="Salin slug"
+                  aria-label="Copy slug"
                   class="cursor-pointer text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
                   @click="copy(slug)"
                 >
@@ -842,7 +842,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 Bubble toolbar
               </div>
               <div class="sc-desc">
-                Muncul saat teks diblok. Coba klik B dan i.
+                Appears when you select text. Try clicking B and i.
               </div>
             </div>
             <div class="flex flex-col items-start gap-3 pt-1">
@@ -852,7 +852,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   class="bubble-btn cursor-pointer text-sm font-extrabold transition-colors"
                   :class="fmt.bold ? 'bg-brand-500/20 text-brand-200' : 'text-zinc-300 hover:bg-zinc-800'"
                   :aria-pressed="fmt.bold"
-                  aria-label="Tebal"
+                  aria-label="Bold"
                   @click="fmt.bold = !fmt.bold"
                 >
                   B
@@ -862,7 +862,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   class="bubble-btn cursor-pointer font-serif text-[15px] italic transition-colors"
                   :class="fmt.italic ? 'bg-brand-500/20 text-brand-200' : 'text-zinc-300 hover:bg-zinc-800'"
                   :aria-pressed="fmt.italic"
-                  aria-label="Miring"
+                  aria-label="Italic"
                   @click="fmt.italic = !fmt.italic"
                 >
                   i
@@ -897,18 +897,18 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card">
             <div>
               <div class="sc-title">
-                Mode artikel
+                Article mode
               </div>
               <div class="sc-desc">
-                Judul &amp; subjudul otomatis, seperti Medium.
+                Automatic title &amp; subtitle, just like Medium.
               </div>
             </div>
             <div class="grid grid-cols-[52px_minmax(0,1fr)] gap-x-3 gap-y-1.5">
-              <span class="pt-1.5 text-right text-[11px] text-zinc-400 dark:text-zinc-500">Judul</span>
+              <span class="pt-1.5 text-right text-[11px] text-zinc-400 dark:text-zinc-500">Title</span>
               <div class="border-l border-zinc-300 pl-3 text-lg leading-snug font-extrabold text-zinc-950 dark:border-zinc-700 dark:text-zinc-50">
                 Catatan dari Medan
               </div>
-              <span class="pt-0.5 text-right text-[11px] text-zinc-400 dark:text-zinc-500">Subjudul</span>
+              <span class="pt-0.5 text-right text-[11px] text-zinc-400 dark:text-zinc-500">Subtitle</span>
               <div class="border-l border-zinc-300 pb-1 pl-3 text-[13.5px] text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
                 Pagi yang dingin dan kopi yang hangat
               </div>
@@ -925,10 +925,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card">
             <div>
               <div class="sc-title">
-                Shortcut markdown
+                Markdown shortcuts
               </div>
               <div class="sc-desc">
-                Format berubah langsung saat mengetik.
+                Formatting applies as you type.
               </div>
             </div>
             <div class="-mx-4 -mb-4 divide-y divide-zinc-100 border-t border-zinc-100 dark:divide-zinc-800/80 dark:border-zinc-800/80">
@@ -953,10 +953,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card">
             <div>
               <div class="sc-title">
-                Gambar &amp; video
+                Images &amp; video
               </div>
               <div class="sc-desc">
-                Upload, keterangan, alt text, dan tiga ukuran.
+                Uploads, captions, alt text, and three sizes.
               </div>
             </div>
             <div class="flex flex-col items-center gap-2">
@@ -994,7 +994,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 name="i-simple-icons-vimeo"
                 class="size-4 text-[#1AB7EA]"
               />
-              Tempel link video di baris kosong
+              Paste a video link on an empty line
             </div>
           </div>
 
@@ -1002,10 +1002,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card">
             <div>
               <div class="sc-title">
-                Engine Tiptap / ProseMirror
+                Tiptap / ProseMirror engine
               </div>
               <div class="sc-desc">
-                Mengetik, list, dan kursor sama di semua browser.
+                Typing, lists, and the cursor behave the same in every browser.
               </div>
             </div>
             <div class="flex flex-col gap-1.5">
@@ -1018,7 +1018,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                   :name="b.icon"
                   class="size-4 shrink-0"
                   :class="b.color"
-                />{{ b.name }}</span><span class="text-xs font-semibold text-brand-600 dark:text-brand-300">✓ Konsisten</span>
+                />{{ b.name }}</span><span class="text-xs font-semibold text-brand-600 dark:text-brand-300">✓ Consistent</span>
               </div>
             </div>
           </div>
@@ -1027,10 +1027,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card">
             <div>
               <div class="sc-title">
-                Pindah blok
+                Move blocks
               </div>
               <div class="sc-desc">
-                Seret lewat pegangan ⋮⋮, atau pakai keyboard.
+                Drag by the ⋮⋮ handle, or use the keyboard.
               </div>
             </div>
             <div class="flex flex-col gap-1 text-[13px]">
@@ -1070,22 +1070,22 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card">
             <div>
               <div class="sc-title">
-                Indonesia &amp; Inggris
+                English &amp; Indonesian
               </div>
               <div class="sc-desc">
-                Semua teks antarmuka bisa ditimpa satu per satu.
+                Every UI string can be overridden, one by one.
               </div>
             </div>
             <div class="grid grid-cols-2 rounded-lg border border-zinc-200 bg-white p-0.5 text-[13px] font-medium dark:border-zinc-800 dark:bg-[#09090b]">
               <button
-                v-for="l in (['id', 'en'] as const)"
+                v-for="l in (['en', 'id'] as const)"
                 :key="l"
                 type="button"
                 class="cursor-pointer rounded-md py-1.5 transition-colors"
                 :class="lang === l ? 'bg-brand-600 text-white' : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'"
                 @click="lang = l"
               >
-                {{ l === 'id' ? 'Indonesia' : 'English' }}
+                {{ l === 'id' ? 'Indonesian' : 'English' }}
               </button>
             </div>
             <div class="sc-field text-zinc-400 dark:text-zinc-500">
@@ -1106,16 +1106,16 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             <div class="flex items-start justify-between gap-3">
               <div>
                 <div class="sc-title">
-                  HTML atau JSON
+                  HTML or JSON
                 </div>
                 <div class="sc-desc">
-                  Simpan HTML bersih atau JSON ProseMirror.
+                  Store clean HTML or ProseMirror JSON.
                 </div>
               </div>
               <NuxtLink
-                to="/panduan/json"
+                to="/guide/json"
                 class="shrink-0 text-xs font-semibold text-brand-700 hover:underline dark:text-brand-300"
-              >Panduan →</NuxtLink>
+              >Guide →</NuxtLink>
             </div>
             <div
               role="tablist"
@@ -1152,15 +1152,15 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card">
             <div>
               <div class="sc-title">
-                Output selalu bersih
+                Always-clean output
               </div>
               <div class="sc-desc">
-                Paste dari Word, Google Docs, atau web disaring.
+                Pastes from Word, Google Docs, or the web get filtered.
               </div>
             </div>
             <div class="sc-inset p-3 font-mono text-[11.5px] leading-[1.7]">
               <div class="mb-1 font-sans text-[11px] font-semibold tracking-[0.04em] text-zinc-400 dark:text-zinc-500">
-                DITEMPEL
+                PASTED
               </div>
               <div class="text-rose-600/90 line-through decoration-rose-500/40 dark:text-rose-400/90">
                 &lt;span style="mso-bidi:…"&gt;
@@ -1176,12 +1176,12 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 />
               </div>
               <div class="mb-1 font-sans text-[11px] font-semibold tracking-[0.04em] text-zinc-400 dark:text-zinc-500">
-                DISIMPAN
+                SAVED
               </div>
-              <div><span :class="T.tag">&lt;p&gt;</span>Halo <span :class="T.tag">&lt;strong&gt;</span>dunia<span :class="T.tag">&lt;/strong&gt;&lt;/p&gt;</span></div>
+              <div><span :class="T.tag">&lt;p&gt;</span>Hello <span :class="T.tag">&lt;strong&gt;</span>world<span :class="T.tag">&lt;/strong&gt;&lt;/p&gt;</span></div>
             </div>
             <div class="text-xs text-zinc-500 dark:text-zinc-400">
-              Plus whitelist HTMLPurifier untuk server Laravel.
+              Plus an HTMLPurifier whitelist for your Laravel server.
             </div>
           </div>
 
@@ -1189,10 +1189,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card">
             <div>
               <div class="sc-title">
-                Autosave draf
+                Draft autosave
               </div>
               <div class="sc-desc">
-                Tersimpan di localStorage, ditawarkan lagi nanti.
+                Saved to localStorage, offered back later.
               </div>
             </div>
             <button
@@ -1209,21 +1209,21 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 class="absolute top-0.5 left-0.5 size-4 rounded-full bg-white transition-transform"
                 :class="{ 'translate-x-4': autosave }"
               /></span>
-              <span class="text-[13px] text-zinc-800 dark:text-zinc-200">Simpan draf otomatis</span>
+              <span class="text-[13px] text-zinc-800 dark:text-zinc-200">Auto-save drafts</span>
             </button>
             <div
               class="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-[12.5px] text-amber-800 transition-opacity dark:text-amber-200"
               :class="{ 'opacity-40': !autosave }"
             >
-              <span class="basis-full">Ada draf yang belum tersimpan dari 10.24.</span>
-              <span class="rounded-md bg-amber-400 px-2.5 py-1 font-semibold text-stone-900">Pulihkan</span>
-              <span class="rounded-md px-2.5 py-1 font-semibold">Buang</span>
+              <span class="basis-full">You have an unsaved draft from 10:24.</span>
+              <span class="rounded-md bg-amber-400 px-2.5 py-1 font-semibold text-stone-900">Restore</span>
+              <span class="rounded-md px-2.5 py-1 font-semibold">Discard</span>
             </div>
           </div>
 
           <!-- Laravel -->
           <NuxtLink
-            to="/integrasi/laravel"
+            to="/integrations/laravel"
             class="sc-card sc-card-link"
           >
             <div class="flex items-start gap-3">
@@ -1233,10 +1233,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               />
               <div>
                 <div class="sc-title">
-                  Integrasi Laravel
+                  Laravel integration
                 </div>
                 <div class="sc-desc">
-                  Komponen Blade, upload, sanitasi server, Livewire.
+                  Blade component, uploads, server sanitizing, Livewire.
                 </div>
               </div>
             </div>
@@ -1247,10 +1247,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card">
             <div>
               <div class="sc-title">
-                Pasang dalam semenit
+                Install in a minute
               </div>
               <div class="sc-desc">
-                Lewat npm dengan bundler, atau satu tag script.
+                Via npm with a bundler, or a single script tag.
               </div>
             </div>
             <div class="flex gap-1 text-xs font-medium">
@@ -1269,7 +1269,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               <span class="min-w-0 flex-1 truncate">{{ INSTALL[install] }}</span>
               <button
                 type="button"
-                :aria-label="copied ? 'Tersalin' : 'Salin'"
+                :aria-label="copied ? 'Copied' : 'Copy'"
                 class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
                 @click="copy(INSTALL[install])"
               >
@@ -1282,7 +1282,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               </button>
             </div>
             <div class="text-xs text-zinc-500 dark:text-zinc-400">
-              {{ install === 'npm' ? 'Tiptap/ProseMirror ikut terpasang sebagai dependency.' : 'Sudah berisi Tiptap/ProseMirror (±130 KB gzip). Muat sebelum Alpine.' }}
+              {{ install === 'npm' ? 'Tiptap/ProseMirror comes along as a dependency.' : 'Tiptap/ProseMirror bundled in (~130 KB gzip). Load it before Alpine.' }}
             </div>
           </div>
 
@@ -1290,10 +1290,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card">
             <div>
               <div class="sc-title">
-                CSS tidak bentrok
+                CSS that won't clash
               </div>
               <div class="sc-desc">
-                Semua class &amp; variabel memakai prefix afw.
+                Every class &amp; variable uses the afw prefix.
               </div>
             </div>
             <div class="sc-inset flex flex-col gap-1 p-3 font-mono text-xs">
@@ -1317,10 +1317,10 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
           <div class="sc-card">
             <div>
               <div class="sc-title">
-                Teruji
+                Tested
               </div>
               <div class="sc-desc">
-                Setiap rilis dijaga test otomatis.
+                Every release is guarded by automated tests.
               </div>
             </div>
             <ul class="m-0 flex list-none flex-col gap-2 p-0 font-mono text-xs">
@@ -1344,7 +1344,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             class="btn-soft cursor-pointer gap-2"
             @click="showAll = true"
           >
-            Tampilkan semua fitur
+            Show all features
             <svg
               class="size-4"
               v-bind="svgAttrs"
@@ -1362,7 +1362,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             class="btn-soft cursor-pointer gap-2"
             @click="collapseFeatures"
           >
-            Tampilkan lebih sedikit
+            Show less
             <svg
               class="size-4 rotate-180"
               v-bind="svgAttrs"
@@ -1378,7 +1378,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
         >
           <div
             role="tablist"
-            aria-label="Varian editor"
+            aria-label="Editor variants"
             class="flex flex-wrap justify-center gap-2"
           >
             <button
@@ -1444,17 +1444,17 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             class="cta-glow pointer-events-none absolute inset-0"
           />
           <h2 class="section-title relative">
-            Siap mencoba<span class="text-sun">?</span>
+            Ready to try it<span class="text-sun">?</span>
           </h2>
           <p class="relative m-0 max-w-[520px] text-[17px] leading-[1.65] text-zinc-600 dark:text-zinc-400">
-            Pasang lewat npm atau CDN, tambahkan satu atribut x-data, dan editor siap dipakai di form Anda.
+            Install via npm or CDN, add a single x-data attribute, and the editor is ready to use in your forms.
           </p>
           <div class="relative mt-2 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
             <NuxtLink
-              to="/memulai/instalasi"
+              to="/getting-started/installation"
               class="btn-primary justify-center"
             >
-              Instalasi
+              Installation
               <svg
                 class="size-4"
                 v-bind="svgAttrs"
@@ -1462,7 +1462,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
               />
             </NuxtLink>
             <a
-              href="#coba"
+              href="#try"
               class="btn-ghost justify-center bg-white/50 dark:bg-[#0a0a0a]/40"
               @click="showcase = 'coba'"
             >
@@ -1472,7 +1472,7 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
                 stroke-linejoin="round"
                 v-html="ICON.play"
               />
-              Coba editornya
+              Try the editor
             </a>
           </div>
         </div>
@@ -1489,32 +1489,32 @@ const tested = ['Unit test', 'Browser · Chromium', 'Browser · Firefox', 'Brows
             class="size-5"
           >
           <span class="font-logo font-semibold text-zinc-950 dark:text-zinc-50">{{ BRAND }}</span>
-          <span>· Lisensi MIT</span>
+          <span>· MIT License</span>
         </div>
         <nav class="flex flex-wrap justify-center gap-x-5 gap-y-2">
           <NuxtLink
-            to="/memulai/instalasi"
+            to="/getting-started/installation"
             class="foot-link"
-          >Instalasi</NuxtLink>
+          >Installation</NuxtLink>
           <NuxtLink
-            to="/panduan/opsi"
+            to="/guide/options"
             class="foot-link"
-          >Opsi</NuxtLink>
+          >Options</NuxtLink>
           <NuxtLink
-            to="/integrasi/laravel"
+            to="/integrations/laravel"
             class="foot-link"
           >Laravel</NuxtLink>
           <NuxtLink
-            to="/memulai/demo"
+            to="/getting-started/demo"
             class="foot-link"
           >Demo</NuxtLink>
           <NuxtLink
-            to="/lainnya/changelog"
+            to="/more/changelog"
             class="foot-link"
           >Changelog</NuxtLink>
         </nav>
         <div class="flex items-center gap-4">
-          <span class="hidden lg:inline">Dibangun dengan Tiptap, ProseMirror &amp; Nuxt UI</span>
+          <span class="hidden lg:inline">Built with Tiptap, ProseMirror &amp; Nuxt UI</span>
           <a
             :href="REPO"
             aria-label="GitHub"
