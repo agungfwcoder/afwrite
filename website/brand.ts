@@ -4,3 +4,6 @@ export const BRAND = 'afwrite'
 
 // Slogan: judul hero landing dan teks di gambar OG.
 export const SLOGAN = 'All fine. Just write.'
+
+// Pesan utama brand: semua fitur gratis (tanpa paket berbayar). Dipakai di hero, footer, dan gambar OG.
+export const FREE = 'Free for every feature'

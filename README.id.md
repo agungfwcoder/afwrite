@@ -4,8 +4,11 @@
 
 [English](README.md) · **Bahasa Indonesia**
 
-Editor WYSIWYG modern berbasis **vanilla JS + Alpine.js**, dengan engine
+Editor WYSIWYG modern ala Medium berbasis **vanilla JS + Alpine.js**, dengan engine
 [Tiptap](https://tiptap.dev) / [ProseMirror](https://prosemirror.net).
+
+**Gratis untuk semua fitur.** Tidak ada paket berbayar, license key, atau batas pemakaian: semua
+yang ada di bawah berlisensi MIT. [Kenapa afwrite?](https://agungfwcoder.github.io/afwrite/more/why)
 
 - Bubble toolbar saat teks diblok, slash command `/`, tombol `+` di baris kosong
 - Shortcut markdown: `##`, `>`, `-`, `1.`, `---`, `**tebal**`, `*miring*`, `` `kode` ``

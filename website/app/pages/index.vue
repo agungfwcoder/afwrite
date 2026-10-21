@@ -3,7 +3,7 @@
 // kartu-kartu demo fitur (masonry) dan tab "Coba langsung", lalu CTA dan footer. Warna: brand (#009994) + zinc, dengan aksen kecil kuning logo (sun).
 // Teks SEO diambil dari content/index.md.
 import { useClipboard } from '@vueuse/core'
-import { BRAND, SLOGAN } from '~~/brand'
+import { BRAND, FREE, SLOGAN } from '~~/brand'
 import { slugify } from '../../../src/core/slug.js'
 
 const { data: page } = await useAsyncData('index', () => queryCollection('landing').path('/').first())
@@ -355,11 +355,11 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
       <div class="relative mx-auto grid max-w-(--ui-container) items-center gap-12 px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:pt-24 lg:pb-24">
         <div class="flex min-w-0 flex-col items-start gap-6">
           <NuxtLink
-            to="/guide/event-api#title-slug"
+            to="/more/why"
             style="--reveal-delay: 0ms"
             class="hero-in inline-flex items-center gap-1.5 rounded-full bg-brand-500/10 px-3 py-1 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-500/15 dark:text-brand-400"
           >
-            New in v2: title &amp; slug
+            {{ FREE }}, no paid plan
             <svg
               class="size-4"
               v-bind="svgAttrs"
@@ -377,7 +377,14 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
             style="--reveal-delay: 160ms"
             class="hero-in m-0 max-w-[560px] text-lg leading-[1.6] text-zinc-600 dark:text-zinc-400"
           >
-            A Medium-style editor for Alpine.js and Laravel. Bubble toolbar, slash commands, markdown shortcuts, images &amp; video, and HTML output that's always clean.
+            A <mark class="free-mark">free</mark>, Medium-style editor for Alpine.js and Laravel. Bubble toolbar, slash commands, markdown shortcuts, images &amp; video, and always-clean HTML. Every feature included, <span class="scribble">no paid plan<svg
+              aria-hidden="true"
+              viewBox="0 0 120 12"
+              preserveAspectRatio="none"
+            ><path
+              d="M2 9.5C22 4.5 48 3 72 5.5S110 9 118 6.5"
+              pathLength="1"
+            /></svg></span>.
           </p>
 
           <div
@@ -427,7 +434,7 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
               <UIcon
                 name="i-simple-icons-github"
                 class="size-4"
-              />Open source · MIT
+              />100% free · MIT
             </a>
           </div>
         </div>
@@ -1447,7 +1454,7 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
             Ready to try it<span class="text-sun">?</span>
           </h2>
           <p class="relative m-0 max-w-[520px] text-[17px] leading-[1.65] text-zinc-600 dark:text-zinc-400">
-            Install via npm or CDN, add a single x-data attribute, and the editor is ready to use in your forms.
+            Every feature is free. Install via npm or CDN, add a single x-data attribute, and the editor is ready to use in your forms.
           </p>
           <div class="relative mt-2 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
             <NuxtLink
@@ -1489,7 +1496,7 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
             class="size-5"
           >
           <span class="font-logo font-semibold text-zinc-950 dark:text-zinc-50">{{ BRAND }}</span>
-          <span>· MIT License</span>
+          <span>· {{ FREE }} · MIT License</span>
         </div>
         <nav class="flex flex-wrap justify-center gap-x-5 gap-y-2">
           <NuxtLink
@@ -1512,6 +1519,10 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
             to="/more/changelog"
             class="foot-link"
           >Changelog</NuxtLink>
+          <NuxtLink
+            to="/more/why"
+            class="foot-link"
+          >Why afwrite</NuxtLink>
         </nav>
         <div class="flex items-center gap-4">
           <span class="hidden lg:inline">Built with Tiptap, ProseMirror &amp; Nuxt UI</span>
@@ -1754,6 +1765,64 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
 
 .dark .landing .hero-sun {
   background: radial-gradient(min(420px, 85vw) min(320px, 60vw) at 92% 0%, rgba(255, 187, 0, 0.12), transparent 70%);
+}
+
+/* Kata "free" di deskripsi hero: label kuning logo supaya langsung terlihat. */
+.landing .free-mark {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: rgba(255, 187, 0, 0.22);
+  color: #7a5200;
+  font-weight: 600;
+}
+
+.dark .landing .free-mark {
+  background: rgba(255, 187, 0, 0.16);
+  color: #ffd25e;
+}
+
+/* "no paid plan": coretan tangan (SVG) di bawah teks, digambar saat hero muncul. */
+.landing .scribble {
+  position: relative;
+  white-space: nowrap;
+  color: #18181b;
+}
+
+.dark .landing .scribble {
+  color: #fafafa;
+}
+
+.landing .scribble svg {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  bottom: -7px;
+  width: calc(100% + 4px);
+  height: 10px;
+  overflow: visible;
+}
+
+.landing .scribble path {
+  fill: none;
+  stroke: #ffbb00;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: afw-scribble 0.9s cubic-bezier(0.65, 0, 0.35, 1) 1s forwards;
+}
+
+@keyframes afw-scribble {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing .scribble path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
 }
 
 /* Logo brand "Bekerja dengan": abu-abu, berwarna saat disorot. */

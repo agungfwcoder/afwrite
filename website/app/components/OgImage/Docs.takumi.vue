@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BRAND, SLOGAN } from '~~/brand'
+import { BRAND, FREE, SLOGAN } from '~~/brand'
 import logo from '~~/public/logo.svg?raw'
 
 const LOGO = `data:image/svg+xml;base64,${btoa(logo)}`
@@ -66,10 +66,9 @@ defineProps<{
           style="background-color: #27272a"
         />
         <span
-          v-if="title !== SLOGAN"
           class="text-2xl"
-          style="color: #a1a1aa"
-        >{{ SLOGAN }}</span>
+          style="color: #ffbb00"
+        >{{ FREE }}</span>
         <span
           class="text-2xl font-bold"
           style="color: #fafafa"

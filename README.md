@@ -4,8 +4,11 @@
 
 **English** · [Bahasa Indonesia](https://github.com/agungfwcoder/afwrite/blob/main/README.id.md)
 
-A modern WYSIWYG editor built with **vanilla JS + Alpine.js**, powered by
+A modern, Medium-style WYSIWYG editor built with **vanilla JS + Alpine.js**, powered by
 [Tiptap](https://tiptap.dev) / [ProseMirror](https://prosemirror.net).
+
+**Free for every feature.** There is no paid plan, no license key, and no usage limit: everything
+below is MIT-licensed. [Why afwrite?](https://agungfwcoder.github.io/afwrite/more/why)
 
 - Bubble toolbar on text selection, `/` slash commands, `+` button on empty lines
 - Markdown shortcuts: `##`, `>`, `-`, `1.`, `---`, `**bold**`, `*italic*`, `` `code` ``

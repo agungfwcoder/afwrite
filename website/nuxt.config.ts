@@ -134,7 +134,7 @@ export default defineNuxtConfig({
   llms: {
     domain: siteUrl.replace(/\/$/, ''),
     title: BRAND,
-    description: `${BRAND} documentation: a modern WYSIWYG editor for Alpine.js built on Tiptap/ProseMirror.`,
+    description: `${BRAND} documentation: a Medium-style WYSIWYG editor for Alpine.js built on Tiptap/ProseMirror, free for every feature.`,
     full: {
       title: `${BRAND} - Full documentation`,
       description: `The complete ${BRAND} documentation in a single file.`
