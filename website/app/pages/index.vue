@@ -670,7 +670,7 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
     <!-- SHOWCASE: kartu demo fitur / editor sungguhan -->
     <section
       id="try"
-      class="mx-auto max-w-(--ui-container) scroll-mt-20 px-4 sm:px-6 lg:px-8 pt-16 pb-24"
+      class="mx-auto max-w-(--ui-container) scroll-mt-20 px-4 sm:px-6 lg:px-8 pt-16 pb-8 sm:pb-10"
     >
       <div
         data-reveal
