@@ -379,10 +379,10 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
           >
             A <mark class="free-mark">free</mark>, Medium-style editor for Alpine.js and Laravel. Bubble toolbar, slash commands, markdown shortcuts, images &amp; video, and always-clean HTML. Every feature included, <span class="scribble">no paid plan<svg
               aria-hidden="true"
-              viewBox="0 0 120 12"
+              viewBox="0 0 134 14"
               preserveAspectRatio="none"
             ><path
-              d="M2 9.5C22 4.5 48 3 72 5.5S110 9 118 6.5"
+              d="M2 6.5C40 3.5 84 3 126 4.5L10 10.5C52 8 94 7.5 132 9"
               pathLength="1"
             /></svg></span>.
           </p>
@@ -1794,22 +1794,22 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
 
 .landing .scribble svg {
   position: absolute;
-  left: -2px;
-  right: -2px;
-  bottom: -7px;
-  width: calc(100% + 4px);
-  height: 10px;
+  left: -6px;
+  bottom: -10px;
+  width: calc(100% + 16px);
+  height: 13px;
   overflow: visible;
 }
 
 .landing .scribble path {
   fill: none;
   stroke: #ffbb00;
-  stroke-width: 3;
+  stroke-width: 3.5;
   stroke-linecap: round;
+  stroke-linejoin: round;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: afw-scribble 0.9s cubic-bezier(0.65, 0, 0.35, 1) 1s forwards;
+  animation: afw-scribble 1.1s cubic-bezier(0.65, 0, 0.35, 1) 1s forwards;
 }
 
 @keyframes afw-scribble {
