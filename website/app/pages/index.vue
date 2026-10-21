@@ -588,7 +588,7 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
                      + jarak panel ke tepi kartu (10px, atau 48px saat deretan chip tampil) + 16px. -->
                 <div
                   aria-hidden="true"
-                  class="mock-pop relative z-[3] -mt-2 -mb-[58px] w-[260px] sm:-mb-[96px] lg:-mb-[58px] xl:-mb-[96px] max-w-full self-start rounded-xl border border-zinc-200 bg-white p-1.5 text-sm leading-[1.3] shadow-[0_20px_40px_-12px_rgba(24,24,27,0.25)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.7)]"
+                  class="mock-pop relative z-[3] -mt-2 -mb-[58px] w-[260px] sm:-mb-[96px] lg:-mb-[58px] xl:-mb-[96px] max-w-full self-start rounded-[10px] border border-zinc-200 bg-white p-1.5 text-sm leading-[1.3] shadow-[0_20px_40px_-12px_rgba(24,24,27,0.25)] dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.7)]"
                   :class="{ 'is-on': demo.menu }"
                 >
                   <div class="px-2.5 pt-1.5 pb-2 text-[11px] font-semibold tracking-[0.06em] text-zinc-500 dark:text-zinc-400">
@@ -602,11 +602,11 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
                       { icon: 'code', label: 'Code block', key: '```' }
                     ]"
                     :key="item.label"
-                    class="flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150"
+                    class="flex items-center gap-2.5 rounded-[6px] px-2.5 py-2 transition-colors duration-150"
                     :class="i === demo.active ? 'bg-brand-500/15 text-zinc-950 dark:bg-brand-500/20 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'"
                   >
                     <span
-                      class="flex size-7 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800"
+                      class="flex size-7 items-center justify-center rounded-[6px] bg-zinc-100 dark:bg-zinc-800"
                       :class="i === demo.active ? 'text-brand-600 dark:text-brand-300' : 'text-zinc-500 dark:text-zinc-400'"
                     ><svg
                       class="size-[15px]"
