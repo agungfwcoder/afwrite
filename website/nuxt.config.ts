@@ -44,12 +44,6 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
-  runtimeConfig: {
-    public: {
-      assetVersions
-    }
-  },
-
   // Alamat situs untuk URL absolut (og:image). Base path ditambahkan sendiri oleh modul.
   site: {
     url: siteOrigin,
@@ -67,6 +61,12 @@ export default defineNuxtConfig({
     },
     experimental: {
       sqliteConnector: 'native'
+    }
+  },
+
+  runtimeConfig: {
+    public: {
+      assetVersions
     }
   },
 
