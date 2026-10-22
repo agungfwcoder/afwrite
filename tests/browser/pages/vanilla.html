@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>afwrite tanpa Alpine</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <style>body { max-width: 760px; margin: 40px auto; font-family: system-ui, sans-serif; }</style>
+  <!-- Halaman uji tanpa Alpine: dipakai tests/browser/13-vanilla.test.mjs. -->
+  <script type="module">
+    import * as Afwrite from '/src/index.js';
+    window.Afwrite = Afwrite;
+    window.events = [];
+    document.addEventListener('wysiwyg-change', (e) => window.events.push(['dom-change', e.detail.html]));
+    window.ed = Afwrite.create(document.getElementById('ed'), { name: 'content', titleName: 'title', lang: 'en' });
+    ed.on('ready', () => window.events.push(['ready']));
+    ed.on('change', ({ html }) => window.events.push(['change', html]));
+  </script>
+</head>
+<body>
+  <form id="form" onsubmit="event.preventDefault()">
+    <div id="ed"><p>Hello world</p></div>
+  </form>
+</body>
+</html>

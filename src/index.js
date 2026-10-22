@@ -1,5 +1,6 @@
 import './style.css';
 
+export { create } from './afwrite.js';
 export { Editor } from './core/editor.js';
 export { COMMANDS } from './core/commands.js';
 export { DEFAULT_COLORS, DEFAULT_HIGHLIGHTS, FORMATS } from './core/formats.js';
