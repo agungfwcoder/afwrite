@@ -4,7 +4,8 @@
 
 [English](README.md) · **Bahasa Indonesia**
 
-Editor WYSIWYG modern ala Medium berbasis **vanilla JS + Alpine.js**, dengan engine
+Editor WYSIWYG modern ala Medium dengan **JavaScript biasa**, plus komponen **Alpine.js**
+(opsional) dan wrapper kecil untuk React/Vue, dengan engine
 [Tiptap](https://tiptap.dev) / [ProseMirror](https://prosemirror.net).
 
 **Gratis untuk semua fitur.** Tidak ada paket berbayar, license key, atau batas pemakaian: semua
@@ -18,6 +19,8 @@ yang ada di bawah berlisensi MIT. [Kenapa afwrite?](https://agungfwcoder.github.
 - Perilaku mengetik konsisten di semua browser (engine ProseMirror), undo/redo, mode baca saja,
   `x-model`, bahasa Indonesia & Inggris
 - CSS terisolasi dengan prefix `afw` — aman bersama Bootstrap, Tailwind, dll.
+- Bisa dengan atau tanpa Alpine: `x-data="wysiwyg()"`, atau `create(el, options)` untuk JS biasa,
+  React, dan Vue
 - Teruji di Chrome, Firefox, dan Safari (WebKit); integrasi Laravel siap pakai
 
 Dokumentasi lengkap: https://agungfwcoder.github.io/afwrite/
@@ -26,7 +29,8 @@ Dokumentasi lengkap: https://agungfwcoder.github.io/afwrite/
 
 ### Lewat CDN (tanpa build)
 
-Script afwrite dimuat **sebelum** Alpine; plugin terdaftar otomatis dan API lain ada di `window.Afwrite`:
+Tanpa Alpine, script Alpine tidak perlu dimuat; panggil `Afwrite.create(el, options)` (lihat
+[Tanpa Alpine](#tanpa-alpine)). Dengan Alpine, script afwrite dimuat **sebelum** Alpine; plugin terdaftar otomatis dan API lain ada di `window.Afwrite`:
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/agungfwcoder/afwrite@2/dist/afwrite.css">
@@ -180,7 +184,32 @@ baru di bawahnya, **panah** keluar dari media.
 
 ## Tanpa Alpine
 
-Inti editor tidak bergantung pada Alpine (tanpa UI melayang; link & video memakai `prompt()`):
+`create()` memberi UI lengkap (toolbar, bubble, slash menu, tombol `+`, media bar, palet, pegangan
+drag) dengan JavaScript biasa, dengan opsi yang sama seperti `wysiwyg({...})`:
+
+```js
+import { create } from 'afwrite'; // CDN: Afwrite.create
+import 'afwrite/style.css';
+
+const editor = create(document.querySelector('#body'), { name: 'body', upload: uploadImage });
+editor.on('change', ({ html, meta }) => console.log(html));
+editor.destroy(); // mis. saat unmount; elemen dikembalikan seperti semula
+```
+
+Instance punya `getHTML/setHTML`, `getJSON/setJSON`, `getMeta`, `exec`, `isActive`,
+`insertImage`, `replaceImage`, `setReadOnly`, `focus`, `on/off`, `destroy`, dan `editor` (instance
+`Editor`). Event: `ready`, `change`, `focus`, `blur`, `error`, `image-request`; event DOM
+`wysiwyg-*` juga tetap dikirim. Docs:
+[JavaScript](https://agungfwcoder.github.io/afwrite/integrations/javascript).
+
+**React & Vue**: salin wrapper kecil di [`examples/`](examples) (diuji dengan React 18 StrictMode
+dan Vue 3.5). Lihat halaman [React](https://agungfwcoder.github.io/afwrite/integrations/react) dan
+[Vue](https://agungfwcoder.github.io/afwrite/integrations/vue).
+
+### Hanya inti editor
+
+Class `Editor` saja tanpa UI sama sekali (link & video memakai `prompt()`), untuk antarmuka yang
+sepenuhnya buatan sendiri:
 
 ```js
 import { Editor } from 'afwrite';

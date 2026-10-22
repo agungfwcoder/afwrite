@@ -4,7 +4,8 @@
 
 **English** · [Bahasa Indonesia](https://github.com/agungfwcoder/afwrite/blob/main/README.id.md)
 
-A modern, Medium-style WYSIWYG editor built with **vanilla JS + Alpine.js**, powered by
+A modern, Medium-style WYSIWYG editor in **plain JavaScript**, with an optional **Alpine.js**
+component and small React/Vue wrappers, powered by
 [Tiptap](https://tiptap.dev) / [ProseMirror](https://prosemirror.net).
 
 **Free for every feature.** There is no paid plan, no license key, and no usage limit: everything
@@ -18,15 +19,18 @@ below is MIT-licensed. [Why afwrite?](https://agungfwcoder.github.io/afwrite/mor
 - Consistent typing behavior across browsers (ProseMirror engine), undo/redo, read-only mode,
   `x-model`, Indonesian & English UI
 - CSS isolated under the `afw` prefix — safe alongside Bootstrap, Tailwind, etc.
+- Works with or without Alpine: `x-data="wysiwyg()"`, or `create(el, options)` for plain JS,
+  React, and Vue
 - Tested in Chrome, Firefox, and Safari (WebKit); ready-made Laravel integration
 
-Full documentation (in Indonesian): https://agungfwcoder.github.io/afwrite/
+Full documentation: https://agungfwcoder.github.io/afwrite/
 
 ## Installation
 
 ### Via CDN (no build step)
 
-Load the afwrite script **before** Alpine; the plugin registers itself and the rest of the API is on `window.Afwrite`:
+Without Alpine, leave out the Alpine script and call `Afwrite.create(el, options)` (see
+[Without Alpine](#without-alpine)). With Alpine, load the afwrite script **before** Alpine; the plugin registers itself and the rest of the API is on `window.Afwrite`:
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/agungfwcoder/afwrite@2/dist/afwrite.css">
@@ -249,7 +253,31 @@ paragraph below, **arrow keys** move out of the media.
 
 ## Without Alpine
 
-The editor core doesn't depend on Alpine (no floating UI; links & video use `prompt()`):
+`create()` gives the full UI (toolbar, bubble, slash menu, `+` button, media toolbar, palette, drag
+handle) in plain JavaScript, with the same options as `wysiwyg({...})`:
+
+```js
+import { create } from 'afwrite'; // CDN: Afwrite.create
+import 'afwrite/style.css';
+
+const editor = create(document.querySelector('#body'), { name: 'body', upload: uploadImage });
+editor.on('change', ({ html, meta }) => console.log(html));
+editor.destroy(); // e.g. on unmount; the element is restored
+```
+
+The instance has `getHTML/setHTML`, `getJSON/setJSON`, `getMeta`, `exec`, `isActive`,
+`insertImage`, `replaceImage`, `setReadOnly`, `focus`, `on/off`, `destroy`, and `editor` (the
+`Editor` instance). Events: `ready`, `change`, `focus`, `blur`, `error`, `image-request`; the
+`wysiwyg-*` DOM events are dispatched as well. Docs:
+[JavaScript](https://agungfwcoder.github.io/afwrite/integrations/javascript).
+
+**React & Vue**: copy the small wrappers in [`examples/`](examples) (tested with React 18
+StrictMode and Vue 3.5). See the [React](https://agungfwcoder.github.io/afwrite/integrations/react)
+and [Vue](https://agungfwcoder.github.io/afwrite/integrations/vue) pages.
+
+### Editor core only
+
+The bare `Editor` class has no UI at all (links & video use `prompt()`), for a fully custom interface:
 
 ```js
 import { Editor } from 'afwrite';

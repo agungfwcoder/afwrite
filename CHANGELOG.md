@@ -10,6 +10,7 @@ Sampai ada pemakai, perubahan kecil berikutnya digabung ke 2.0.0 ini. CDN `@2` d
 `npm install github:agungfwcoder/afwrite#semver:^2` selalu mengambil v2 terbaru.
 
 ### Berubah
+- `alpinejs` kini peer dependency opsional
 - Bahasa antarmuka bawaan kini bahasa Inggris (`lang: 'en'`), termasuk komponen Blade Laravel.
   Pakai `lang: 'id'` (atau `lang="id"` di Blade) untuk bahasa Indonesia
 - Perilaku mengetik, list, format, dan kursor ditangani ProseMirror: sama di semua browser,
@@ -31,6 +32,14 @@ Sampai ada pemakai, perubahan kecil berikutnya digabung ke 2.0.0 ini. CDN `@2` d
   yang dibuka lalu disimpan ulang akan berubah tag-nya (isinya sama)
 
 ### Baru
+- **Tanpa Alpine**: `create(el, options)` (CDN: `Afwrite.create`) memberi UI lengkap (toolbar,
+  bubble, slash menu, tombol `+`, media bar, palet, pegangan drag) dengan JavaScript biasa. Opsi
+  sama dengan `wysiwyg({...})`; event lewat `on('change', fn)` dan event DOM `wysiwyg-*`;
+  `destroy()` mengembalikan elemen seperti semula. Komponen Alpine kini adapter tipis di atasnya,
+  cara pakainya tidak berubah
+- Contoh wrapper React & Vue di `examples/` (diuji dari aplikasi Vite terpisah, termasuk React
+  StrictMode) dan halaman docs JavaScript, React, Vue
+- UI & konten editor diberi `x-ignore` otomatis, jadi `create()` aman di halaman yang memakai Alpine
 - Build standalone `dist/afwrite.min.js` untuk `<script>` / CDN (jsDelivr), sudah berisi
   Tiptap/ProseMirror. Plugin terdaftar otomatis, API di `window.Afwrite`
 - Opsi `headings` (bawaan `[2, 3]`): level judul H2–H6. Tombol toolbar & bubble (bubble paling

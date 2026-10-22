@@ -100,7 +100,11 @@ dengan dan tanpa Alpine.
   (`useRef` + `useEffect`), Vue (`onMounted`/`onBeforeUnmount` + `v-model`), HTML biasa.
 - Dicoba dari aplikasi Vite terpisah untuk React dan Vue (seperti uji build v2).
 
-### T6: docs & rilis
+### T6: docs & rilis (docs selesai; tes manual & merge menunggu)
+Docs: halaman Integrations > JavaScript (no Alpine), React, Vue; intro, instalasi, pemakaian,
+Events & API, FAQ, troubleshooting, development, credits, landing page, README en/id, CHANGELOG
+(digabung ke 2.0.0). Editor demo di situs docs kini memakai `create()` (tanpa Alpine) dan
+memanggil `destroy()` saat halaman ditinggalkan. Contoh di docs dijalankan apa adanya.
 - Website: halaman "Tanpa Alpine", "React", "Vue"; landing & "Why afwrite" menyebut dukungan ini.
 - README en/id, CHANGELOG, demo tanpa Alpine.
 - Tes manual Android/iOS, merge ke `main`.

@@ -123,7 +123,7 @@ export default defineNuxtConfig({
     clientBundle: {
       scan: true,
       icons: [
-        'simple-icons:alpinedotjs', 'simple-icons:laravel', 'simple-icons:livewire', 'simple-icons:bootstrap',
+        'simple-icons:alpinedotjs', 'simple-icons:javascript', 'simple-icons:react', 'simple-icons:vuedotjs', 'simple-icons:laravel', 'simple-icons:livewire', 'simple-icons:bootstrap',
         'simple-icons:tailwindcss', 'simple-icons:github', 'simple-icons:googlechrome', 'simple-icons:firefoxbrowser',
         'simple-icons:safari', 'simple-icons:youtube', 'simple-icons:vimeo',
         'vscode-icons:file-type-html', 'vscode-icons:file-type-js-official', 'vscode-icons:file-type-blade'
@@ -134,7 +134,7 @@ export default defineNuxtConfig({
   llms: {
     domain: siteUrl.replace(/\/$/, ''),
     title: BRAND,
-    description: `${BRAND} documentation: a Medium-style WYSIWYG editor for Alpine.js built on Tiptap/ProseMirror, free for every feature.`,
+    description: `${BRAND} documentation: a Medium-style WYSIWYG editor for Alpine.js and plain JavaScript (React, Vue) built on Tiptap/ProseMirror, free for every feature.`,
     full: {
       title: `${BRAND} - Full documentation`,
       description: `The complete ${BRAND} documentation in a single file.`

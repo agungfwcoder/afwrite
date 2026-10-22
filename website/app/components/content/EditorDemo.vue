@@ -4,9 +4,8 @@
 //   ::editor-demo{:options='{"headings":[2,3,4]}'}
 //   ::
 //
-// Elemen editor dibuat lewat DOM biasa (bukan template Vue) karena isinya dikelola Alpine
-// dan ProseMirror. Alpine dimulai sekali; editor yang ditambahkan kemudian diinisialisasi
-// otomatis oleh MutationObserver milik Alpine.
+// Dipasang lewat create() (tanpa Alpine), seperti wrapper Vue di examples/vue. Elemen editor
+// dibuat lewat DOM biasa (bukan template Vue) karena isinya dikelola afwrite dan ProseMirror.
 const props = withDefaults(defineProps<{
   content?: string
   options?: Record<string, unknown>
@@ -22,35 +21,31 @@ const container = ref<HTMLElement | null>(null)
 const html = ref('')
 const ready = ref(false)
 let host: HTMLElement | null = null
+let editor: { destroy: () => void } | null = null // bukan ref(): jangan dibungkus Proxy Vue
 
 const theme = () => (colorMode.value === 'dark' ? 'dark' : 'light')
 
 onMounted(async () => {
-  const [{ default: Alpine }, { default: afwrite }] = await Promise.all([import('alpinejs'), import('afwrite')])
-  const w = window as unknown as { Alpine?: typeof Alpine }
-  if (!w.Alpine) {
-    w.Alpine = Alpine
-    Alpine.plugin(afwrite)
-    Alpine.start()
-  }
+  const { create } = await import('afwrite')
+  if (!container.value) return // halaman sudah ditinggalkan sebelum modul selesai dimuat
 
   host = document.createElement('div')
-  host.setAttribute('x-data', `wysiwyg(${JSON.stringify({ stats: true, ...props.options })})`)
   host.setAttribute('data-afw-theme', theme())
   host.innerHTML = props.content
-  host.addEventListener('wysiwyg-change', (e) => {
-    html.value = (e as CustomEvent).detail.html
-  })
-  host.addEventListener('wysiwyg-ready', (e) => {
-    html.value = (e as CustomEvent).detail.editor.getHTML()
-    ready.value = true
-  })
-  container.value?.appendChild(host)
+  container.value.appendChild(host)
+  const instance = create(host, { stats: true, ...props.options })
+  instance.on('change', ({ html: value }: { html: string }) => (html.value = value))
+  html.value = instance.getHTML()
+  ready.value = true
+  editor = instance
 })
 
 watch(() => colorMode.value, () => host?.setAttribute('data-afw-theme', theme()))
 
-onBeforeUnmount(() => host?.remove())
+onBeforeUnmount(() => {
+  editor?.destroy()
+  host?.remove()
+})
 
 const pretty = computed(() => html.value
   .replace(/(<\/(p|h[2-6]|blockquote|ul|ol|li|pre|figure)>|<hr>)/g, '$1\n')

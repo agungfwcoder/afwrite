@@ -127,6 +127,9 @@ const chips = [
 // Logo brand di baris "Bekerja dengan".
 const works = [
   { name: 'Alpine.js', icon: 'i-simple-icons-alpinedotjs' },
+  { name: 'JavaScript', icon: 'i-simple-icons-javascript' },
+  { name: 'React', icon: 'i-simple-icons-react' },
+  { name: 'Vue', icon: 'i-simple-icons-vuedotjs' },
   { name: 'Laravel', icon: 'i-simple-icons-laravel' },
   { name: 'Livewire', icon: 'i-simple-icons-livewire' },
   { name: 'Bootstrap 5', icon: 'i-simple-icons-bootstrap' },
@@ -377,7 +380,7 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
             style="--reveal-delay: 160ms"
             class="hero-in m-0 max-w-[560px] text-lg leading-[1.6] text-zinc-600 dark:text-zinc-400"
           >
-            A <mark class="free-mark">free</mark>, Medium-style editor for Alpine.js and Laravel. Bubble toolbar, slash commands, markdown shortcuts, images &amp; video, and always-clean HTML. Every feature included, <span class="scribble">no paid plan<svg
+            A <mark class="free-mark">free</mark>, Medium-style editor for Alpine.js, Laravel, React, Vue, or plain JavaScript. Bubble toolbar, slash commands, markdown shortcuts, images &amp; video, and always-clean HTML. Every feature included, <span class="scribble">no paid plan<svg
               aria-hidden="true"
               viewBox="0 0 134 14"
               preserveAspectRatio="none"
@@ -1289,7 +1292,7 @@ const tested = ['Unit tests', 'Browser · Chromium', 'Browser · Firefox', 'Brow
               </button>
             </div>
             <div class="text-xs text-zinc-500 dark:text-zinc-400">
-              {{ install === 'npm' ? 'Tiptap/ProseMirror comes along as a dependency.' : 'Tiptap/ProseMirror bundled in (~130 KB gzip). Load it before Alpine.' }}
+              {{ install === 'npm' ? 'Tiptap/ProseMirror comes along as a dependency.' : 'Tiptap/ProseMirror bundled in (~135 KB gzip). Alpine optional; if used, load this first.' }}
             </div>
           </div>
 
