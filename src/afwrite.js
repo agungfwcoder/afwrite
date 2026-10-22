@@ -380,24 +380,16 @@ class EditorUI {
     on(ui.linkInput, 'blur', () => this._onInputBlur());
     on(ui.linkPreview, 'mousedown', keepFocus);
 
-    this.mediaSizeButtons = MEDIA_SIZES.map((size) => {
-      const label = this.t(size.label);
-      const button = el('button', { type: 'button', class: 'afw-btn afw-btn-inverse', title: label, 'aria-label': label });
-      setHTML(button, ICONS[size.icon]);
-      on(button, 'mousedown', keepFocus);
-      on(button, 'click', () => this.setMediaSize(size.value));
-      return { el: button, value: size.value };
-    });
+    this.mediaSizeButtons = MEDIA_SIZES.map((size) => ({
+      el: this._button(size.label, '', size.icon, () => this.setMediaSize(size.value)),
+      value: size.value,
+    }));
     ui.mediaSizes.append(...this.mediaSizeButtons.map((b) => b.el), el('span', { class: 'afw-sep' }));
 
-    this.alignButtons = ALIGN_ITEMS.map((item) => {
-      const label = this.t(item.command);
-      const button = el('button', { type: 'button', class: 'afw-btn afw-btn-inverse', title: `${label} (${item.shortcut})`, 'aria-label': label });
-      setHTML(button, ICONS[item.command]);
-      on(button, 'mousedown', keepFocus);
-      on(button, 'click', () => this._applyPop(item.command));
-      return { el: button, command: item.command };
-    });
+    this.alignButtons = ALIGN_ITEMS.map((item) => ({
+      el: this._button(item.command, item.shortcut, item.command, () => this._applyPop(item.command)),
+      command: item.command,
+    }));
     ui.popAlign.append(...this.alignButtons.map((b) => b.el));
 
     // Palet: Esc menutup dan mengembalikan fokus ke tombol pembukanya. Klik di luar palet atau Esc
@@ -453,9 +445,7 @@ class EditorUI {
       const label = this.t(row.label);
       const none = this.t(row.none);
       const swatch = (value, attrs) => {
-        const button = el('button', { type: 'button', ...attrs });
-        this.cleanups.push(listen(button, 'mousedown', keepFocus));
-        this.cleanups.push(listen(button, 'click', () => this._applyPop(row.command, value)));
+        const button = this._button(null, '', null, () => this._applyPop(row.command, value), attrs);
         this.swatches.push({ el: button, command: row.command, value });
         return button;
       };
@@ -472,22 +462,33 @@ class EditorUI {
     }
   }
 
+  // Tombol yang tidak mengambil fokus dari editor. `label`: kunci teks untuk title & aria-label
+  // (dengan shortcut di title); `icon`: nama ikon; class bawaan tombol di elemen melayang.
+  _button(label, shortcut, icon, onClick, attrs = {}) {
+    const text = label && this.t(label);
+    const button = el('button', {
+      type: 'button',
+      class: 'afw-btn afw-btn-inverse',
+      title: text && (shortcut ? `${text} (${shortcut})` : text),
+      'aria-label': text,
+      ...attrs,
+    });
+    if (icon) setHTML(button, ICONS[icon]);
+    this.cleanups.push(listen(button, 'mousedown', keepFocus), listen(button, 'click', onClick));
+    return button;
+  }
+
   // Grup tombol (toolbar / bubble): [[{ command, shortcut }, ...], ...] -> tombol + pemisah.
   _buttonGroups(container, groups, extraClass = '') {
     const buttons = [];
     groups.forEach((group, gi) => {
       const groupEl = el('div', { class: 'afw-group' }, gi > 0 ? el('span', { class: 'afw-sep' }) : null);
       for (const item of group) {
-        const label = this.t(item.command);
-        const button = el('button', {
-          type: 'button',
+        // Ikon diisi render(): bisa berubah (perataan di posisi kursor).
+        const button = this._button(item.command, item.shortcut, null, (e) => this._onItem(item.command, e), {
           class: `afw-btn${extraClass ? ` ${extraClass}` : ''}`,
-          title: item.shortcut ? `${label} (${item.shortcut})` : label,
-          'aria-label': label,
           'aria-haspopup': POPOVERS.includes(item.command) ? 'true' : null,
         });
-        this.cleanups.push(listen(button, 'mousedown', keepFocus));
-        this.cleanups.push(listen(button, 'click', (e) => this._onItem(item.command, e)));
         groupEl.append(button);
         buttons.push({ el: button, command: item.command });
       }

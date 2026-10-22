@@ -88,7 +88,11 @@ di demo), sehingga effect berjalan ulang dan menutup slash menu. `Alpine.raw` ti
 - Lolos `npm test`, `npm run test:browser -- all` (Chrome, Firefox, WebKit, bentrok
   Bootstrap/Tailwind), integrasi Laravel/Livewire.
 
-### T5: build & wrapper framework
+### T5: build & wrapper framework (selesai)
+Hasil: ES 36,6 KB gzip (sebelumnya 34,5), CDN 134,9 KB gzip (sebelumnya 133,1). Kenaikan ~2,5 KB
+karena reaktivitas yang dulu dikerjakan Alpine sekarang ditulis sendiri. Wrapper ada di `examples/`
+dan diuji dari aplikasi Vite terpisah (React 18 StrictMode, Vue 3.5) di tiga browser; CDN diuji
+dengan dan tanpa Alpine.
 - Build ES: `create` diekspor; standalone CDN: `window.Afwrite.create` + pendaftaran plugin Alpine
   otomatis tetap ada.
 - Cek ukuran bundle: target tidak lebih besar dari sekarang (~135 KB gzip).
