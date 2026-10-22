@@ -107,7 +107,7 @@ Alpine-nya sendiri. Akibatnya ada dua Alpine yang bentrok.
   dibuktikan.
 - Kasus khusus: setelah submit, server mengembalikan HTML yang sudah dibersihkan
   (`WyswygHtml::clean`) dan bisa sedikit berbeda dari `getHTML()`. Watcher
-  `html` (`src/alpine.js` sekitar baris 173) lalu memanggil `setHTML`, sehingga
+  `html` (`$watch('html')` di `src/alpine.js`) lalu memanggil `setHTML`, sehingga
   kursor melompat. Usulan: bandingkan setelah dinormalisasi (lewat sanitize
   klien) sebelum memanggil `setHTML`, atau sediakan opsi untuk mematikannya.
 

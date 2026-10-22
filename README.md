@@ -87,6 +87,8 @@ With `x-model`:
 
 ### Options
 
+The same options work for `wysiwyg({...})` and `create(el, {...})`.
+
 | Option | Default | Description |
 |---|---|---|
 | `name` | `''` | Hidden input name for forms |
@@ -152,6 +154,8 @@ Dispatched from the editor element and *bubbling*, so a parent can listen:
 ```html
 <div x-data="wysiwyg()" @wysiwyg-change="console.log($event.detail.html)"></div>
 ```
+
+Without Alpine: `editor.on('change', ({ html }) => …)` (see [Without Alpine](#without-alpine)).
 
 `wysiwyg-ready` (`{ editor }`), `wysiwyg-change` (`{ html, meta }`), `wysiwyg-focus`, `wysiwyg-blur`,
 `wysiwyg-error` (`{ message }`), `wysiwyg-image-request` (`{ mode, current?, insert, pickFiles, cancel }`, only with

@@ -45,4 +45,4 @@ Yang tidak termasuk:
 - aplikasi yang menyimpan atau menampilkan HTML dari editor **tanpa** sanitasi di server. Sanitasi di
   browser hanya untuk kenyamanan; data dari klien selalu bisa dipalsukan, jadi server wajib
   membersihkannya (lihat `integrations/laravel` dan halaman Keamanan di dokumentasi);
-- celah di dependency (Tiptap, ProseMirror, Alpine.js): laporkan ke proyek aslinya.
+- celah di dependency (Tiptap, ProseMirror, Alpine.js bila dipakai): laporkan ke proyek aslinya.

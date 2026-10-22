@@ -13,6 +13,9 @@ File di folder ini disalin ke proyek Laravel Anda (struktur foldernya sama):
 Diuji dengan Laravel 13 + Livewire 4 + `ezyang/htmlpurifier` (`php artisan test --filter=WyswygTest`).
 Livewire 4 (x-model `$wire`, simpan, reload, `wire:navigate`) diuji dengan Playwright.
 
+Komponen Blade memakai Alpine. Tanpa Alpine (mis. Inertia + React/Vue), pakai wrapper di
+[`examples/`](../../examples) untuk sisi depan; controller upload dan `WyswygHtml::clean()` tetap sama.
+
 ## 1. Pasang
 
 ```bash

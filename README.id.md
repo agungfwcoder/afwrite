@@ -87,6 +87,8 @@ Dengan `x-model`:
 
 ### Opsi
 
+Opsi yang sama berlaku untuk `wysiwyg({...})` dan `create(el, {...})`.
+
 | Opsi | Default | Keterangan |
 |---|---|---|
 | `name` | `''` | Nama input hidden untuk form |
@@ -149,6 +151,8 @@ Dikirim dari elemen editor dan *bubbling*, jadi bisa ditangkap di parent:
 ```html
 <div x-data="wysiwyg()" @wysiwyg-change="console.log($event.detail.html)"></div>
 ```
+
+Tanpa Alpine: `editor.on('change', ({ html }) => …)` (lihat [Tanpa Alpine](#tanpa-alpine)).
 
 `wysiwyg-ready` (`{ editor }`), `wysiwyg-change` (`{ html, meta }`), `wysiwyg-focus`, `wysiwyg-blur`,
 `wysiwyg-error` (`{ message }`).
