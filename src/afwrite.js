@@ -25,7 +25,7 @@ import { normalizeHeadings } from './core/sanitize.js';
 import { ALIGN_ITEMS, BUBBLE, ICONS, TOOLBAR, withFormats, withHeadings } from './icons.js';
 import { TEMPLATE } from './ui/template.js';
 import { el, keepFocus, listen, setAttr, setHTML, setText, show } from './ui/dom.js';
-import { gutterX, isCoarsePointer, place } from './ui/position.js';
+import { gutterX, isCoarsePointer, keyboardOpen, place, revealRange } from './ui/position.js';
 
 const EMPTY_META = { image: null, title: '', subtitle: '', slug: '' };
 const EMPTY_VALUES = { color: null, highlight: null, align: null };
@@ -38,6 +38,8 @@ const MEDIA_SIZES = [
 // Tombol yang membuka palet (bukan langsung menjalankan perintah).
 const POPOVERS = ['color', 'align'];
 const TOAST_DELAY = 4000;
+// Jeda setelah seleksi lewat sentuhan berhenti berubah sebelum halaman digeser (lihat _reveal).
+const REVEAL_DELAY = 350;
 const instances = new WeakMap();
 let uidCounter = 0;
 
@@ -87,7 +89,7 @@ class EditorUI {
     this.bubbleItems = withFormats(options.bubbleItems || withHeadings(BUBBLE, this.headings, 2), this.formats);
     this.toast = { open: false, message: '' };
     // mode: format | input | linkinfo; purpose (mode input): link | embed | alt
-    this.bubble = { open: false, ready: false, mode: 'format', purpose: 'link', x: 0, y: 0, url: '', href: '', hasLink: false, error: '' };
+    this.bubble = { open: false, ready: false, pinned: false, mode: 'format', purpose: 'link', x: 0, y: 0, url: '', href: '', hasLink: false, error: '' };
     this.media = { open: false, ready: false, x: 0, y: 0, kind: 'image', size: 'normal', alt: '', src: null, mediaId: null };
     this.pop = { open: false, ready: false, kind: '', x: 0, y: 0 };
     this.slash = { open: false, ready: false, items: [], index: 0, x: 0, y: 0 };
@@ -187,6 +189,8 @@ class EditorUI {
   destroy() {
     if (!this.editor) return;
     clearTimeout(this.toastTimer);
+    clearTimeout(this.revealTimer);
+    cancelAnimationFrame(this.viewportFrame);
     this.cleanups.forEach((fn) => fn());
     this.cleanups = [];
     this.editor.destroy();
@@ -426,6 +430,16 @@ class EditorUI {
     const finishDrag = () => this.dragging && this._endBlockDrag();
     on(document, 'drop', finishDrag, true);
     on(document, 'dragend', finishDrag, true);
+
+    // Keyboard HP muncul/hilang (atau zoom): area terlihat berubah, elemen melayang diposisikan ulang.
+    if (window.visualViewport) {
+      const onViewport = () => {
+        cancelAnimationFrame(this.viewportFrame);
+        this.viewportFrame = requestAnimationFrame(() => this._onViewportChange());
+      };
+      on(window.visualViewport, 'resize', onViewport);
+      on(window.visualViewport, 'scroll', onViewport);
+    }
 
     // Input hidden untuk form: isi (HTML / JSON) dan, dengan opsi titleName, judul.
     if (this.name) ui.inputs.push(['content', root.appendChild(el('input', { type: 'hidden', name: this.name }))]);
@@ -744,12 +758,66 @@ class EditorUI {
     this.bubble.open = true;
     if (!sameMode) this.bubble.ready = false;
     // Di perangkat sentuh, menu bawaan OS muncul di atas seleksi -> bubble di bawah.
-    const prefer = isCoarsePointer() && mode === 'format' ? 'below' : 'above';
-    this._placeFloating(this.bubble, this.ui.bubble, rect, { prefer });
+    const touch = isCoarsePointer() && mode === 'format';
+    // Di HP dengan keyboard terbuka: bilah format menempel di atas keyboard, bukan dipatok ke
+    // seleksi; jadi selalu terlihat dan tidak berebut tempat dengan menu bawaan OS. Seleksi digeser
+    // agar tetap terlihat di atas bilah.
+    if (touch && keyboardOpen()) {
+      this.bubble.pinned = true;
+      this._placePinned();
+      this._scheduleReveal();
+      return;
+    }
+    this.bubble.pinned = false;
+    this._placeFloating(this.bubble, this.ui.bubble, rect, { prefer: touch ? 'below' : 'above' });
+    if (touch) this._scheduleReveal();
+  }
+
+  // Posisikan bilah format tepat di atas keyboard (koordinat fixed, lewat visualViewport).
+  _placePinned() {
+    this.render(); // buka & isi dulu agar tingginya bisa diukur
+    const vv = window.visualViewport;
+    this.bubble.y = Math.round(vv.offsetTop + vv.height - this.ui.bubble.offsetHeight - 8);
+    this.bubble.ready = true;
+    this.render();
+  }
+
+  // Seleksi lewat sentuhan tidak di-scroll ProseMirror (hanya seleksi dari keyboard), jadi seleksi
+  // dan bubble di bawahnya bisa tertutup keyboard HP. Setelah seleksi berhenti berubah (pegangan
+  // seleksi Android tidak mengirim event sentuh ke halaman), halaman digeser seperlunya.
+  _scheduleReveal() {
+    clearTimeout(this.revealTimer);
+    this.revealTimer = setTimeout(() => this._reveal(), REVEAL_DELAY);
+  }
+
+  _reveal() {
+    if (!this.editor || !this.bubble.open || this.bubble.mode !== 'format') return;
+    const rect = this.editor.selectionRect();
+    if (!rect) return;
+    const bottom = rect.bottom + 10 + this.ui.bubble.offsetHeight; // posisi bubble di bawah seleksi
+    if (revealRange(this.root, rect.top, bottom)) this.editor._scheduleSelection();
+  }
+
+  _onViewportChange() {
+    if (!this.editor) return;
+    this._closePop();
+    if (this.bubble.open || this.media.open) {
+      // Mode input (link/alt): fokus di input, seleksi editor diabaikan; posisikan ulang langsung.
+      if (this.bubble.open && this.bubble.mode === 'input') {
+        const rect = this.bubble.purpose === 'alt' ? this._mediaRect() : this.editor.selectionRect();
+        if (rect) this._placeFloating(this.bubble, this.ui.bubble, rect, { prefer: 'above' });
+      } else {
+        this.editor._scheduleSelection();
+      }
+    }
+    if (this.slash.open) {
+      this.slash.ready = false; // posisi dikunci saat dibuka; hitung ulang
+      this._onSlash({ ...this.editor.slash, rect: this.editor.selectionRect() });
+    }
   }
 
   closeBubble() {
-    Object.assign(this.bubble, { open: false, ready: false, mode: 'format', error: '' });
+    Object.assign(this.bubble, { open: false, ready: false, pinned: false, mode: 'format', error: '' });
     this.render();
   }
 
@@ -990,9 +1058,11 @@ function ignoreAlpine(node) {
 }
 
 // Class & posisi elemen melayang (bubble, media bar, palet).
-function floating(node, { open, ready, x, y }) {
+function floating(node, { open, ready, x, y, pinned }) {
   node.classList.toggle('afw-is-open', open);
   node.classList.toggle('afw-is-ready', ready);
-  const style = `left: ${x}px; top: ${y}px`;
+  node.classList.toggle('afw-is-pinned', !!pinned);
+  // Pinned: posisi fixed (left/right dari CSS), hanya top yang diatur.
+  const style = pinned ? `top: ${y}px` : `left: ${x}px; top: ${y}px`;
   if (node.getAttribute('style') !== style) node.setAttribute('style', style);
 }

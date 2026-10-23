@@ -103,6 +103,9 @@ Sampai ada pemakai, perubahan kecil berikutnya digabung ke 2.0.0 ini. CDN `@2` d
   `selectedMedia()` kini juga berisi `src` dan `mediaId`
 
 ### Perbaikan
+- HP: saat keyboard virtual terbuka, bubble format menempel di atas keyboard (tidak lagi tertutup
+  keyboard atau berebut tempat dengan menu Cut/Copy bawaan OS); seleksi digeser agar tetap terlihat.
+  Elemen melayang diukur terhadap `visualViewport`
 - x-model / `$wire`: HTML dari luar yang isinya sama tetapi beda penulisan (mis. hasil
   `WyswygHtml::clean()` setelah simpan) tidak lagi memuat ulang editor, sehingga kursor tidak
   melompat dan riwayat undo tetap

@@ -929,6 +929,15 @@
   pointer-events: auto;
 }
 
+/* HP: bilah format menempel di atas keyboard (posisi diatur JS lewat visualViewport). */
+.afw .afw-bubble.afw-is-pinned {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 .afw .afw-bubble-row {
   display: flex;
   align-items: center;
